@@ -3,6 +3,7 @@ console.log("Hello via Bun!");
 import { Elysia } from "elysia";
 import { openapi } from '@elysia/openapi'
 
+import { session } from "./session";
 import { setup } from "./api/setup";
 import { auth } from "./api/auth";
 import { user } from "./api/user";
@@ -18,6 +19,7 @@ import { admin } from "./api/admin";
 import { engine } from "./api/engine";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
+    .use(session)
     .use(setup)
     .use(auth)
     .use(user)
