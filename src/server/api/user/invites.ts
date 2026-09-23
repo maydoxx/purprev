@@ -1,6 +1,28 @@
 import { Elysia } from "elysia";
-import { stub } from "../stub";
+import { session } from "../../session";
+import { sql, now } from "../../db";
+
+const COOLDOWN = 60 * 60 * 12;
 
 // one key per 12 hours
 export const invites = new Elysia({ prefix: "/invites" })
-    .post("/generate", stub)
+    .use(session)
+    .post("/generate", async ({ user, status }) => {
+        const [row] = await sql`SELECT lastInviteKeyCreated FROM users WHERE id = ${user.id}`;
+        const wait = row.lastInviteKeyCreated + COOLDOWN - now();
+
+        if (wait > 0) {
+            return status(403, {
+                error: "You already made a key in the last 12 hours",
+                retryIn: wait
+            });
+        }
+
+        const key = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("hex");
+        await sql`UPDATE users SET lastInviteKeyCreated = ${now()} WHERE id = ${user.id}`;
+        await sql`INSERT INTO invites (createdBy, inviteKey, createdAt) VALUES (${user.id}, ${key}, ${now()})`;
+
+        return { key };
+    }, {
+        auth: true
+    })

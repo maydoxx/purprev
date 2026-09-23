@@ -1,10 +1,34 @@
 import { Elysia, t } from "elysia";
-import { stub } from "../../stub";
+import { session } from "../../../session";
+import { sql } from "../../../db";
 
-// TODO: actually check currentPassword, since the old site didn't...
-//       okay i should probably shut it down
 export const changepassword = new Elysia()
-    .post("/changepassword", stub, {
+    .use(session)
+    .post("/changepassword", async ({ body, user, cookie, status }) => {
+        if (body.newPassword !== body.confirmPassword) {
+            return status(400, {
+                error: "Passwords do not match"
+            });
+        }
+
+        const [row] = await sql`SELECT password FROM users WHERE id = ${user.id}`;
+        if (!(await Bun.password.verify(body.currentPassword, row.password))) {
+            return status(401, {
+                error: "Current password is wrong"
+            });
+        }
+
+        const hash = await Bun.password.hash(body.newPassword, "bcrypt");
+        await sql`UPDATE users SET password = ${hash} WHERE id = ${user.id}`;
+
+        // log out everywhere else
+        await sql`DELETE FROM tokens WHERE user_id = ${user.id} AND token != ${cookie.token!.value}`;
+
+        return {
+            ok: true
+        };
+    }, {
+        auth: true,
         body: t.Object({
             currentPassword: t.String(),
             newPassword: t.String({ minLength: 8 }),
