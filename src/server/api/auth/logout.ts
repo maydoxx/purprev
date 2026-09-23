@@ -1,6 +1,11 @@
 import { Elysia } from "elysia";
-import { stub } from "../stub";
+import { session } from "../../session";
 
-// TODO: kill the token and cookies
 export const logout = new Elysia()
-    .post("/logout", stub)
+    .use(session)
+    .post("/logout", async ({ logout }) => {
+        await logout();
+        return {
+            ok: true
+        };
+    })
