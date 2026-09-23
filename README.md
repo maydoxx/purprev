@@ -54,6 +54,9 @@ cp .env.example .env
 | `MYSQL_DATABASE` | Name of the database |
 | `MYSQL_USER` | Database login |
 | `MYSQL_PASSWORD` | Database password |
+| `RCCMANAGER_HOST` | Where RCCManager is, `localhost` if its on the same machine |
+| `RCCMANAGER_PORT` | RCCManager binding port, default `25500` |
+| `RCCMANAGER_PASSWORD` | RCCManager password |
 | `ROBLOX_COOKIE` | A `.ROBLOSECURITY` cookie, needed for pulling assets from Roblox |
 
 > [!WARNING]
