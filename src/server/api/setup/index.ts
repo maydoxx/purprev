@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 
 export const setup = new Elysia({ prefix: "/api/setup" })
     .get("/version", () => ({
@@ -6,9 +6,14 @@ export const setup = new Elysia({ prefix: "/api/setup" })
     }))
 
     // TODO: make this grab the setup from cloudflare CDN
+    // ?os=linux/mac
     .get("/download", () => ({
         message: "stub"
-    }))
+    }), {
+        query: t.Object({
+            os: t.Optional(t.String())
+        })
+    })
 
     // TODO: make it download the client from cloudflare CDN
     .get("/:file", () => ({

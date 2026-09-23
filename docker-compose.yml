@@ -1,0 +1,38 @@
+# reads .env, only the db host is overridden
+services:
+  db:
+    image: docker.io/library/mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - dbdata:/var/lib/mysql
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: "3306"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  web:
+    build: .
+    restart: unless-stopped
+    command: ["bunx", "vite", "--host", "0.0.0.0"]
+    environment:
+      API_URL: http://api:3000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  dbdata:

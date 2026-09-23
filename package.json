@@ -3,6 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "license": "AGPL-3.0-only",
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@types/bun": "latest",
