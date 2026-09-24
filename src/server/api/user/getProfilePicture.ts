@@ -1,10 +1,18 @@
 import { Elysia, t } from "elysia";
-import { stub } from "../stub";
+import { avatarImage, PENDING } from "../../paths";
 
-// return rendered avatar png or pending placeholder if not rendered yet
-// TODO: make rcc manager render
+// rendered avatar png, or the placeholder until rcc manager renders one
 export const getProfilePicture = new Elysia()
-    .get("/getProfilePicture", stub, {
+    .get("/getProfilePicture", async ({ query }) => {
+        const file = Bun.file(avatarImage(query.userId, query.type === "headshot"));
+
+        return new Response(await file.exists() ? file : Bun.file(PENDING), {
+            headers: {
+                "Content-Type": "image/png",
+                "Cache-Control": "public, max-age=300"
+            }
+        });
+    }, {
         query: t.Object({
             userId: t.Numeric(),
             type: t.Optional(t.Union([
