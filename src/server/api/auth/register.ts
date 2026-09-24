@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { session } from "../../session";
+import { session, getUser } from "../../session";
 import { sql, now } from "../../db";
 
 // TODO: captcha, cloudflare turnstile
@@ -44,9 +44,11 @@ export const register = new Elysia()
         const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${username}, ${hash}, ${now()})`;
 
         // TODO: rcc manager renders the avatar here
-        await login(Number(created.lastInsertRowid));
+        const id = Number(created.lastInsertRowid);
+        await login(id);
         return {
-            ok: true
+            ok: true,
+            user: await getUser(id)
         };
     }, {
         body: t.Object({

@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { session } from "../../session";
+import { session, getUser } from "../../session";
 import { sql } from "../../db";
 
 export const login = new Elysia()
@@ -14,9 +14,11 @@ export const login = new Elysia()
             });
         }
 
-        await login(row.id);
+        const id = row.id;
+        await login(id);
         return {
-            ok: true
+            ok: true,
+            user: await getUser(id)
         };
     }, {
         body: t.Object({
