@@ -19,6 +19,24 @@ import { admin } from "./api/admin";
 import { engine } from "./api/engine";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
+
+    // every error goes to the console, validation and 404 keep elysias answer
+    .onError({ as: "global" }, ({ code, error, request, set }) => {
+        const where = `${request.method} ${new URL(request.url).pathname}`;
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (code === "VALIDATION" || code === "NOT_FOUND") {
+            console.warn(`${where} -> ${code}: ${message.split("\n")[0]}`);
+            return;
+        }
+
+        console.error(`${where} -> ${code}:`, error);
+        set.status = 500;
+        return {
+            error: message
+        };
+    })
+
     .use(session)
     .use(setup)
     .use(auth)
