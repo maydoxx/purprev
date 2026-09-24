@@ -15,7 +15,7 @@ export type User = {
     ongoing_action_id: number | null;
 };
 
-const USER_COLS = sql`id, username, email, about, admin, currency, ongoing_action_id`;
+const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.ongoing_action_id`;
 
 export const getUser = async (id: number): Promise<User | null> => {
     const [user] = await sql`SELECT ${USER_COLS} FROM users WHERE id = ${id}`;
