@@ -34,8 +34,11 @@ export const inventory = new Elysia({ prefix: "/inventory" })
         const [items, [count]] = type
             ? await Promise.all([
                 sql`
-                    SELECT catalog_items.id, catalog_items.name, catalog_items.thumbnail, user_items.wearing, user_items.serial_number
+                    SELECT catalog_items.id, catalog_items.name, catalog_items.thumbnail, catalog_items.creator_id, users.username AS creator_name,
+                        catalog_items.is_limited, catalog_items.is_limited_unique, catalog_items.limited_stock,
+                        user_items.wearing, user_items.serial_number
                     FROM user_items JOIN catalog_items ON catalog_items.id = user_items.item_id
+                    LEFT JOIN users ON users.id = catalog_items.creator_id
                     WHERE user_items.user_id = ${user.id} AND catalog_items.category = ${type}
                     ORDER BY user_items.purchased_at DESC, catalog_items.id DESC
                     LIMIT ${PER_PAGE} OFFSET ${offset}
@@ -48,14 +51,18 @@ export const inventory = new Elysia({ prefix: "/inventory" })
             : category === "badges"
             ? await Promise.all([
                 sql`
-                    SELECT b.id, b.name, b.icon, b.game_id FROM user_badges ub JOIN game_badges b ON b.id = ub.badge_id
+                    SELECT b.id, b.name, b.icon, b.game_id, b.creator_id, users.username AS creator_name, games.title AS game_title
+                    FROM user_badges ub JOIN game_badges b ON b.id = ub.badge_id
+                    LEFT JOIN users ON users.id = b.creator_id LEFT JOIN games ON games.id = b.game_id
                     WHERE ub.user_id = ${user.id} ORDER BY ub.awarded_at DESC LIMIT ${PER_PAGE} OFFSET ${offset}
                 `,
                 sql`SELECT COUNT(*) AS n FROM user_badges WHERE user_id = ${user.id}`
             ])
             : await Promise.all([
                 sql`
-                    SELECT p.id, p.name, p.icon, p.game_id FROM user_game_passes up JOIN game_passes p ON p.id = up.pass_id
+                    SELECT p.id, p.name, p.icon, p.game_id, p.creator_id, users.username AS creator_name, games.title AS game_title
+                    FROM user_game_passes up JOIN game_passes p ON p.id = up.pass_id
+                    LEFT JOIN users ON users.id = p.creator_id LEFT JOIN games ON games.id = p.game_id
                     WHERE up.user_id = ${user.id} ORDER BY up.purchased_at DESC LIMIT ${PER_PAGE} OFFSET ${offset}
                 `,
                 sql`SELECT COUNT(*) AS n FROM user_game_passes WHERE user_id = ${user.id}`

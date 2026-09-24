@@ -43,7 +43,7 @@ export const profile = new Elysia({ prefix: "/profile" })
                     (SELECT COUNT(*) FROM forum_posts WHERE author_id = ${row.id}) AS posts
             `,
             sql`
-                SELECT catalog_items.id, catalog_items.name, catalog_items.category FROM user_items
+                SELECT catalog_items.id, catalog_items.name, catalog_items.category, catalog_items.thumbnail FROM user_items
                 JOIN catalog_items ON catalog_items.id = user_items.item_id
                 WHERE user_items.user_id = ${row.id} AND user_items.wearing = 1
                 ORDER BY catalog_items.category, catalog_items.id
