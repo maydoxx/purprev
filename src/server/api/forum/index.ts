@@ -1,5 +1,7 @@
 import { Elysia, t } from "elysia";
 import { stub } from "../stub";
+import { sql } from "../../db";
+import { FORUM_GROUPS } from "../../forum";
 
 const id = t.Object({
     id: t.Numeric()
@@ -7,8 +9,40 @@ const id = t.Object({
 const page = t.Optional(t.Numeric());
 
 export const forum = new Elysia({ prefix: "/api/forum" })
-    // forum groups with their categories and the thread/post counts
-    .get("/", stub)
+    // the categories with their thread/post counts and last post
+    .get("/", async () => {
+        const groups = [];
+        for (const [section, forums] of Object.entries(FORUM_GROUPS)) {
+            const out = [];
+            for (const forum of forums) {
+                const [stats] = await sql`
+                    SELECT
+                        (SELECT COUNT(*) FROM forum_threads WHERE forum_id = ${forum.id}) AS threads,
+                        (SELECT COUNT(*) FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE t.forum_id = ${forum.id}) AS posts
+                `;
+                const [last] = await sql`
+                    SELECT p.created_at, u.username FROM forum_posts p
+                    JOIN forum_threads t ON t.id = p.thread_id
+                    LEFT JOIN users u ON u.id = p.author_id
+                    WHERE t.forum_id = ${forum.id}
+                    ORDER BY p.created_at DESC, p.id DESC LIMIT 1
+                `;
+                out.push({
+                    ...forum,
+                    threads: Number(stats.threads),
+                    posts: Number(stats.posts),
+                    last: last ?? null
+                });
+            }
+            groups.push({
+                section,
+                forums: out
+            });
+        }
+        return {
+            groups
+        };
+    })
 
     .get("/search", stub, {
         query: t.Object({
