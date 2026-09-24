@@ -1,0 +1,173 @@
+/* friends: profile section, /my/friends page, home page row */
+
+.friends-grid {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.friend-card {
+    width: 110px;
+    margin: 0 8px 12px 0;
+    text-align: center;
+}
+
+.friend-card a {
+    display: block;
+    text-decoration: none;
+    color: #191919;
+}
+
+.friend-card .friend-avatar {
+    position: relative;
+    display: block;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 6px;
+    background: #fff;
+    border: 1px solid #b8b8b8;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.friend-card .friend-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.friend-card.online .friend-avatar {
+    border-color: #02b757;
+    box-shadow: 0 0 0 2px #02b757;
+}
+
+.friend-card .friend-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.friend-card .friend-status {
+    display: block;
+    font-size: 12px;
+    color: #757575;
+}
+
+.friend-card.online .friend-status {
+    color: #02b757;
+}
+
+.friend-card .friend-actions {
+    margin-top: 6px;
+}
+
+.friend-card .friend-actions button {
+    margin: 2px 0;
+    width: 100%;
+    padding: 6px 4px;
+    font-size: 13px;
+}
+
+/* /my/friends page */
+.friends-page {
+    max-width: 970px;
+    margin: 0 auto;
+    padding: 0 12px;
+    color: #191919;
+}
+
+.friends-page h1 {
+    margin: 0 0 12px;
+    font-size: 28px;
+    font-weight: 300;
+}
+
+.friends-page .friends-tabs {
+    display: flex;
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.friends-page .friends-tabs a {
+    display: block;
+    padding: 12px 24px;
+    font-size: 16px;
+    color: #191919;
+    text-decoration: none;
+}
+
+.friends-page .friends-tabs a.active {
+    box-shadow: 0 -4px 0 0 #7B2CBF inset;
+}
+
+.friends-page .friends-tabs .count {
+    margin-left: 4px;
+    padding: 1px 7px;
+    font-size: 12px;
+    color: #fff;
+    background: #7B2CBF;
+    border-radius: 10px;
+}
+
+.friends-page .tab-pane {
+    display: none;
+    padding: 12px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.friends-page .tab-pane.active {
+    display: block;
+}
+
+.friends-page .tab-pane h3 {
+    margin: 12px 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.friends-page .friends-grid .friend-card {
+    width: 130px;
+    margin: 0 4px 16px;
+}
+
+.friends-empty-list {
+    padding: 30px 0;
+    text-align: center;
+    color: #757575;
+}
+
+/* home page row */
+.home-friends {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.home-friends .friend-card {
+    width: 120px;
+}
+
+/* pending request badge in the left nav */
+.rbx-nav-badge {
+    display: inline-block;
+    min-width: 18px;
+    margin-left: 8px;
+    padding: 1px 6px;
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+    color: #fff;
+    background: #7B2CBF;
+    border-radius: 9px;
+}

@@ -1,0 +1,343 @@
+.settings-page {
+    width: min(970px, calc(100% - 40px));
+    margin: 38px auto 70px;
+    color: #343434;
+    font-family: "Source Sans Pro", Arial, sans-serif;
+}
+
+.settings-title-row {
+    margin-bottom: 20px;
+}
+
+.settings-title-row h1 {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1.2;
+    font-weight: 400;
+    color: #343434;
+}
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.settings-navigation {
+    background: #fff;
+    border: 1px solid #d5d5d5;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.settings-nav-item {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid #e5e5e5;
+    background: #fff;
+    color: #555;
+    text-align: left;
+    padding: 13px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.settings-nav-item:last-child {
+    border-bottom: 0;
+}
+
+.settings-nav-item:hover {
+    background: #f7f7f7;
+}
+
+.settings-nav-item.active {
+    background: #f2f2f2;
+    color: #7B2CBF;
+    box-shadow: inset 4px 0 0 #7B2CBF;
+}
+
+.settings-content {
+    min-width: 0;
+}
+
+.settings-panel {
+    display: none;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
+.settings-panel-header {
+    margin-bottom: 10px;
+}
+
+.settings-panel-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 400;
+    color: #343434;
+}
+
+.settings-card {
+    background: #fff;
+    border: 1px solid #d5d5d5;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.settings-row {
+    min-height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.settings-card > .settings-row:last-of-type {
+    border-bottom: 0;
+}
+
+.settings-row-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.settings-label {
+    margin-bottom: 3px;
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.settings-value {
+    color: #343434;
+    font-size: 16px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.settings-bio-value {
+    white-space: normal;
+}
+
+.settings-edit-btn,
+.settings-cancel-btn,
+.settings-copy-btn {
+    min-width: 72px;
+    height: 34px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    background: #fff;
+    color: #555;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.settings-edit-btn:hover,
+.settings-cancel-btn:hover,
+.settings-copy-btn:hover {
+    background: #f2f2f2;
+}
+
+.settings-primary-btn,
+.settings-save-btn {
+    min-width: 92px;
+    height: 36px;
+    border: 1px solid #6A1B9A;
+    border-radius: 3px;
+    background: #7B2CBF;
+    color: #fff;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.settings-primary-btn:hover,
+.settings-save-btn:hover {
+    background: #6A1B9A;
+}
+
+.settings-primary-btn:disabled {
+    opacity: .6;
+    cursor: default;
+}
+
+.settings-editor {
+    display: none;
+    padding: 18px 20px 20px;
+    background: #f7f7f7;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.settings-editor form {
+    max-width: 520px;
+}
+
+.settings-editor label,
+.settings-invite-result label {
+    display: block;
+    margin: 0 0 6px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.settings-editor input,
+.settings-editor textarea,
+.settings-invite-result input {
+    display: block;
+    width: 100%;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    background: #fff;
+    color: #333;
+    padding: 9px 10px;
+    font-size: 15px;
+    outline: none;
+}
+
+.settings-editor input {
+    height: 39px;
+    margin-bottom: 13px;
+}
+
+.settings-editor textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.settings-editor input:focus,
+.settings-editor textarea:focus,
+.settings-invite-result input:focus {
+    border-color: #7B2CBF;
+    box-shadow: 0 0 0 1px #7B2CBF;
+}
+
+.settings-editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.settings-message {
+    display: none;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.settings-message.success {
+    color: #168c46;
+}
+
+.settings-message.error {
+    color: #c0392b;
+}
+
+.settings-message-block {
+    padding: 0 20px 16px;
+}
+
+.settings-invite-result {
+    display: none;
+    padding: 18px 20px 8px;
+    border-top: 1px solid #e5e5e5;
+    background: #f7f7f7;
+}
+
+.settings-key-wrap {
+    display: flex;
+    gap: 8px;
+    max-width: 620px;
+}
+
+.settings-key-wrap input {
+    flex: 1;
+    min-width: 0;
+    height: 38px;
+    font-family: Consolas, Monaco, monospace;
+}
+
+.settings-copy-btn {
+    height: 38px;
+}
+
+@media (max-width: 800px) {
+    .settings-page {
+        width: min(100% - 24px, 700px);
+        margin-top: 24px;
+    }
+
+    .settings-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .settings-navigation {
+        display: flex;
+    }
+
+    .settings-nav-item {
+        flex: 1;
+        text-align: center;
+        border-bottom: 0;
+        border-right: 1px solid #e5e5e5;
+        padding: 11px 8px;
+        font-size: 14px;
+    }
+
+    .settings-nav-item:last-child {
+        border-right: 0;
+    }
+
+    .settings-nav-item.active {
+        box-shadow: inset 0 -3px 0 #7B2CBF;
+    }
+}
+
+@media (max-width: 520px) {
+    .settings-title-row h1 {
+        font-size: 27px;
+    }
+
+    .settings-navigation {
+        overflow-x: auto;
+    }
+
+    .settings-nav-item {
+        min-width: 105px;
+    }
+
+    .settings-row {
+        align-items: flex-start;
+        padding: 14px;
+    }
+
+    .settings-edit-btn,
+    .settings-primary-btn {
+        flex-shrink: 0;
+    }
+
+    .settings-editor,
+    .settings-invite-result {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .settings-key-wrap {
+        flex-direction: column;
+    }
+
+    .settings-copy-btn {
+        width: 100%;
+    }
+}

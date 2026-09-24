@@ -1,0 +1,579 @@
+body {
+    background-color: #F2F2F2;
+}
+
+.games-container {
+    max-width: 1338px;
+    margin: 0 auto;
+    padding: 0 12px;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.3em;
+    color: #191919;
+}
+
+.games-container ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.games-container h3 {
+    margin: 0;
+    padding: 5px 0;
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1em;
+}
+
+.games-filters {
+    position: relative;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.games-filters::after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
+.games-filters .rbx-select {
+    position: relative;
+    display: inline-block;
+    width: 164px;
+    margin: 0 0.95% 6px 0;
+    vertical-align: middle;
+}
+
+.games-filters .rbx-select-btn {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 5px 12px;
+    line-height: 18px;
+    text-align: center;
+    color: #191919;
+    background-color: #fff;
+    border: 1px solid #B8B8B8;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.games-filters .rbx-select-btn:hover,
+.games-filters .rbx-select-btn:focus {
+    color: #fff;
+    background-color: #7B2CBF;
+    border-color: #7B2CBF;
+    outline: 0;
+}
+
+.games-filters .rbx-select-label {
+    display: inline-block;
+    float: left;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 26px;
+}
+
+.games-filters .rbx-select-arrow {
+    position: absolute;
+    right: 8px;
+    top: 10px;
+    font-size: 16px;
+    line-height: 16px;
+}
+
+.games-filters .dropdown-menu {
+    float: left;
+    width: 100%;
+    min-width: 105px;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+    text-align: left;
+    background-color: #fff;
+    border: 0;
+    border-radius: 4px;
+    box-shadow: 0 -5px 20px rgba(25, 25, 25, 0.15);
+    z-index: 1020;
+}
+
+.games-filters .dropdown-menu a {
+    display: block;
+    padding: 10px 12px;
+    line-height: 1.42857;
+    color: #191919;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.games-filters .dropdown-menu a:hover,
+.games-filters .dropdown-menu a:focus {
+    background-color: #fff;
+    box-shadow: 4px 0 0 0 #7B2CBF inset;
+}
+
+.game-sort-header::after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
+.game-sort-header h3 {
+    float: left;
+}
+
+.game-sort-header .btn-see-all {
+    float: right;
+    width: 90px;
+    margin: 6px 0 0;
+    padding: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 100%;
+    text-align: center;
+    text-decoration: none;
+    color: #fff;
+    background-color: #7B2CBF;
+    border: 1px solid #7B2CBF;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.game-sort-header .btn-see-all:hover,
+.game-sort-header .btn-see-all:focus {
+    color: #fff;
+    background-color: #9D4EDD;
+    border-color: #9D4EDD;
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+}
+
+.games-empty {
+    margin: 12px 0 18px;
+}
+
+@media (max-width: 767px) {
+    .games-container {
+        padding: 0 6px;
+    }
+
+    .games-filters .rbx-select {
+        width: 48%;
+    }
+}
+
+.game-detail-page {
+    background: #f2f2f2;
+    min-height: calc(100vh - 40px);
+    padding: 28px 18px 60px;
+    color: #191919;
+    font-family: "Source Sans Pro", Arial, sans-serif;
+}
+
+.game-detail-shell {
+    max-width: 970px;
+    margin: 0 auto;
+}
+
+.game-hero-2016 {
+    display: grid;
+    grid-template-columns: minmax(0, 640px) 280px;
+    gap: 26px;
+    align-items: start;
+}
+
+.game-media-column,
+.game-actions-column {
+    min-width: 0;
+}
+
+.game-carousel-2016 {
+    background: #d8d8d8;
+    box-shadow: 0 1px 2px rgba(0,0,0,.18);
+    overflow: hidden;
+}
+
+.game-carousel-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #ddd;
+}
+
+.game-name-2016 {
+    margin: 0 0 4px;
+    font-size: 28px;
+    line-height: 1.15;
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.game-creator-2016 {
+    margin: 0 0 28px;
+    font-size: 16px;
+    line-height: 1.4;
+    font-weight: 300;
+    color: #666;
+}
+
+.game-creator-2016 a,
+.game-stats-2016 a,
+.game-stat-footer-2016 a {
+    color: #7B2CBF;
+    text-decoration: none;
+}
+
+.game-creator-2016 a:hover,
+.game-stats-2016 a:hover,
+.game-stat-footer-2016 a:hover {
+    text-decoration: underline;
+}
+
+.game-play-area {
+    margin: 0 0 31px;
+}
+
+.btn-play-2016 {
+    display: block;
+    width: 100%;
+    border: 1px solid #02a13a;
+    border-radius: 3px;
+    padding: 13px 20px;
+    background: #02b757;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 1px 2px rgba(0,0,0,.15);
+    color: #fff !important;
+    font-size: 22px;
+    line-height: 1.1;
+    font-weight: 400;
+    text-align: center;
+    text-decoration: none !important;
+    cursor: pointer;
+}
+
+.btn-play-2016:hover {
+    background: #00c75a;
+}
+
+.share-rate-favorite-2016 {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.favorite-2016 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #777;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.favorite-star {
+    color: #f5a623;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.voting-panel-2016 {
+    flex: 1;
+    min-width: 0;
+}
+
+.vote-counts-2016 {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    color: #777;
+    font-size: 12px;
+}
+
+.vote-track-2016 {
+    position: relative;
+    height: 5px;
+    background: #d8d8d8;
+    overflow: hidden;
+}
+
+.vote-fill-2016 {
+    height: 100%;
+    background: #02b757;
+}
+
+.game-tabs-2016 {
+    margin-top: 28px;
+}
+
+.game-tab-list-2016 {
+    border-bottom: 1px solid #b8b8b8;
+}
+
+.game-tab-list-2016 .nav-item {
+    margin-bottom: -1px;
+}
+
+.game-tab-list-2016 .nav-link {
+    min-width: 135px;
+    padding: 12px 25px;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: #777;
+    font-size: 18px;
+    font-weight: 300;
+}
+
+.game-tab-list-2016 .nav-link:hover {
+    color: #191919;
+    border-color: transparent transparent #b8b8b8;
+}
+
+.game-tab-list-2016 .nav-link.active {
+    background: transparent;
+    color: #191919;
+    border-color: transparent transparent #7B2CBF;
+}
+
+.game-tab-content-2016 {
+    padding-top: 20px;
+}
+
+.section-2016 {
+    background: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.game-about-2016 {
+    padding: 24px 28px 0;
+}
+
+.game-about-2016 h3,
+.empty-tab-2016 h3,
+.server-list-empty-2016 h3,
+.game-detail-empty h2 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    line-height: 1.2;
+    font-weight: 300;
+}
+
+.game-description-2016 {
+    min-height: 50px;
+    margin: 0 0 28px;
+    color: #444;
+    font-size: 16px;
+    line-height: 1.45;
+    font-weight: 300;
+    word-wrap: break-word;
+}
+
+.game-stats-2016 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    list-style: none;
+    margin: 0;
+    padding: 20px 0;
+    border-top: 1px solid #e5e5e5;
+}
+
+.game-stats-2016 li {
+    min-width: 0;
+    padding: 0 12px;
+    text-align: center;
+    border-right: 1px solid #e5e5e5;
+}
+
+.game-stats-2016 li:first-child {
+    padding-left: 0;
+}
+
+.game-stats-2016 li:last-child {
+    padding-right: 0;
+    border-right: 0;
+}
+
+.game-stats-2016 p {
+    margin: 0;
+}
+
+.game-stats-2016 .stat-title {
+    margin-bottom: 5px;
+    color: #777;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.game-stats-2016 .stat-value {
+    color: #191919;
+    font-size: 16px;
+    line-height: 1.25;
+    font-weight: 300;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.game-stat-footer-2016 {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 -28px;
+    padding: 12px 28px;
+    border-top: 1px solid #e5e5e5;
+    color: #777;
+    font-size: 12px;
+}
+
+.empty-tab-2016,
+.server-list-empty-2016,
+.game-detail-empty {
+    padding: 28px;
+}
+
+.servers-2016 {
+    overflow: hidden;
+}
+
+.servers-banner-2016 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    color: #555;
+    font-size: 14px;
+}
+
+.btn-2016-gray,
+.btn-2016-blue {
+    display: inline-block;
+    padding: 7px 14px;
+    border-radius: 3px;
+    font-size: 14px;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-2016-gray {
+    border: 1px solid #aaa;
+    background: #eee;
+    color: #777;
+}
+
+.btn-2016-blue {
+    border: 1px solid #6A1B9A;
+    background: #7B2CBF;
+    color: #fff !important;
+}
+
+.game-detail-empty {
+    margin-top: 35px;
+}
+
+@media (max-width: 900px) {
+    .game-hero-2016 {
+        grid-template-columns: 1fr 250px;
+        gap: 18px;
+    }
+
+    .game-stats-2016 {
+        grid-template-columns: repeat(3, 1fr);
+        row-gap: 18px;
+    }
+
+    .game-stats-2016 li:nth-child(3) {
+        border-right: 0;
+    }
+}
+
+@media (max-width: 700px) {
+    .game-detail-page {
+        padding: 18px 8px 40px;
+    }
+
+    .game-hero-2016 {
+        display: block;
+    }
+
+    .game-actions-column {
+        margin-top: 18px;
+    }
+
+    .game-creator-2016 {
+        margin-bottom: 18px;
+    }
+
+    .game-play-area {
+        margin-bottom: 18px;
+    }
+
+    .game-tab-list-2016 .nav-link {
+        min-width: 0;
+        padding: 10px 16px;
+        font-size: 16px;
+    }
+
+    .game-about-2016 {
+        padding: 20px 18px 0;
+    }
+
+    .game-stats-2016 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .game-stats-2016 li,
+    .game-stats-2016 li:nth-child(3) {
+        border-right: 1px solid #e5e5e5;
+    }
+
+    .game-stats-2016 li:nth-child(even) {
+        border-right: 0;
+    }
+
+    .game-stat-footer-2016 {
+        margin: 0 -18px;
+        padding: 12px 18px;
+    }
+
+    .servers-banner-2016 {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+/* 2016 game passes + badges */
+.game-store-2016 h3,
+.game-badges-2016 h3 { margin: 0 0 14px; font-size: 22px; font-weight: 400; }
+.game-pass-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.game-pass-card { border: 1px solid #d5d5d5; background: #fff; display: flex; min-height: 112px; }
+.game-pass-card > img { width: 110px; height: 110px; object-fit: contain; background: #f4f4f4; border-right: 1px solid #ddd; }
+.game-pass-card-body { min-width: 0; padding: 10px; flex: 1 1 auto; }
+.game-pass-card-body strong { display: block; font-size: 16px; font-weight: 400; color: #6A1B9A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-pass-card-body p { margin: 5px 0 10px; min-height: 32px; max-height: 32px; overflow: hidden; color: #666; font-size: 12px; line-height: 16px; }
+.game-pass-buy-row { display: flex; justify-content: space-between; gap: 8px; align-items: center; color: #00a651; font-size: 13px; }
+.game-pass-buy-row form { margin: 0; }
+.game-store-empty { color: #777; margin: 0; }
+.game-store-alert { padding: 8px 10px; margin-bottom: 12px; border: 1px solid; font-size: 13px; }
+.game-store-alert.success { border-color: #9dcc9d; background: #eef8ee; color: #2b6b2b; }
+.game-store-alert.error { border-color: #dfa5a5; background: #fff0f0; color: #9c1d1d; }
+.game-badges-2016 { margin-top: 16px; }
+.game-badge-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.game-badge-card { display: flex; gap: 12px; border-top: 1px solid #ddd; padding: 10px 0; min-width: 0; }
+.game-badge-card > img { width: 70px; height: 70px; object-fit: contain; background: #f5f5f5; border: 1px solid #ccc; flex: 0 0 70px; }
+.game-badge-card strong { display: block; font-size: 15px; color: #333; font-weight: 400; }
+.game-badge-card p { margin: 4px 0; font-size: 12px; color: #666; line-height: 16px; }
+.game-badge-card span { font-size: 11px; color: #999; }
+.game-badge-card.disabled { opacity: .55; }
+@media (max-width: 900px) { .game-pass-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 620px) { .game-pass-grid, .game-badge-grid { grid-template-columns: 1fr; } }

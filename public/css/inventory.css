@@ -1,0 +1,345 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600&display=swap");
+
+.inventory-2016,
+.inventory-2016 a,
+.inventory-2016 button,
+.inventory-2016 input,
+.inventory-2016 select {
+    font-family: "Source Sans Pro", Arial, sans-serif;
+}
+
+.inventory-2016 {
+    min-height: calc(100vh - 40px);
+    padding: 28px 18px 70px;
+    color: #191919;
+    font-size: 16px;
+    font-weight: 300;
+}
+
+.inventory-shell {
+    width: 100%;
+    max-width: 1040px;
+    margin: 0 auto;
+}
+
+.inventory-shell > h1 {
+    margin: 0 0 10px;
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 300;
+}
+
+.inventory-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.inventory-categories {
+    flex: 0 0 150px;
+    width: 150px;
+}
+
+.inventory-categories h2,
+.inventory-content h2 {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.15;
+    font-weight: 300;
+}
+
+.inventory-categories h2 {
+    margin-bottom: 8px;
+}
+
+.inventory-categories nav {
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+}
+
+.inventory-categories nav a {
+    position: relative;
+    display: block;
+    min-height: 37px;
+    padding: 8px 11px;
+    color: #333;
+    font-size: 16px;
+    line-height: 21px;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+}
+
+.inventory-categories nav a:hover {
+    color: #7B2CBF;
+    background: #f7f7f7;
+}
+
+.inventory-categories nav a.active {
+    color: #333;
+    background: #f2f2f2;
+    border-left-color: #7B2CBF;
+}
+
+.inventory-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.inventory-heading-row {
+    min-height: 62px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 0 0 8px;
+}
+
+.inventory-heading-row p {
+    margin: 3px 0 0;
+    color: #555;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+.inventory-get-more {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 2px;
+    text-align: right;
+}
+
+.inventory-get-more span {
+    color: #555;
+    font-size: 12px;
+    line-height: 14px;
+}
+
+.inventory-get-more a {
+    display: inline-block;
+    min-width: 74px;
+    padding: 7px 12px;
+    color: #fff;
+    background: #02b757;
+    border: 1px solid #02a950;
+    border-radius: 2px;
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 400;
+    text-align: center;
+    text-decoration: none;
+}
+
+.inventory-get-more a:hover {
+    color: #fff;
+    background: #00a94f;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.inventory-item {
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+    overflow: hidden;
+}
+
+.inventory-thumb {
+    display: flex;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    text-decoration: none;
+}
+
+.inventory-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.inventory-item-info {
+    min-height: 55px;
+    padding: 5px 6px 7px;
+}
+
+.inventory-item-name {
+    display: block;
+    overflow: hidden;
+    color: #444;
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 300;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inventory-item-name:hover {
+    color: #7B2CBF;
+}
+
+.inventory-creator {
+    margin-top: 1px;
+    overflow: hidden;
+    color: #aaa;
+    font-size: 11px;
+    line-height: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inventory-creator a,
+.inventory-creator span {
+    color: #7B2CBF;
+    text-decoration: none;
+}
+
+.inventory-creator a:hover {
+    text-decoration: underline;
+}
+
+.inventory-empty {
+    min-height: 190px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    color: #888;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    font-size: 16px;
+    text-align: center;
+}
+
+.inventory-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.inventory-pagination a {
+    color: #7B2CBF;
+    text-decoration: none;
+}
+
+.inventory-pagination a:hover {
+    text-decoration: underline;
+}
+
+.inventory-pagination .disabled {
+    color: #aaa;
+}
+
+.inventory-pagination .page-number {
+    color: #666;
+}
+
+@media (max-width: 1100px) {
+    .inventory-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .inventory-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .inventory-2016 {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .inventory-layout {
+        display: block;
+    }
+
+    .inventory-categories {
+        width: 100%;
+        margin-bottom: 18px;
+    }
+
+    .inventory-categories nav {
+        display: flex;
+        overflow-x: auto;
+    }
+
+    .inventory-categories nav a {
+        flex: 0 0 auto;
+        border-left: 0;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+    }
+
+    .inventory-categories nav a.active {
+        border-left: 0;
+        border-bottom-color: #7B2CBF;
+    }
+
+    .inventory-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .inventory-shell > h1 {
+        font-size: 28px;
+    }
+
+    .inventory-heading-row {
+        display: block;
+    }
+
+    .inventory-get-more {
+        justify-content: flex-start;
+        margin-top: 10px;
+        text-align: left;
+    }
+
+    .inventory-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Limited / Limited U overlays */
+.inventory-thumb {
+    position: relative;
+    overflow: hidden;
+}
+
+.inventory-thumb > img.inventory-limited-overlay {
+    position: absolute;
+    left: 0;
+    bottom: 6px;
+    width: auto;
+    height: 15px;
+    object-fit: contain;
+    z-index: 2;
+}
+
+.inventory-serial {
+    margin-top: 1px;
+    color: #c28a00;
+    font-size: 11px;
+    line-height: 14px;
+    font-weight: 600;
+}

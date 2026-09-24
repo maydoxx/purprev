@@ -1,0 +1,186 @@
+<script lang="ts">
+    import { api } from "../api";
+    import { session } from "../session.svelte";
+
+    const me = session.me!;
+
+    const parts: [string, string][] = [
+        ["head_color", "Head"],
+        ["torso_color", "Torso"],
+        ["left_arm_color", "Left Arm"],
+        ["right_arm_color", "Right Arm"],
+        ["left_leg_color", "Left Leg"],
+        ["right_leg_color", "Right Leg"]
+    ];
+
+    const categories: [string, string][] = [
+        ["all", "All"],
+        ["Hat", "Hats"],
+        ["Face", "Faces"],
+        ["T-Shirt", "T-Shirts"],
+        ["Shirt", "Shirts"],
+        ["Pants", "Pants"],
+        ["Gear", "Gear"],
+        ["Package", "Packages"]
+    ];
+
+    const wearable = ["Hat", "Face", "Shirt", "Pants", "T-Shirt"];
+    const PER_PAGE = 8;
+
+    let data = $state<any>(null);
+    let part = $state<string | null>(null);
+    let category = $state("all");
+    let page = $state(1);
+    let status = $state("");
+    let statusError = $state(false);
+
+    const load = async () => {
+        data = await api("/user/avatar");
+    };
+    load();
+
+    const shown = $derived(data ? data.owned.filter((i: any) => category === "all" || i.category === category) : []);
+    const pages = $derived(Math.max(1, Math.ceil(shown.length / PER_PAGE)));
+    const pageItems = $derived(shown.slice((page - 1) * PER_PAGE, page * PER_PAGE));
+
+    const hex = (n: number) => {
+        const c = data.palette[n];
+        return c ? "#" + [c[0], c[1], c[2]].map(v => v.toString(16).padStart(2, "0")).join("") : "#000";
+    };
+    const name = (n: number) => data.palette[n]?.[3] ?? "";
+
+    const paint = async (n: number) => {
+        if (!part) return;
+        try {
+            const res = await api("/user/avatar/colors", {
+                [part]: n
+            });
+            data.colors = res.colors;
+            statusError = false;
+            status = "Saved. Renders come from the rcc manager, not hooked up yet.";
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
+    };
+
+    const wear = async (itemId: number, on: boolean) => {
+        try {
+            await api("/user/avatar/wear", {
+                itemId,
+                wear: on
+            });
+            await load();
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
+    };
+
+    const thumb = (item: any) => item.thumbnail || "/img/pending.png";
+    const canWear = (item: any) => wearable.includes(item.category) && item.asset_id;
+</script>
+
+<svelte:head>
+    <title>Avatar - NoneRev</title>
+    <link rel="stylesheet" href="/css/avatar.css">
+</svelte:head>
+
+{#snippet tile(item: any, mode: "wardrobe" | "wearing")}
+    <li class="item-tile">
+        <span class="item-image">
+            <a href="/catalog/item?id={item.id}"><img src={thumb(item)} alt={item.name}></a>
+            {#if mode === "wearing"}
+                <button type="button" class="item-badge wear-toggle" onclick={() => wear(item.id, false)}>Remove</button>
+            {:else if canWear(item)}
+                <button type="button" class="item-badge wear-toggle" class:wearing={item.wearing} disabled={!!item.wearing} onclick={() => wear(item.id, true)}>{item.wearing ? "Wearing" : "Wear"}</button>
+            {/if}
+        </span>
+        <a class="item-name" href="/catalog/item?id={item.id}">{item.name}</a>
+        {#if mode === "wardrobe" && !canWear(item)}
+            <span class="item-note">Not wearable</span>
+        {/if}
+    </li>
+{/snippet}
+
+<main class="rbx-content">
+{#if data}
+    <div class="avatar-container">
+        <div class="avatar-left">
+            <div class="avatar-thumb">
+                <img src="/api/user/getProfilePicture?userId={me.id}&type=full" alt={me.username}>
+                <span class="avatar-3d-toggle">2D</span>
+            </div>
+            <div class="avatar-redraw">
+                Something wrong with your avatar?<br>
+                <a href="#" onclick={e => { e.preventDefault(); status = "Re-rendering needs the rcc manager."; }}>Click here to re-draw it!</a>
+                <div class="avatar-status" class:error={statusError}>{status}</div>
+            </div>
+
+            <div class="avatar-colors">
+                <h2>Colors</h2>
+                <p>Click a body part to change its color:</p>
+                <div class="body-figure">
+                    {#each parts as [key, label]}
+                        <button type="button" class="body-part" class:active={part === key} data-part={key}
+                            title="{label}: {name(data.colors[key])}" style="background: {hex(data.colors[key])}"
+                            onclick={() => part = part === key ? null : key}></button>
+                    {/each}
+                </div>
+                <div class="color-picker" class:open={part !== null}>
+                    <p class="picker-title">Pick a color for the <span>{parts.find(p => p[0] === part)?.[1] ?? "Head"}</span></p>
+                    <div class="swatches">
+                        {#each Object.entries(data.palette) as [n, c]}
+                            <button type="button" title={c[3]} style="background: {hex(Number(n))}" onclick={() => paint(Number(n))}></button>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="avatar-right">
+            <ul class="wardrobe-tabs">
+                <li><a href="#" class="active" onclick={e => e.preventDefault()}>Wardrobe</a></li>
+                <li><a href="#" class="disabled" title="Outfits are not available yet" onclick={e => e.preventDefault()}>Outfits</a></li>
+            </ul>
+
+            <div class="wardrobe-categories">
+                {#each categories as [key, label]}
+                    <a href="#" class:active={category === key} onclick={e => { e.preventDefault(); category = key; page = 1; }}>{label}</a>
+                {/each}
+                <a href="/catalog">Shop</a>
+            </div>
+
+            {#if data.owned.length === 0}
+                <div class="wardrobe-empty">You do not own any items yet. Visit the <a href="/catalog">catalog</a> to get some.</div>
+            {:else}
+                <ul class="item-tiles" id="wardrobe">
+                    {#each pageItems as item}
+                        {@render tile(item, "wardrobe")}
+                    {/each}
+                </ul>
+                <div class="wardrobe-empty" hidden={pageItems.length > 0}>No items in this category.</div>
+                <div class="wardrobe-pager">
+                    {#if pages > 1}
+                        <a href="#" class:disabled={page <= 1} onclick={e => { e.preventDefault(); if (page > 1) page--; }}>Previous</a>
+                        {#each Array(pages) as _, i}
+                            <a href="#" class:current={page === i + 1} onclick={e => { e.preventDefault(); page = i + 1; }}>{i + 1}</a>
+                        {/each}
+                        <a href="#" class:disabled={page >= pages} onclick={e => { e.preventDefault(); if (page < pages) page++; }}>Next</a>
+                    {/if}
+                </div>
+            {/if}
+
+            <div class="currently-wearing">
+                <h2>Currently Wearing</h2>
+                <ul class="item-tiles" id="wearing">
+                    {#each data.wearing as item}
+                        {@render tile(item, "wearing")}
+                    {/each}
+                </ul>
+                <div class="wardrobe-empty" hidden={data.wearing.length > 0}>You aren't wearing anything yet.</div>
+            </div>
+        </div>
+    </div>
+{/if}
+</main>

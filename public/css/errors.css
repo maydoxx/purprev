@@ -1,0 +1,188 @@
+.request-error-page-content {
+    max-width: 970px;
+    width: 800px;
+    margin: 0 auto;
+    margin-top: 15%;
+    color: #191919;
+    font-family: "Source Sans 3", "Source Sans Pro", Arial, Helvetica, sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+}
+
+.request-error-page-content .default-error-page {
+    background: #fff;
+    overflow: hidden;
+    padding: 15px;
+    position: relative;
+}
+
+.request-error-page-content .default-error-page .message-container {
+    float: left;
+    width: 45%;
+    margin: 0 auto;
+}
+
+.request-error-page-content .default-error-page .message-container .error-title,
+.request-error-page-content .default-error-page .message-container .error-message {
+    margin-bottom: 12px;
+}
+
+.request-error-page-content .default-error-page .message-container .error-title {
+    font-weight: 400;
+    font-size: 36px;
+}
+
+.request-error-page-content .default-error-page .message-container .error-message {
+    font-weight: 300;
+    font-size: 16px;
+}
+
+.request-error-page-content .default-error-page .message-container .error-message span {
+    padding: 0 5px;
+}
+
+.request-error-page-content .default-error-page .error-image {
+    height: 300px;
+    float: right;
+    display: block;
+    margin: 20px 0;
+}
+
+.request-error-page-content .default-error-page .action-buttons {
+    padding: 18px 0;
+    position: absolute;
+    bottom: 0;
+}
+
+.request-error-page-content .default-error-page .action-buttons a:first-child {
+    margin-right: 12px;
+}
+
+.btn-control-md {
+    user-select: none;
+    border: 1px solid transparent;
+    background-color: #fff;
+    border-color: #B8B8B8;
+    color: #191919;
+    cursor: pointer;
+    display: inline-block;
+    font-weight: 400;
+    height: auto;
+    transition: all 0.2s ease-in-out;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    padding: 9px 9px;
+    font-size: 18px;
+    line-height: 100%;
+    border-radius: 3px;
+    text-decoration: none;
+}
+
+.btn-control-md:link,
+.btn-control-md:visited {
+    color: #191919;
+    text-decoration: none;
+}
+
+.btn-control-md:hover,
+.btn-control-md:focus {
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+    border-color: #B8B8B8;
+    color: #191919;
+    text-decoration: none;
+}
+
+.btn-control-md:active {
+    box-shadow: none;
+    background-color: #fff;
+    color: #191919;
+}
+
+.btn-fixed-width {
+    width: 90px;
+}
+
+@media (max-width: 991px) {
+    .request-error-page-content {
+        width: 100%;
+        margin-top: 0;
+    }
+
+    .request-error-page-content .default-error-page .message-container {
+        float: none;
+        width: 100%;
+    }
+
+    .request-error-page-content .default-error-page .message-container .error-title,
+    .request-error-page-content .default-error-page .message-container .error-message {
+        text-align: center;
+    }
+
+    .request-error-page-content .default-error-page .message-container .error-title {
+        font-size: 24px;
+    }
+
+    .request-error-page-content .default-error-page .error-image {
+        float: none;
+        margin: 36px auto;
+    }
+
+    .request-error-page-content .default-error-page .action-buttons {
+        position: static;
+        text-align: center;
+    }
+}
+
+@media (max-width: 767px) {
+    .request-error-page-content .default-error-page .message-container {
+        float: left;
+        width: 45%;
+    }
+
+    .request-error-page-content .default-error-page .message-container .error-title,
+    .request-error-page-content .default-error-page .message-container .error-message {
+        text-align: left;
+    }
+
+    .request-error-page-content .default-error-page .error-image {
+        float: right;
+        height: 126px;
+    }
+
+    .request-error-page-content .default-error-page .action-buttons {
+        position: absolute;
+    }
+}
+
+@media (max-width: 543px) {
+    .request-error-page-content {
+        width: 100%;
+        margin-top: 0;
+    }
+
+    .request-error-page-content .default-error-page .message-container {
+        float: none;
+        width: 100%;
+    }
+
+    .request-error-page-content .default-error-page .message-container .error-title,
+    .request-error-page-content .default-error-page .message-container .error-message {
+        text-align: center;
+    }
+
+    .request-error-page-content .default-error-page .message-container .error-title {
+        font-size: 24px;
+    }
+
+    .request-error-page-content .default-error-page .error-image {
+        float: none;
+        margin: 36px auto;
+    }
+
+    .request-error-page-content .default-error-page .action-buttons {
+        position: static;
+        text-align: center;
+    }
+}

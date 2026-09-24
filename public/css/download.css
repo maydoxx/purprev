@@ -1,0 +1,234 @@
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+}
+
+body.none-download-page {
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: #fff;
+    font-family: "Source Sans Pro", "Segoe UI", Arial, sans-serif;
+    background: #55348f url('/img/image.png') center center / cover no-repeat fixed;
+}
+
+body.none-download-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(43, 16, 94, .10), rgba(35, 13, 80, .22));
+}
+
+.download-hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 20px;
+    text-align: center;
+}
+
+.download-content {
+    width: min(860px, 100%);
+    margin: 0 auto;
+}
+
+.download-logo {
+    display: block;
+    width: min(430px, 69vw);
+    height: auto;
+    margin: 0 auto 18px;
+    filter: drop-shadow(0 4px 0 rgba(49, 18, 92, .5));
+}
+
+.download-content h1 {
+    margin: 0;
+    color: #fff;
+    font-size: 36px;
+    line-height: 1.15;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .26);
+}
+
+.download-copy {
+    margin: 20px auto 0;
+    color: rgba(255, 255, 255, .95);
+    font-size: 17px;
+    line-height: 1.48;
+    font-weight: 400;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .22);
+}
+
+.download-main-button {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(520px, 90%);
+    min-height: 86px;
+    margin: 48px auto 24px;
+    border: 1px solid #087400;
+    background: linear-gradient(#36d33c, #04920b);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .35),
+        0 2px 3px rgba(0, 0, 0, .28);
+    color: #fff;
+    font-size: 39px;
+    line-height: 1;
+    font-weight: 700;
+    text-decoration: none;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, .35);
+}
+
+.download-main-button:hover,
+.download-main-button:focus {
+    color: #fff;
+    text-decoration: none;
+    background: linear-gradient(#40de46, #079c0f);
+}
+
+.download-main-button:active {
+    background: linear-gradient(#07890e, #2fc536);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .25);
+}
+
+.download-platforms {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.platform-button {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 122px;
+    min-height: 104px;
+    box-sizing: border-box;
+    padding: 12px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 16px;
+    line-height: 1;
+    text-decoration: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .28);
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease, transform .12s ease;
+}
+
+.platform-button:hover,
+.platform-button:focus {
+    color: #fff;
+    text-decoration: none;
+    outline: none;
+    background: rgba(255, 255, 255, .11);
+    border-color: rgba(255, 255, 255, .24);
+    transform: translateY(-1px);
+}
+
+.platform-image {
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .24));
+    pointer-events: none;
+}
+
+.platform-image-windows {
+    width: 58px;
+    height: 58px;
+}
+
+.platform-image-android {
+    width: 72px;
+    height: 58px;
+}
+
+.platform-image-linux {
+    width: 60px;
+    height: 60px;
+}
+
+.platform-button-disabled {
+    opacity: .65;
+    cursor: default;
+}
+
+.platform-button-disabled:hover,
+.platform-button-disabled:focus {
+    background: transparent;
+    border-color: transparent;
+    transform: none;
+}
+
+@media (max-width: 700px) {
+    .download-hero {
+        padding: 24px 16px;
+    }
+
+    .download-logo {
+        width: min(380px, 82vw);
+    }
+
+    .download-content h1 {
+        font-size: 30px;
+    }
+
+    .download-copy {
+        font-size: 15px;
+    }
+
+    .download-main-button {
+        min-height: 70px;
+        margin-top: 40px;
+        font-size: 31px;
+    }
+
+    .platform-button {
+        width: 104px;
+        min-height: 96px;
+    }
+}
+
+@media (max-width: 430px) {
+    .download-platforms {
+        gap: 6px;
+    }
+
+    .platform-button {
+        width: 92px;
+        min-height: 88px;
+        padding-left: 5px;
+        padding-right: 5px;
+        font-size: 14px;
+    }
+
+    .platform-image-windows {
+        width: 50px;
+        height: 50px;
+    }
+
+    .platform-image-android {
+        width: 62px;
+        height: 50px;
+    }
+
+    .platform-image-linux {
+        width: 52px;
+        height: 52px;
+    }
+}

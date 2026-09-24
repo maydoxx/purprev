@@ -1,0 +1,110 @@
+.admin-wrap {
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 24px 18px 48px;
+}
+
+.admin-subnav {
+    background: #212529;
+    border-top: 1px solid #343a40;
+    border-bottom: 1px solid #111;
+}
+
+.admin-subnav .navbar-brand {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.admin-subnav .nav-link {
+    font-size: 14px;
+    padding-top: .7rem;
+    padding-bottom: .7rem;
+}
+
+.admin-heading {
+    margin-bottom: 22px;
+}
+
+.admin-heading h1 {
+    font-size: 27px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.admin-heading p {
+    color: #6c757d;
+    margin: 0;
+}
+
+.admin-stat-card .card-body {
+    min-height: 116px;
+}
+
+.admin-stat-label {
+    color: #6c757d;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.admin-stat-number {
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-top: 6px;
+}
+
+.admin-card-title {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.admin-table th {
+    color: #495057;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.admin-table td {
+    vertical-align: middle;
+}
+
+.admin-thumb {
+    width: 54px;
+    height: 54px;
+    object-fit: cover;
+    border: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+.admin-muted {
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.admin-actions {
+    white-space: nowrap;
+}
+
+.admin-form-card {
+    max-width: 760px;
+}
+
+.admin-key {
+    font-family: monospace;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+@media (max-width: 768px) {
+    .admin-wrap {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .admin-heading h1 {
+        font-size: 24px;
+    }
+}
