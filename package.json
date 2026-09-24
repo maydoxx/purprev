@@ -5,6 +5,9 @@
   "private": true,
   "license": "AGPL-3.0-only",
   "scripts": {
+    "dev": "bun --watch src/server/index.ts",
+    "dev:web": "vite",
+    "start": "bun run src/server/index.ts",
     "db:migrate": "bun run src/server/db/migrate.ts"
   },
   "devDependencies": {

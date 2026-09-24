@@ -86,11 +86,13 @@ Then run these in two terminals:
 
 ```bash
 # API
-bun run src/server/index.ts
+bun run dev
 
 # frontend
-bunx vite
+bun run dev:web
 ```
+
+`bun run start` runs the API without the watcher.
 
 ### Docker
 
