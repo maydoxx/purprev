@@ -35,3 +35,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # avatar renders, place files etc
 uploads
+
+# join script signing key
+keys
+*.pem

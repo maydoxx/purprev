@@ -57,10 +57,20 @@ cp .env.example .env
 | `RCCMANAGER_HOST` | Where RCCManager is, `localhost` if its on the same machine |
 | `RCCMANAGER_PORT` | RCCManager binding port, default `25500` |
 | `RCCMANAGER_PASSWORD` | RCCManager password |
+| `SETUP_URL` | Where the launcher and client zips are hosted |
+| `CDN_URL` | The uploads bucket's custom domain, only for `STORAGE=cloudflare` |
 | `ROBLOX_COOKIE` | A `.ROBLOSECURITY` cookie, needed for pulling assets from Roblox |
+| `SITE_URL` | Public url, ends up in the join scripts the client gets |
+| `SITE_INTERNAL_URL` | How RCCService reaches the site, a LAN address and never through Cloudflare |
+| `JOIN_PRIVATE_KEY` | Path to the key that signs `Join.ashx`, default `keys/PrivateKey.pem` |
+| `STORAGE` | `local` keeps uploads and renders in `UPLOADS_DIR`, `cloudflare` puts them in an R2 bucket behind `CDN_URL` |
+| `UPLOADS_DIR` | The local folder, default `uploads/`, RCCManager writes here too when it is local |
+| `R2_*` | Account, bucket, prefix and an API token with object read+write, only for `STORAGE=cloudflare` |
 
 > [!WARNING]
 > Do not commit `.env`. and PLEASE use throwaway account for `ROBLOX_COOKIE`.
+
+Put the join script key in `keys/PrivateKey.pem` (gitignored). Game servers and renders come from RCCManager (its own repo), the site only talks to it over HTTP.
 
 In Docker and Podman the database is its own container, so `MYSQL_HOST` and `MYSQL_PORT` get set for you. The database, user and password still come from `.env`.
 
@@ -93,6 +103,8 @@ bun run dev:web
 ```
 
 `bun run start` runs the API without the watcher.
+
+Moving to R2 or bringing an old `uploads/` folder over: set `STORAGE=cloudflare` and run `bun run media:sync [folder]`. It records every file in the `media` table and pushes it to the bucket, skipping what is already there.
 
 ### Docker
 
