@@ -1,0 +1,67 @@
+# words the chat filter masks, one per line. case doesnt matter, whole words only,
+# and it catches leet (sh1t) and split (s.h.i.t) spellings too
+# add/remove whatever u want, the filter reads this file on every request
+
+# profanity
+fuck
+fucking
+fucker
+fucked
+motherfucker
+shit
+shitty
+bullshit
+bitch
+bitches
+asshole
+arsehole
+dick
+dickhead
+cock
+pussy
+cunt
+whore
+slut
+bastard
+damn
+wanker
+twat
+prick
+piss
+jackass
+dumbass
+douchebag
+
+# slurs
+nigger
+nigga
+niggers
+faggot
+fag
+fags
+retard
+retarded
+tranny
+kike
+spic
+chink
+
+# sexual
+porn
+porno
+sex
+sexy
+penis
+vagina
+boobs
+tits
+cum
+dildo
+blowjob
+handjob
+hentai
+rape
+raping
+rapist
+nude
+nudes

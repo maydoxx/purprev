@@ -1,22 +1,150 @@
 import { Elysia, t } from "elysia";
-import { stub } from "../stub";
-import { bool, xmlBool } from "./respond";
+import { session } from "../../session";
+import { sql, now } from "../../db";
+import { rcc, RccError } from "../../rcc";
+import { SITE_URL, SITE_INTERNAL_URL, appearanceUrl } from "../../site";
+import { friendStatus } from "../../friends";
+import { sign, rbxsig, studiosig, text } from "./sign";
+import { isInternal } from "./internal";
+import { bool, xmlBool, xml } from "./respond";
+
+const ADMIN_GROUP = 1200769;
+
+const creatorOf = async (placeId: number) => {
+    const [game] = await sql`SELECT creator_id FROM games WHERE id = ${placeId}`;
+    return game ? Number(game.creator_id) || 1 : 1;
+};
+
+// the client hits PlaceLauncher with .ROBLOSECURITY, then Join.ashx with ?token= too
+const userFromToken = async (token: string) => {
+    const [row] = await sql`
+        SELECT users.id, users.username FROM tokens
+        JOIN users ON users.id = tokens.user_id
+        WHERE token = ${token} AND expires > ${now()}
+    `;
+    return row ?? null;
+};
 
 // client uses /Game and /game both
 const routes = (prefix: string) => new Elysia({ prefix })
-    // join script, has to be signed with the client key
+    .use(session)
+
     // keep IsRobloxPlace false or a bad LocalScript freezes the client
-    // TODO: auth from .ROBLOSECURITY cookie, server/port for the jobId from rcc manager
-    .get("/Join.ashx", stub, {
+    .all("/Join.ashx", async ({ query, user, status }) => {
+        const who = user ?? (query.token ? await userFromToken(query.token) : null);
+        if (!who) {
+            return status(401, "invalid auth ticket");
+        }
+
+        const server = query.jobId ? await rcc.server(query.jobId) : null;
+        if (!server) {
+            return status(410, "that game server is gone");
+        }
+
+        const placeId = server.placeId;
+        const appearance = appearanceUrl(who.id);
+        const time = String(now());
+
+        // ServerReplicator rebuilds both halves: install = userId\nname\nappearance\njobId\ntime, preauth = userId\njobId\ntime
+        const ticket = time
+            + ";" + sign([who.id, who.username, appearance, server.jobId, time].join("\n"))
+            + ";" + sign([who.id, server.jobId, time].join("\n"));
+
+        const join = {
+            ClientPort: 0,
+            MachineAddress: server.address,
+            ServerPort: server.port,
+            PingUrl: "",
+            PingInterval: 20,
+            UserName: who.username,
+            SeleniumTestMode: false,
+            UserId: who.id,
+            SuperSafeChat: false,
+            CharacterAppearance: appearance,
+            ClientTicket: ticket,
+            GameId: placeId,
+            PlaceId: placeId,
+            MeasurementUrl: "",
+            WaitingForCharacterGuid: "26eb3e21-aa80-475b-a777-b43c3ea5f7d2",
+            BaseUrl: SITE_URL + "/",
+            ChatStyle: "ClassicAndBubble",
+            VendorId: 0,
+            ScreenShotInfo: "",
+            VideoInfo: "",
+            CreatorId: await creatorOf(placeId),
+            CreatorTypeEnum: "User",
+            MembershipType: "None",
+            AccountAge: 100,
+            CookieStoreFirstTimePlayKey: "rbx_evt_ftp",
+            CookieStoreFiveMinutePlayKey: "rbx_evt_fmp",
+            CookieStoreEnabled: true,
+            IsRobloxPlace: false,
+            GenerateTeleportJoin: false,
+            IsUnknownOrUnder13: false,
+            SessionId: "39412c34-2f9b-436f-b19d-b8db90c2e186|00000000-0000-0000-0000-000000000000|0|190.23.103.228|8|2021-03-03T17:04:47+01:00|0|null|null",
+            DataCenterId: 0,
+            UniverseId: 3,
+            BrowserTrackerId: 0,
+            UsePortraitMode: false,
+            FollowUserId: 0,
+            characterAppearanceId: 1
+        };
+
+        return text(rbxsig(JSON.stringify(join)));
+    }, {
         query: t.Object({
-            jobId: t.Optional(t.String())
+            jobId: t.Optional(t.String()),
+            token: t.Optional(t.String())
         })
     })
 
-    // status 0 = still starting (client retries), 2 = ready, anything else = *dead*
+    // status 0 = still starting (client retries), 2 = ready, anything else = give up
     // dont put a slash before the ? in joinScriptUrl or the client wont fetch it
-    // TODO: ask rcc manager for a server
-    .get("/PlaceLauncher.ashx", stub, {
+    // the launcher posts, the browser gets
+    .all("/PlaceLauncher.ashx", async ({ query, user, token, status }) => {
+        if (!user || !token) {
+            return status(403, "invalid auth ticket");
+        }
+
+        const placeId = query.placeId ?? query.placeid ?? query.PlaceId ?? 0;
+        const [game] = placeId > 0 ? await sql`SELECT id FROM games WHERE id = ${placeId}` : [];
+        if (!game) {
+            return {
+                jobId: "",
+                status: 5,
+                message: "no such place"
+            };
+        }
+
+        let server;
+        try {
+            server = await rcc.findOrCreate(placeId);
+        } catch (err) {
+            console.error(`PlaceLauncher: could not start a server for place ${placeId}:`, err instanceof RccError ? err.message : err);
+            return {
+                jobId: "",
+                status: 5,
+                message: "could not start a game server"
+            };
+        }
+
+        if (!server.ready) {
+            return {
+                jobId: server.jobId,
+                status: 0,
+                message: "starting the game server"
+            };
+        }
+
+        return {
+            jobId: server.jobId,
+            status: 2,
+            joinScriptUrl: `${SITE_URL}/Game/Join.ashx?token=${token}&jobId=${encodeURIComponent(server.jobId)}`,
+            authenticationUrl: `${SITE_URL}/Login/Negotiate.ashx`,
+            authenticationTicket: token,
+            message: "success"
+        };
+    }, {
         query: t.Object({
             placeId: t.Optional(t.Numeric()),
             placeid: t.Optional(t.Numeric()),
@@ -24,16 +152,79 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // lua the game server runs on start, signed like Join.ashx
-    // use the internal url in here, only the game server fetches these
-    .get("/LoadPlaceInfo.ashx", stub, {
+    // rcc loads this from gameserver.txt right after the game starts, only the game server fetches it so internal url
+    .get("/LoadPlaceInfo.ashx", async ({ query }) => {
+        const site = SITE_INTERNAL_URL;
+        const social = `${site}/Game/LuaWebService/HandleSocialRequest.ashx?method=`;
+        const lua = [
+            "-- Loaded by StartGameSharedScript --",
+            `pcall(function() game:SetCreatorID(${await creatorOf(query.PlaceId)}, Enum.CreatorType.User) end)`,
+            `pcall(function() game:GetService("SocialService"):SetFriendUrl("${social}IsFriendsWith&playerid=%d&userid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetBestFriendUrl("${social}IsBestFriendsWith&playerid=%d&userid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetGroupUrl("${social}IsInGroup&playerid=%d&groupid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetGroupRankUrl("${social}GetGroupRank&playerid=%d&groupid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetGroupRoleUrl("${social}GetGroupRole&playerid=%d&groupid=%d") end)`,
+            `pcall(function() game:GetService("FriendService"):SetGetFriendsUrl("${site}/Friend/AreFriends?userId=%d") end)`,
+            `pcall(function() game:GetService("FriendService"):SetCreateFriendRequestUrl("${site}/Friend/CreateFriendRequest?firstUserId=%d&secondUserId=%d") end)`,
+            `pcall(function() game:GetService("FriendService"):SetDeleteFriendRequestUrl("${site}/Friend/DeleteFriendRequest?firstUserId=%d&secondUserId=%d") end)`,
+            `pcall(function() game:GetService("FriendService"):SetMakeFriendUrl("${site}/Friend/CreateFriend?firstUserId=%d&secondUserId=%d") end)`,
+            `pcall(function() game:GetService("FriendService"):SetBreakFriendUrl("${site}/Friend/BreakFriend?firstUserId=%d&secondUserId=%d") end)`,
+            `pcall(function() game:GetService("FriendService"):SetEnabled(true) end)`,
+            `pcall(function() game:GetService("GamePassService"):SetPlayerHasPassUrl("${site}/Game/GamePass/GamePassHandler.ashx?Action=HasPass&UserID=%d&PassID=%d") end)`,
+            `pcall(function() game:GetService("BadgeService"):SetPlaceId(${query.PlaceId}) end)`,
+            `pcall(function() game:GetService("BadgeService"):SetAwardBadgeUrl("${site}/Game/Badges/AwardBadge.ashx?UserID=%d&BadgeID=%d&PlaceID=%d") end)`,
+            `pcall(function() game:GetService("BadgeService"):SetHasBadgeUrl("${site}/Game/Badges/HasBadge.ashx?UserID=%d&BadgeID=%d") end)`,
+            `pcall(function() game:GetService("BadgeService"):SetIsBadgeDisabledUrl("${site}/Game/Badges/IsBadgeDisabled.ashx?BadgeID=%d") end)`,
+            `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
+            `pcall(function() game:GetService("MarketplaceService"):SetDevProductInfoUrl("${site}/marketplace/productDetails?productId=%d") end)`,
+            `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasAsset?userId=%d&assetId=%d") end)`,
+            `pcall(function() game:SetPlaceVersion(1) end)`,
+            `pcall(function() game:SetVIPServerOwnerId(0) end)`,
+            ""
+        ].join("\n");
+
+        return text(rbxsig(lua));
+    }, {
         query: t.Object({
             PlaceId: t.Numeric()
         })
     })
 
-    // same for studio, signature is %sig% without --rbxsig
-    .get("/studio.ashx", stub)
+    // studio, signed with the other key and no --rbxsig
+    .get("/studio.ashx", () => {
+        const site = SITE_URL;
+        const social = `${site}/Game/LuaWebService/HandleSocialRequest.ashx?method=`;
+        const lua = [
+            "",
+            `pcall(function() game:GetService("InsertService"):SetFreeModelUrl("${site}/Game/Tools/InsertAsset.ashx?type=fm&q=%s&pg=%d&rs=%d") end)`,
+            `pcall(function() game:GetService("InsertService"):SetFreeDecalUrl("${site}/Game/Tools/InsertAsset.ashx?type=fd&q=%s&pg=%d&rs=%d") end)`,
+            "",
+            `game:GetService("ScriptInformationProvider"):SetAssetUrl("${site}/Asset/")`,
+            `game:GetService("InsertService"):SetBaseSetsUrl("${site}/Game/Tools/InsertAsset.ashx?nsets=10&type=base")`,
+            `game:GetService("InsertService"):SetUserSetsUrl("${site}/Game/Tools/InsertAsset.ashx?nsets=20&type=user&userid=%d")`,
+            `game:GetService("InsertService"):SetCollectionUrl("${site}/Game/Tools/InsertAsset.ashx?sid=%d")`,
+            `game:GetService("InsertService"):SetAssetUrl("${site}/Asset/?id=%d")`,
+            `game:GetService("InsertService"):SetAssetVersionUrl("${site}/Asset/?assetversionid=%d")`,
+            "",
+            `pcall(function() game:GetService("SocialService"):SetFriendUrl("${social}IsFriendsWith&playerid=%d&userid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetBestFriendUrl("${social}IsBestFriendsWith&playerid=%d&userid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetGroupUrl("${social}IsInGroup&playerid=%d&groupid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetGroupRankUrl("${social}GetGroupRank&playerid=%d&groupid=%d") end)`,
+            `pcall(function() game:GetService("SocialService"):SetGroupRoleUrl("${social}GetGroupRole&playerid=%d&groupid=%d") end)`,
+            `pcall(function() game:GetService("GamePassService"):SetPlayerHasPassUrl("${site}/Game/GamePass/GamePassHandler.ashx?Action=HasPass&UserID=%d&PassID=%d") end)`,
+            `pcall(function() game:GetService("BadgeService"):SetPlaceId(game.PlaceId) end)`,
+            `pcall(function() game:GetService("BadgeService"):SetAwardBadgeUrl("${site}/Game/Badges/AwardBadge.ashx?UserID=%d&BadgeID=%d&PlaceID=%d") end)`,
+            `pcall(function() game:GetService("BadgeService"):SetHasBadgeUrl("${site}/Game/Badges/HasBadge.ashx?UserID=%d&BadgeID=%d") end)`,
+            `pcall(function() game:GetService("BadgeService"):SetIsBadgeDisabledUrl("${site}/Game/Badges/IsBadgeDisabled.ashx?BadgeID=%d") end)`,
+            `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
+            `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasasset?userId=%d&assetId=%d") end)`,
+            "",
+            `game:GetService("ScriptContext"):AddStarterScript(37801172)`,
+            ""
+        ].join("\n");
+
+        return text(studiosig(lua));
+    })
 
     .get("/players/:userId", () => ({
         ChatFilter: "blacklist"
@@ -43,10 +234,29 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    .all("/validate-machine", () => "")
+    .all("/validate-machine", () => ({
+        success: true
+    }))
 
-    // TODO: game servers only, then actually award
-    .all("/Badges/AwardBadge.ashx", () => bool(false), {
+    // client sends its specs here, nobody reads them
+    .all("/MachineConfiguration.ashx", () => "")
+
+    // game servers only, the url in LoadPlaceInfo is internal
+    .all("/Badges/AwardBadge.ashx", async ({ query, request, server }) => {
+        if (!isInternal(request, server)) {
+            return bool(false);
+        }
+        const [badge] = await sql`SELECT game_id, enabled FROM game_badges WHERE id = ${query.BadgeID}`;
+        if (!badge || !badge.enabled || Number(badge.game_id) !== query.PlaceID) {
+            return bool(false);
+        }
+        const [exists] = await sql`SELECT id FROM users WHERE id = ${query.UserID}`;
+        if (!exists) {
+            return bool(false);
+        }
+        await sql`INSERT IGNORE INTO user_badges (user_id, badge_id, awarded_at) VALUES (${query.UserID}, ${query.BadgeID}, ${now()})`;
+        return bool(true);
+    }, {
         query: t.Object({
             UserID: t.Numeric(),
             BadgeID: t.Numeric(),
@@ -54,7 +264,10 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    .get("/Badges/HasBadge.ashx", () => bool(false), {
+    .get("/Badges/HasBadge.ashx", async ({ query }) => {
+        const [row] = await sql`SELECT 1 FROM user_badges WHERE user_id = ${query.UserID} AND badge_id = ${query.BadgeID}`;
+        return bool(!!row);
+    }, {
         query: t.Object({
             UserID: t.Numeric(),
             BadgeID: t.Numeric()
@@ -62,14 +275,24 @@ const routes = (prefix: string) => new Elysia({ prefix })
     })
 
     // unknown badge = disabled
-    .get("/Badges/IsBadgeDisabled.ashx", () => bool(true), {
+    .get("/Badges/IsBadgeDisabled.ashx", async ({ query }) => {
+        const [badge] = await sql`SELECT enabled FROM game_badges WHERE id = ${query.BadgeID}`;
+        return bool(!badge || !badge.enabled);
+    }, {
         query: t.Object({
             BadgeID: t.Numeric()
         })
     })
 
     // Action is always HasPass
-    .get("/GamePass/GamePassHandler.ashx", () => xmlBool(false), {
+    .get("/GamePass/GamePassHandler.ashx", async ({ query, set }) => {
+        if (query.Action !== "HasPass") {
+            set.status = 400;
+            return xmlBool(false);
+        }
+        const [row] = await sql`SELECT 1 FROM user_game_passes WHERE user_id = ${query.UserID} AND pass_id = ${query.PassID}`;
+        return xmlBool(!!row);
+    }, {
         query: t.Object({
             Action: t.String(),
             UserID: t.Numeric(),
@@ -77,9 +300,26 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // IsBestFriendsWith is always false
-    // TODO: GetGroupRank wants <Value Type="integer">, GetGroupRole never existed
-    .get("/LuaWebService/HandleSocialRequest.ashx", () => xmlBool(false), {
+    // IsBestFriendsWith is always false, the admin "group" is what the php had
+    .get("/LuaWebService/HandleSocialRequest.ashx", async ({ query }) => {
+        const isAdmin = async () => {
+            const [row] = await sql`SELECT admin FROM users WHERE id = ${query.playerid}`;
+            return !!row && Number(row.admin) > 0;
+        };
+
+        switch (query.method) {
+            case "IsFriendsWith":
+                return xmlBool(query.userid !== undefined && await friendStatus(query.playerid, query.userid) === "friends");
+            case "IsInGroup":
+                return xmlBool(query.groupid === ADMIN_GROUP && await isAdmin());
+            case "GetGroupRank":
+                return xml("integer", query.groupid === 1 && await isAdmin() ? 255 : 0);
+            case "GetGroupRole":
+                return xml("string", query.groupid === 1 && await isAdmin() ? "Admin" : "Guest");
+            default:
+                return xmlBool(false);
+        }
+    }, {
         query: t.Object({
             method: t.Union([
                 t.Literal("IsFriendsWith"),
@@ -95,8 +335,24 @@ const routes = (prefix: string) => new Elysia({ prefix })
     })
 
 export const game = new Elysia()
+    .use(session)
     .use(routes("/Game"))
     .use(routes("/game"))
+
+    // rcc checks the client against these on join, the hash is the 2016 player exe
+    .get("/GetAllowedMD5Hashes", () => ({
+        data: ["3000f74eb7ffca5c3b5fc7d93f80de30"]
+    }))
+
+    .get("/GetAllowedSecurityKeys", () => ({
+        data: ["76E5A40C-3AE1-4028-9F10-7C62520BD94F"]
+    }))
+
+    .get("/GetAllowedSecurityVersions", () => ({
+        data: ["0.249.0pcplayer"]
+    }))
+
+    .get("/discord", ({ redirect }) => redirect("https://discord.gg/qvYkJ6q6A9", 302))
 
     // android app catches this url and launches the game itself
     .get("/games/start", ({ query, redirect }) => {
@@ -110,7 +366,19 @@ export const game = new Elysia()
     })
 
     // suggest is the ticket, good = set .ROBLOSECURITY and echo it, bad = 403 "false"
-    .get("/Login/Negotiate.ashx", stub, {
+    .get("/Login/Negotiate.ashx", async ({ query, cookie, status }) => {
+        const who = await userFromToken(query.suggest);
+        if (!who) {
+            return status(403, "false");
+        }
+        cookie[".ROBLOSECURITY"]!.set({
+            value: query.suggest,
+            path: "/",
+            httpOnly: true,
+            sameSite: "lax"
+        });
+        return text(query.suggest);
+    }, {
         query: t.Object({
             suggest: t.String()
         })

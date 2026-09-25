@@ -26,7 +26,8 @@ export const session = new Elysia({ name: "session" })
     .resolve({
         as: "global"
     }, async ({ cookie }) => {
-        const token = cookie.token?.value;
+        // the client only has .ROBLOSECURITY, the launcher sets it from the token
+        const token = cookie.token?.value ?? cookie[".ROBLOSECURITY"]?.value;
         let user: User | null = null;
 
         if (typeof token === "string" && token.length === 64) {
@@ -40,6 +41,7 @@ export const session = new Elysia({ name: "session" })
 
         return {
             user,
+            token: user ? (token as string) : null,
 
             login: async (userId: number) => {
                 const token = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex");
