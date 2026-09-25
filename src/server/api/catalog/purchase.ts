@@ -1,9 +1,73 @@
 import { Elysia, t } from "elysia";
-import { stub } from "../stub";
+import { session } from "../../session";
+import { sql, now } from "../../db";
 
-// TODO: limiteds (stock + serials) go here too
+class PurchaseError extends Error {}
+
 export const purchase = new Elysia()
-    .post("/purchase", stub, {
+    .use(session)
+    .post("/purchase", async ({ body, user, status }) => {
+        try {
+            const balance = await sql.begin(async tx => {
+                const [item] = await tx`SELECT * FROM catalog_items WHERE id = ${body.itemId} FOR UPDATE`;
+                if (!item) {
+                    throw new PurchaseError("This item does not exist");
+                }
+
+                const [owned] = await tx`SELECT 1 FROM user_items WHERE user_id = ${user.id} AND item_id = ${body.itemId} FOR UPDATE`;
+                if (owned) {
+                    throw new PurchaseError("You already own this item");
+                }
+                if (item.price === null) {
+                    throw new PurchaseError("This item is off sale");
+                }
+
+                const price = Number(item.price);
+                let serial: number | null = null;
+
+                if (item.is_limited_unique) {
+                    const stock = Number(item.limited_stock ?? 0);
+                    const sold = Number(item.limited_sold);
+                    if (stock <= 0 || sold >= stock) {
+                        throw new PurchaseError("This Limited U item is sold out");
+                    }
+                    serial = sold + 1;
+                }
+
+                const [me] = await tx`SELECT currency FROM users WHERE id = ${user.id} FOR UPDATE`;
+                if (Number(me.currency) < price) {
+                    throw new PurchaseError("You do not have enough currency for this item");
+                }
+
+                if (price > 0) {
+                    await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id}`;
+                    if (item.creator_id && item.creator_id !== user.id) {
+                        await tx`UPDATE users SET currency = currency + ${price} WHERE id = ${item.creator_id}`;
+                    }
+                }
+                if (serial !== null) {
+                    await tx`UPDATE catalog_items SET limited_sold = limited_sold + 1 WHERE id = ${body.itemId}`;
+                }
+
+                await tx`INSERT INTO user_items (user_id, item_id, wearing, purchased_at, serial_number) VALUES (${user.id}, ${body.itemId}, 0, ${now()}, ${serial})`;
+
+                return Number(me.currency) - price;
+            });
+
+            return {
+                ok: true,
+                balance
+            };
+        } catch (err) {
+            if (err instanceof PurchaseError) {
+                return status(400, {
+                    error: err.message
+                });
+            }
+            throw err;
+        }
+    }, {
+        auth: true,
         body: t.Object({
             itemId: t.Numeric()
         })
