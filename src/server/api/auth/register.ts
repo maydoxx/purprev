@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session, getUser } from "../../session";
 import { sql, now } from "../../db";
+import { rcc } from "../../rcc";
 
 // TODO: captcha, cloudflare turnstile
 export const register = new Elysia()
@@ -43,8 +44,8 @@ export const register = new Elysia()
         const hash = await Bun.password.hash(body.password, "bcrypt");
         const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${username}, ${hash}, ${now()})`;
 
-        // TODO: rcc manager renders the avatar here
         const id = Number(created.lastInsertRowid);
+        rcc.render.avatar(id);
         await login(id);
         return {
             ok: true,

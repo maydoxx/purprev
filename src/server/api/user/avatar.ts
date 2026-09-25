@@ -2,6 +2,8 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { brickcolors } from "../../brickcolors";
+import { rcc } from "../../rcc";
+import { mediaUrl, withThumbnail } from "../../paths";
 
 const DEFAULT_COLORS = {
     head_color: 24,
@@ -39,19 +41,18 @@ const wornItems = (userId: number) => sql`
     ORDER BY catalog_items.category, catalog_items.id
 `;
 
-// TODO: colors and wear should ask rcc manager to re-render after
 export const avatar = new Elysia({ prefix: "/avatar" })
     .use(session)
     .get("/", async ({ user }) => ({
         colors: await bodyColors(user.id),
-        wearing: await wornItems(user.id),
+        wearing: await Promise.all((await wornItems(user.id)).map(withThumbnail)),
         // everything you own, for the wardrobe
-        owned: await sql`
+        owned: await Promise.all((await sql`
             SELECT catalog_items.id, catalog_items.name, catalog_items.category, catalog_items.thumbnail, catalog_items.asset_id, user_items.wearing
             FROM user_items JOIN catalog_items ON catalog_items.id = user_items.item_id
             WHERE user_items.user_id = ${user.id}
             ORDER BY user_items.purchased_at DESC, catalog_items.id DESC
-        `,
+        `).map(withThumbnail)),
         palette: brickcolors
     }), {
         auth: true
@@ -81,6 +82,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
             VALUES (${user.id}, ${colors.head_color}, ${colors.torso_color}, ${colors.left_arm_color}, ${colors.right_arm_color}, ${colors.left_leg_color}, ${colors.right_leg_color}, ${now()})
         `;
 
+        rcc.render.avatar(user.id);
         return {
             ok: true,
             colors
@@ -137,6 +139,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
             await sql`UPDATE user_items SET wearing = 1 WHERE user_id = ${user.id} AND item_id = ${body.itemId}`;
         }
 
+        rcc.render.avatar(user.id);
         return {
             ok: true,
             wearing: await wornItems(user.id)
@@ -147,4 +150,12 @@ export const avatar = new Elysia({ prefix: "/avatar" })
             itemId: t.Numeric(),
             wear: t.Boolean()
         })
+    })
+
+    // the "click here to re-draw it" link
+    .post("/render", async ({ user }) => ({
+        ok: await rcc.render.avatar(user.id),
+        full: await mediaUrl("avatars", user.id)
+    }), {
+        auth: true
     })
