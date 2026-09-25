@@ -22,7 +22,6 @@
     }).catch(() => {});
     loadFeed();
 
-    // TODO: blog is still a stub on the backend
 
     api("/site/blog").then(d => {
         if (Array.isArray(d?.posts)) blog = d.posts.slice(0, 3);

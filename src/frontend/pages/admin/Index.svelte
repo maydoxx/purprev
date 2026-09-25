@@ -8,11 +8,27 @@
     let items = $state<any>(null);
     let moderation = $state<any>(null);
     let invites = $state<any>(null);
+    let servers = $state<any>(null);
 
     api("/admin/users").then(d => users = d).catch(() => {});
     api("/admin/catalog").then(d => items = d).catch(() => {});
     api("/admin/moderation").then(d => moderation = d).catch(() => {});
     api("/admin/invitekeys").then(d => invites = d).catch(() => {});
+
+    const loadServers = () => api("/admin/servers").then(d => servers = d).catch(() => {});
+    loadServers();
+
+    const shutDown = async (jobId: string) => {
+        if (!confirm("Shut down this game server? Everyone in it gets kicked.")) return;
+        try {
+            await api(`/admin/servers/${jobId}`, undefined, "DELETE");
+            await loadServers();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const rccState = $derived(!servers ? "unknown" : servers.health?.rcc === "up" ? "up" : "down");
 
     const recentUsers = $derived(rows(users).slice(0, 6));
     const recentItems = $derived(rows(items).slice(0, 6));
@@ -42,7 +58,7 @@
 
     <div class="row g-3 mb-4">
         {@render stat("Users", num(total(users)))}
-        {@render stat("Games", "—")}
+        {@render stat("Game servers", servers ? num(servers.servers.length) : "—")}
         {@render stat("Catalog items", num(total(items)))}
         {@render stat("Active actions", num(total(moderation)))}
         {@render stat("Invite keys", num(total(invites)))}
@@ -95,6 +111,41 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="admin-card-title">Running game servers</span>
+            <span class="admin-muted">rcc is {rccState}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 admin-table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Place</th>
+                        <th>Job</th>
+                        <th>Port</th>
+                        <th>Players</th>
+                        <th>Started</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each servers?.servers ?? [] as s}
+                        <tr>
+                            <td><a href="/game?id={s.placeId}">{s.title || s.placeId}</a></td>
+                            <td class="admin-key">{s.jobId}{s.ready ? "" : " (starting)"}</td>
+                            <td>{s.port}</td>
+                            <td>{s.players}</td>
+                            <td>{new Date(s.startedAt).toLocaleString("en-US")}</td>
+                            <td class="admin-actions"><button type="button" class="btn btn-sm btn-outline-danger" onclick={() => shutDown(s.jobId)}>Shut down</button></td>
+                        </tr>
+                    {:else}
+                        <tr><td colspan="6" class="text-center text-muted py-4">No game servers are running.</td></tr>
+                    {/each}
+                </tbody>
+            </table>
         </div>
     </div>
 

@@ -80,6 +80,9 @@ document.addEventListener("click", e => {
 
     const href = a.getAttribute("href") ?? "";
     if (href === "" || href.startsWith("#") || href.startsWith("/api/") || href.startsWith("/uploads/")) return;
+    // /discord, /setup/... and the client urls are the backends, let the browser go there
+    const target = a.pathname.replace(/\/+$/, "") || "/";
+    if (!routes.some(([p]) => p === target)) return;
 
     e.preventDefault();
     router.go(href);

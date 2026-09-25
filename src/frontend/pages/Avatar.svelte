@@ -57,7 +57,19 @@
             });
             data.colors = res.colors;
             statusError = false;
-            status = "Saved. Renders come from the rcc manager, not hooked up yet.";
+            status = "Saved. Your avatar is being re-drawn.";
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
+    };
+
+    const redraw = async (e: Event) => {
+        e.preventDefault();
+        try {
+            const res = await api("/user/avatar/render", {});
+            statusError = !res.ok;
+            status = res.ok ? "Your avatar is being re-drawn, give it a minute." : "Could not reach the renderer, try again later.";
         } catch (err: any) {
             statusError = true;
             status = err.message;
@@ -113,7 +125,7 @@
             </div>
             <div class="avatar-redraw">
                 Something wrong with your avatar?<br>
-                <a href="#" onclick={e => { e.preventDefault(); status = "Re-rendering needs the rcc manager."; }}>Click here to re-draw it!</a>
+                <a href="#" onclick={redraw}>Click here to re-draw it!</a>
                 <div class="avatar-status" class:error={statusError}>{status}</div>
             </div>
 

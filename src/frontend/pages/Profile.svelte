@@ -62,6 +62,7 @@
 <svelte:head>
     <title>{profile ? `${profile.username}'s Profile` : "Profile"} - NoneRev</title>
     <link rel="stylesheet" href="/css/profile.css">
+    <link rel="stylesheet" href="/css/friends.css">
 </svelte:head>
 
 <main class="rbx-content">

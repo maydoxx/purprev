@@ -13,6 +13,7 @@
     let storeMsg = $state("");
     let storeOk = $state(false);
     let buying = $state(0);
+    let launching = $state(false);
 
     const list = (d: any, key: string) => Array.isArray(d) ? d : Array.isArray(d?.[key]) ? d[key] : [];
 
@@ -39,6 +40,17 @@
             badges = list(d, "badges");
         }).catch(() => {});
     });
+
+    // opens nonerev-launcher: which NoneRevLauncher.exe registered, the launcher reads the site url from placelauncherurl
+    const play = async () => {
+        try {
+            const d = await api(`/games/${id}/launch`);
+            location.href = d.url;
+            launching = true;
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
 
     const buy = async (pass: any) => {
         buying = pass.id;
@@ -113,9 +125,8 @@
                         {#if !session.me}
                             <a class="btn-play-2016" href="/login">Play</a>
                         {:else}
-                            <!-- TODO: launcher, needs the rcc manager -->
-                            <button type="button" class="btn-play-2016" disabled>Play</button>
-                            <p class="text-center mt-2">Playing is not available yet.</p>
+                            <button type="button" class="btn-play-2016" onclick={play}>Play</button>
+                            <p class="text-center mt-2" hidden={!launching}>Nothing happened? <a href="/download">Get the launcher</a>.</p>
                         {/if}
                     </div>
 
@@ -151,7 +162,7 @@
                             <p class="game-description-2016" style="white-space: pre-line">{game.description?.trim() || "No description available."}</p>
 
                             <ul class="game-stats-2016">
-                                <li><p class="stat-title">Active</p><p class="stat-value">0</p></li>
+                                <li><p class="stat-title">Active</p><p class="stat-value">{compact(game.playing)}</p></li>
                                 <li><p class="stat-title">Visits</p><p class="stat-value">{compact(game.visits)}</p></li>
                                 <li><p class="stat-title">Created</p><p class="stat-value">{date(game.created_at)}</p></li>
                                 <li><p class="stat-title">Updated</p><p class="stat-value">{date(game.updated_at)}</p></li>

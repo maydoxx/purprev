@@ -2,6 +2,7 @@
     import { session } from "./session.svelte";
     import { router } from "./router.svelte";
     import { api } from "./api";
+    import Banners from "./Banners.svelte";
 
     let q = $state("");
     let pending = $state(0);
@@ -119,3 +120,5 @@
         </ul>
     </div>
 {/if}
+
+<Banners />
