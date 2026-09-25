@@ -16,7 +16,10 @@ import { groups } from "./api/groups";
 import { messages } from "./api/messages";
 import { trade } from "./api/trade";
 import { admin } from "./api/admin";
+import { servers } from "./api/admin/servers";
 import { engine } from "./api/engine";
+import { uploads } from "./api/uploads";
+import { rcc } from "./api/rcc";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
 
@@ -50,6 +53,19 @@ const app = new Elysia()
     .use(messages)
     .use(trade)
     .use(admin)
+    .use(servers)
     .use(engine)
-    .get("/", () => "meow :3")
-    .listen(3000);
+    .use(uploads)
+    .use(rcc)
+    .get("/api", () => "meow :3")
+    .listen(Number(process.env.API_PORT ?? 3000));
+
+// rcc refuses a base url with a port in it, so ALSO_LISTEN=127.0.0.1:80 gives it one without
+for (const addr of (process.env.ALSO_LISTEN ?? "").split(",").filter(Boolean)) {
+    const [host, port] = addr.includes(":") ? addr.split(":") : ["0.0.0.0", addr];
+    Bun.serve({
+        hostname: host,
+        port: Number(port),
+        fetch: app.fetch
+    });
+}
