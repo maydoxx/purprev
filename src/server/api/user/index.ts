@@ -8,6 +8,7 @@ import { friends } from "./friends";
 import { avatar } from "./avatar";
 import { profile } from "./profile";
 import { inventory } from "./inventory";
+import { moderation } from "./moderation";
 
 export const user = new Elysia({ prefix: "/api/user" })
     .use(getProfilePicture)
@@ -18,3 +19,4 @@ export const user = new Elysia({ prefix: "/api/user" })
     .use(avatar)
     .use(profile)
     .use(inventory)
+    .use(moderation)
