@@ -1,7 +1,7 @@
 <script lang="ts">
     import { api } from "../../api";
     import { router } from "../../router.svelte";
-    import { list, num, pageNum, activityTime, forumUrl, threadUrl } from "./common";
+    import { list, num, pageNum, activityTime, forumUrl, threadUrl, seenThreads } from "./common";
     import { topLinks, breadcrumb, pager } from "./Bits.svelte";
 
     const POSTS_PER_PAGE = 15;
@@ -12,6 +12,7 @@
 
     let forum = $state<any>(null);
     let threads = $state<any[]>([]);
+    const seen = seenThreads();
     let pages = $state(1);
     let notFound = $state(false);
     let error = $state("");
@@ -81,7 +82,7 @@
                     {@const shown = Math.min(3, tp)}
                     <div class="forum-thread-row">
                         <div class="forum-thread-subject">
-                            <img class="forum-thread-icon" src={thread.read ? "/img/Forums/thread-read.png" : "/img/Forums/thread-unread.png"} alt={thread.read ? "Read" : "Unread"}>
+                            <img class="forum-thread-icon" src={seen.has(Number(thread.id)) ? "/img/Forums/thread-read.png" : "/img/Forums/thread-unread.png"} alt={seen.has(Number(thread.id)) ? "Read" : "Unread"}>
                             <a href={threadUrl(thread.id)}>{thread.subject}</a>
                             {#if tp > 1}
                                 <span class="forum-mini-pages">

@@ -2,7 +2,7 @@
     import { api } from "../../api";
     import { router } from "../../router.svelte";
     import { session } from "../../session.svelte";
-    import { list, num, pic, pageNum, fullDate, shortDate, forumUrl, threadUrl } from "./common";
+    import { list, num, pic, pageNum, fullDate, shortDate, forumUrl, threadUrl, markSeen } from "./common";
     import { topLinks, breadcrumb, pager, body } from "./Bits.svelte";
 
     const threadId = $derived(Number(router.query.PostID) || 0);
@@ -24,6 +24,7 @@
     const load = async () => {
         try {
             const d = await api(`/forum/threads/${threadId}?sort=${sort}&page=${page}`);
+            markSeen(threadId);
             thread = d.thread ?? null;
             forum = d.forum ?? null;
             posts = list(d.posts);

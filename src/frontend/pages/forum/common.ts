@@ -47,3 +47,22 @@ export const currentTime = () => new Date().toLocaleString("en-US", {
     hour: "numeric",
     minute: "2-digit"
 });
+
+// php kept the read/unread icons in the session, so do we
+const seenKey = "forum_seen_threads";
+
+export const seenThreads = (): Set<number> => {
+    try {
+        return new Set(JSON.parse(sessionStorage.getItem(seenKey) ?? "[]"));
+    } catch {
+        return new Set();
+    }
+};
+
+export const markSeen = (threadId: number) => {
+    try {
+        const seen = seenThreads();
+        seen.add(threadId);
+        sessionStorage.setItem(seenKey, JSON.stringify([...seen]));
+    } catch {}
+};
