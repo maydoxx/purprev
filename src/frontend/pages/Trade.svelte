@@ -134,7 +134,6 @@
         }
 
         if (partnerId > 0) {
-            // TODO: no route for both limited inventories yet, expects {mine, theirs}
             const [p, inv] = await Promise.all([
                 api(`/user/profile/${partnerId}`).catch(() => null),
                 api(`/trade?with=${partnerId}`).catch(() => ({}))
