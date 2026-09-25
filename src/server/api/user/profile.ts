@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql } from "../../db";
 import { isOnline, friendStatus, friendCount, friendsOf } from "../../friends";
+import { withThumbnail } from "../../paths";
 
 // account_deletion, only admins can see those
 const TERMINATED = 6;
@@ -61,7 +62,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             friendStatus: user ? await friendStatus(user.id, row.id) : "guest",
             friendCount: await friendCount(row.id),
             friends,
-            wearing,
+            wearing: await Promise.all(wearing.map(withThumbnail)),
             games,
             badges,
             badgeCount: Number(counts[0].badges),

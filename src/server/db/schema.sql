@@ -394,3 +394,13 @@ CREATE TABLE IF NOT EXISTS `game_servers` (
     KEY `idx_place_open` (`placeId`, `closed`),
     KEY `idx_port_open` (`port`, `closed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- which uploads and renders exist in storage (local or r2), kind + id -> extension
+CREATE TABLE IF NOT EXISTS `media` (
+    `kind` varchar(32) NOT NULL,
+    `id` bigint(20) UNSIGNED NOT NULL,
+    `ext` varchar(10) NOT NULL,
+    `size` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `updated_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`kind`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

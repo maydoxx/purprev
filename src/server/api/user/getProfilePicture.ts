@@ -1,15 +1,18 @@
 import { Elysia, t } from "elysia";
-import { avatarImage, PENDING } from "../../paths";
+import { PENDING } from "../../paths";
+import { mediaUrl } from "../../media";
 
-// rendered avatar png, or the placeholder until rcc manager renders one
+// sends you to the render, or the placeholder until the manager made one
 export const getProfilePicture = new Elysia()
-    .get("/getProfilePicture", async ({ query }) => {
-        const file = Bun.file(avatarImage(query.userId, query.type === "headshot"));
-
-        return new Response(await file.exists() ? file : Bun.file(PENDING), {
+    .get("/getProfilePicture", async ({ query, redirect }) => {
+        const url = await mediaUrl(query.type === "headshot" ? "headshots" : "avatars", query.userId);
+        if (url) {
+            return redirect(url, 302);
+        }
+        return new Response(Bun.file(PENDING), {
             headers: {
                 "Content-Type": "image/png",
-                "Cache-Control": "public, max-age=300"
+                "Cache-Control": "public, max-age=60"
             }
         });
     }, {

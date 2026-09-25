@@ -1,9 +1,36 @@
 import { join } from "path";
+import { mediaPut, mediaRemove, mediaUrl } from "./media";
 
-// where renders and uploads go, rcc manager writes here too
-export const UPLOADS = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
-
-export const avatarImage = (userId: number, headshot: boolean) =>
-    join(UPLOADS, "avatars", `${userId}${headshot ? "-headshot" : ""}.png`);
+export { UPLOADS } from "./storage";
+export { mediaUrl, mediaHas } from "./media";
 
 export const PENDING = join(import.meta.dir, "static", "pending.png");
+
+export const clearMedia = mediaRemove;
+
+export class UploadError extends Error {}
+
+const IMAGE_TYPES: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+    "image/gif": "gif"
+};
+
+// stores <kind>/<id>.<ext>, drops any other extension for that id, gives back the url
+export const saveImage = async (kind: string, id: number, file: File, maxBytes = 4 * 1024 * 1024) => {
+    if (file.size > maxBytes) {
+        throw new UploadError(`Images must be ${Math.round(maxBytes / 1024 / 1024)} MB or smaller.`);
+    }
+    const ext = IMAGE_TYPES[file.type];
+    if (!ext) {
+        throw new UploadError("Images must be PNG, JPG, WEBP or GIF.");
+    }
+    return mediaPut(kind, id, ext, file);
+};
+
+// catalog thumbnail column, else the rcc render
+export const withThumbnail = async <T extends { id: number, thumbnail?: string }>(item: T) => ({
+    ...item,
+    thumbnail: item.thumbnail || await mediaUrl("catalog", item.id)
+});

@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql } from "../../db";
+import { withThumbnail } from "../../paths";
 
 const PER_PAGE = 30;
 
@@ -70,7 +71,7 @@ export const inventory = new Elysia({ prefix: "/inventory" })
 
         return {
             category,
-            items,
+            items: type ? await Promise.all(items.map(withThumbnail)) : items,
             page,
             totalPages: Math.max(1, Math.ceil(Number(count.n) / PER_PAGE))
         };
