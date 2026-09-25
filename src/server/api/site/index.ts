@@ -1,9 +1,27 @@
 import { Elysia } from "elysia";
-import { stub } from "../stub";
+import { sql, now } from "../../db";
 
 import { search } from "./search";
 import { feed } from "./feed";
 import { blog } from "./blog";
+
+const DOWNLOADS = [
+    {
+        title: "None 2016 Client",
+        description: "Re-experience old roblox games here on None!",
+        fileUrl: "/api/setup/download"
+    },
+    {
+        title: "None 2016 Client (Linux)",
+        description: "Runs the client through Proton, no Steam needed. Save it, then run: chmod +x nonerev && ./nonerev install",
+        fileUrl: "/api/setup/download?os=linux"
+    },
+    {
+        title: "None 2016 Studio",
+        description: "not released",
+        fileUrl: ""
+    }
+];
 
 export const site = new Elysia({ prefix: "/api/site" })
     .use(search)
@@ -11,7 +29,18 @@ export const site = new Elysia({ prefix: "/api/site" })
     .use(blog)
 
     // only the active ones
-    .get("/banners", stub)
+    .get("/banners", async () => {
+        const rows = await sql`
+            SELECT id, message, linkText, linkUrl, style, dismissible, updatedAt FROM site_banners
+            WHERE enabled = 1
+            AND (startsAt = 0 OR startsAt <= ${now()})
+            AND (endsAt = 0 OR endsAt >= ${now()})
+            ORDER BY id ASC
+        `;
+        return rows.map((b: any) => ({
+            ...b,
+            dismissible: !!b.dismissible
+        }));
+    })
 
-    // downloads.json
-    .get("/downloads", stub)
+    .get("/downloads", () => DOWNLOADS)
