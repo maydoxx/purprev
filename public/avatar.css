@@ -1,0 +1,374 @@
+
+
+.avatar-container {
+    max-width: 970px;
+    margin: 0 auto;
+    font-size: 16px;
+    color: #191919;
+}
+
+.avatar-container:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.avatar-container h2 {
+    margin: 0 0 12px;
+    font-size: 26px;
+    font-weight: 300;
+    color: #191919;
+}
+
+.avatar-left {
+    float: left;
+    width: 300px;
+    padding: 0 12px;
+}
+
+.avatar-right {
+    float: left;
+    width: calc(100% - 300px);
+    padding: 0 12px 0 30px;
+}
+
+
+.avatar-thumb {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 0 6px;
+    text-align: center;
+}
+
+.avatar-thumb img {
+    width: 300px;
+    height: 300px;
+    object-fit: contain;
+}
+
+.avatar-thumb .avatar-3d-toggle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: #757575;
+    background: #fff;
+    border: 1px solid #b8b8b8;
+    border-radius: 2px;
+}
+
+.avatar-redraw {
+    font-size: 13px;
+    color: #191919;
+    margin-bottom: 40px;
+}
+
+.avatar-redraw a {
+    color: #5A189A;
+    text-decoration: none;
+}
+
+.avatar-redraw a:hover {
+    text-decoration: underline;
+}
+
+.avatar-status {
+    min-height: 20px;
+    font-size: 13px;
+    color: #757575;
+}
+
+.avatar-status.error {
+    color: #d86868;
+}
+
+
+.avatar-colors p {
+    margin: 0 0 12px;
+    font-size: 13px;
+}
+
+.body-figure {
+    position: relative;
+    width: 184px;
+    height: 190px;
+    margin: 0 auto 12px;
+}
+
+.body-part {
+    position: absolute;
+    display: block;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+
+.body-part:hover,
+.body-part.active {
+    box-shadow: 0 0 0 2px #7B2CBF;
+}
+
+.body-part[data-part="head_color"] { left: 74px; top: 0; width: 36px; height: 36px; }
+.body-part[data-part="torso_color"] { left: 54px; top: 40px; width: 76px; height: 76px; }
+.body-part[data-part="left_arm_color"] { left: 14px; top: 40px; width: 36px; height: 76px; }
+.body-part[data-part="right_arm_color"] { left: 134px; top: 40px; width: 36px; height: 76px; }
+.body-part[data-part="left_leg_color"] { left: 54px; top: 120px; width: 36px; height: 70px; }
+.body-part[data-part="right_leg_color"] { left: 94px; top: 120px; width: 36px; height: 70px; }
+
+.color-picker {
+    display: none;
+    width: 276px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #b8b8b8;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.color-picker.open {
+    display: block;
+}
+
+.color-picker .picker-title {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.color-picker .swatches {
+    display: grid;
+    grid-template-columns: repeat(10, 24px);
+    gap: 2px;
+}
+
+.color-picker .swatches button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #999;
+    cursor: pointer;
+}
+
+.color-picker .swatches button:hover {
+    box-shadow: 0 0 0 2px #7B2CBF;
+    position: relative;
+    z-index: 1;
+}
+
+.color-picker .swatches button.selected {
+    outline: 2px solid #191919;
+    outline-offset: -2px;
+}
+
+
+.wardrobe-tabs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid #b8b8b8;
+}
+
+.wardrobe-tabs:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.wardrobe-tabs li {
+    float: left;
+    margin: 0 4px -1px 0;
+}
+
+.wardrobe-tabs a {
+    display: block;
+    padding: 12px 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #191919;
+    text-decoration: none;
+    background: #e3e3e3;
+    border: 1px solid #b8b8b8;
+    border-bottom: 0;
+}
+
+.wardrobe-tabs a.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+}
+
+.wardrobe-tabs a.disabled {
+    color: #757575;
+    cursor: default;
+}
+
+
+.wardrobe-categories {
+    margin: 12px 0 6px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.wardrobe-categories a {
+    display: inline-block;
+    padding: 2px 5px;
+    margin: 0 2px 4px;
+    color: #5A189A;
+    text-decoration: none;
+}
+
+.wardrobe-categories a:hover {
+    text-decoration: underline;
+}
+
+.wardrobe-categories a.active {
+    color: #191919;
+    background: #e3e3e3;
+    border-radius: 2px;
+}
+
+
+.item-tiles {
+    list-style: none;
+    margin: 0;
+    padding: 12px 0 0;
+}
+
+.item-tiles:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.item-tile {
+    position: relative;
+    float: left;
+    width: 25%;
+    min-height: 190px;
+    padding: 0 5px 12px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.item-tile .item-image {
+    position: relative;
+    display: inline-block;
+    width: 110px;
+    height: 110px;
+}
+
+.item-tile .item-image img {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+}
+
+.item-tile .item-badge {
+    position: absolute;
+    top: -5px;
+    right: -4px;
+    min-width: 42px;
+    height: 21px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 20px;
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+    background: #6A1B9A linear-gradient(#9D4EDD, #6A1B9A);
+    border: 1px solid #4C117D;
+    border-radius: 0;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+}
+
+.item-tile .item-badge:hover {
+    background: #9D4EDD linear-gradient(#B264E3, #6A1B9A);
+}
+
+.item-tile .item-badge.wearing,
+.item-tile .item-badge[disabled] {
+    cursor: default;
+    opacity: 1;
+}
+
+.item-tile .item-name {
+    display: block;
+    margin-top: 6px;
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 18px;
+    color: #5A189A;
+    text-decoration: none;
+    overflow: hidden;
+    max-height: 36px;
+}
+
+.item-tile .item-name:hover {
+    text-decoration: underline;
+}
+
+.item-tile .item-note {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #757575;
+}
+
+.wardrobe-empty {
+    padding: 30px 0;
+    text-align: center;
+    color: #757575;
+}
+
+
+.wardrobe-pager {
+    margin: 6px 0 18px;
+    padding: 6px 0;
+    text-align: center;
+    font-size: 13px;
+    border-bottom: 1px solid #b8b8b8;
+}
+
+.wardrobe-pager a,
+.wardrobe-pager span {
+    display: inline-block;
+    padding: 2px 6px;
+    color: #191919;
+    text-decoration: none;
+}
+
+.wardrobe-pager a:hover {
+    text-decoration: underline;
+}
+
+.wardrobe-pager .current {
+    background: #e3e3e3;
+    font-weight: 700;
+}
+
+.wardrobe-pager a.disabled {
+    color: #999;
+    pointer-events: none;
+}
+
+.currently-wearing {
+    margin-top: 24px;
+}
+
+@media (max-width: 767.98px) {
+    .avatar-left,
+    .avatar-right {
+        float: none;
+        width: 100%;
+        padding: 0 12px;
+    }
+
+    .item-tile {
+        width: 50%;
+    }
+}
