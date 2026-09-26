@@ -31,7 +31,7 @@ div#catalog {
     clear: both;
 }
 
-/* title and search  */
+
 #catalog .header {
     height: 60px;
 }
@@ -274,7 +274,7 @@ div#catalog #dropdown li.DropdownDivider {
     margin-left: 5px;
 }
 
-/* legend  */
+
 div#catalog #legend {
     padding: 18px 20px 5px 0;
 }
@@ -321,7 +321,7 @@ div#catalog #legend .legendText {
     line-height: 20px;
 }
 
-/* right column */
+
 #catalog .right-content {
     position: relative;
     float: left;
@@ -399,7 +399,7 @@ div#catalog #legend .legendText {
     clear: both;
 }
 
-/* item tiles */
+
 .CatalogItemOuter {
     float: left;
     padding: 24px 11px;
@@ -558,11 +558,24 @@ div#catalog .textDisplay {
 }
 
 span.robux {
+    position: relative;
     padding: 0 0 2px 20px;
     font-size: 12px;
     font-weight: bold;
     color: #060;
-    background: url("/img/catalog/img-robux.png") no-repeat 0 1px;
+}
+
+span.robux::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translateY(-50%);
+    background: #078515;
+    -webkit-mask: url("/img/nonebux-icon.png") center / contain no-repeat;
+    mask: url("/img/nonebux-icon.png") center / contain no-repeat;
 }
 
 .CatalogItemInner span.NotAPrice {
@@ -611,7 +624,7 @@ span.robux {
     display: inline;
 }
 
-/* footer of the list */
+
 #catalog .see-all-featured {
     clear: both;
     padding-top: 50px;
@@ -693,7 +706,7 @@ span.robux {
     }
 }
 
-/* Stable 2016-style catalog tiles. These replace the old expanding hover boxes. */
+
 #catalog .catalog-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));

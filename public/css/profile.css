@@ -222,7 +222,7 @@ body {
     text-decoration: underline;
 }
 
-/* currently wearing */
+
 .profile-avatar {
     margin-bottom: 18px;
 }
@@ -308,7 +308,7 @@ body {
     color: #fff;
 }
 
-/* statistics */
+
 .profile-stats-container .profile-stat {
     float: left;
     width: 33.3333%;
@@ -324,7 +324,7 @@ body {
     margin: 0 0 12px;
 }
 
-/* creations */
+
 .profile-game {
     margin-bottom: 20px;
 }
@@ -343,7 +343,7 @@ body {
     vertical-align: middle;
 }
 
-/* slideshow view */
+
 .profile-game .rbx-switcher {
     position: relative;
     margin-bottom: 18px;
@@ -489,7 +489,7 @@ body {
     margin: 8px auto;
 }
 
-/* grid view */
+
 .profile-game .rbx-game {
     float: left;
     width: 16.6667%;
@@ -756,7 +756,7 @@ body {
         font-size: 14px;
     }
 }
-/* earned badges */
+
 .profile-badge-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; }
 .profile-badge-list li { width: 92px; text-align: center; }
 .profile-badge-list a { color: #333; text-decoration: none; font-size: 12px; }

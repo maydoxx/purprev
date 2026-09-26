@@ -542,7 +542,7 @@
     }
 }
 
-/* Keep the compose secondary action vertically aligned with Send. */
+
 .messages-form-actions .messages-control-btn {
     display: inline-flex;
     align-items: center;

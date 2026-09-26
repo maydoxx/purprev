@@ -45,13 +45,13 @@ body {
     background-color: #e3e3e3 !important;
 }
 
-/*body {
-    background: url("/img/image.png");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-attachment: fixed;
-}
-*/
+
+
+
+
+
+
+
 
 a.dropdown-item {
     color: black !important;
@@ -92,7 +92,7 @@ a.dropdown-item {
 }
 
 .bg-white {
-    /*background-color: #3c005a;*/
+
 }
 
 .nav-underline .nav-link {
@@ -107,7 +107,7 @@ a.dropdown-item {
     background-color: var(--bs-tertiary-bg) !important;
 }
 
-/* admin pages still use the bootstrap navbar */
+
 .navbar {
     background-color: #7B2CBF;
 }
@@ -116,8 +116,8 @@ a.dropdown-item {
     color: white !important;
 }
 
-/* 2016 header starts here! */
-/* fixed header offset */
+
+
 body {
     padding-top: 40px;
 }
@@ -158,7 +158,7 @@ body {
     text-decoration: none;
 }
 
-/* logo + hamburger */
+
 .rbx-header .rbx-navbar-header {
     flex: 0 0 auto;
     margin: 0 12px;
@@ -465,7 +465,9 @@ body {
 }
 
 .icon-nav-robux {
-    background-position: 0 -28px;
+    background-image: url("/img/nonebux-icon.png");
+    background-position: center;
+    background-size: 26px 26px;
 }
 
 .icon-nav-tix {
@@ -536,7 +538,7 @@ button:hover .icon-nav-menu,
 
 a:hover .icon-nav-robux,
 button:hover .icon-nav-robux {
-    background-position: -28px -28px;
+    background-position: center;
 }
 
 a:hover .icon-nav-tix,
@@ -654,7 +656,7 @@ a:hover .icon-nav-shop {
     vertical-align: middle;
 }
 
-/* username above the list, with the 2016 divider under it */
+
 .rbx-left-col .rbx-nav-username a {
     padding: 6px 3px;
     white-space: nowrap;
@@ -852,10 +854,10 @@ a:hover .icon-nav-shop {
     }
 }
 
-/* =====================================================================
-   2016 page components (sections, text styles, buttons, tabs, icons)
-   Values taken from the archived roblox.com stylesheet (4 Mar 2016).
-   ===================================================================== */
+
+
+
+
 .rbx-content {
     padding: 12px 0 40px;
 }
@@ -950,7 +952,7 @@ a:hover .icon-nav-shop {
     white-space: nowrap;
 }
 
-/* buttons */
+
 .rbx-btn-primary-sm,
 .rbx-btn-control-sm,
 .rbx-btn-control-xs,
@@ -1038,7 +1040,7 @@ a:hover .icon-nav-shop {
     box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
 }
 
-/* horizontal tabs */
+
 .rbx-tabs-horizontal .rbx-nav-tabs {
     display: flex;
     width: 100%;
@@ -1094,7 +1096,7 @@ a:hover .icon-nav-shop {
     display: block;
 }
 
-/* generic icon sprite (28x28 cells, hover column at -28px) */
+
 .rbx-icon-more,
 .rbx-icon-moreinfo,
 .rbx-icon-grid,
@@ -1158,10 +1160,10 @@ a:hover .rbx-icon-carousel-left {
 .rbx-icon-slideshow.selected {
     background-position: -28px -1064px;
 }
-/* =====================================================================
-   2016 game cards and horizontal game rows (games page, home)
-   Values taken from the archived roblox.com games page (archive.today).
-   ===================================================================== */
+
+
+
+
 .game-sort-row {
     position: relative;
     width: 100%;
@@ -1332,7 +1334,7 @@ a:hover .rbx-icon-carousel-left {
     background-color: #fff;
 }
 
-/* pending friend request / unread message count in the left nav */
+
 .rbx-left-col li a.rbx-nav-badged {
     display: flex;
     align-items: center;
@@ -1340,8 +1342,8 @@ a:hover .rbx-icon-carousel-left {
     min-width: 0;
 }
 
-/* Keep the 28px sprite at its real size. Without this, flex can shrink the
-   icon when a badge is present and visually crop the sprite. */
+
+
 .rbx-left-col li a.rbx-nav-badged > [class^="icon-nav-"] {
     flex: 0 0 28px;
     width: 28px;
@@ -1371,7 +1373,7 @@ a:hover .rbx-icon-carousel-left {
     border-radius: 9px;
 }
 
-/* banners color come from rbx-alert-*, just make room for close button and keep text centered */
+
 .rbx-site-banner {
     position: relative;
     padding-left: 44px;
@@ -1403,7 +1405,7 @@ a:hover .rbx-icon-carousel-left {
 }
 
 
-/* NONE purple Bootstrap/UI overrides. Bootstrap is loaded before this file. */
+
 :root,
 [data-bs-theme="light"],
 body {
@@ -1527,7 +1529,7 @@ body {
 }
 
 
-/* Catch every remaining Bootstrap blue state site-wide. */
+
 a {
     --bs-link-color-rgb: 123, 44, 191;
 }

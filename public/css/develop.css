@@ -714,9 +714,9 @@
     }
 }
 
-/* configure page: what the place's thumbnail and icon look like right now.
-   there is no image library on this box to resize an upload with, so the icon is the same
-   file as the thumbnail and object-fit crops it square here instead. */
+
+
+
 .develop-thumb-preview {
     display: flex;
     gap: 18px;
@@ -750,7 +750,7 @@
     color: #666;
 }
 
-/* badges / game passes */
+
 .develop-asset-editor {
     border: 1px solid #d4d4d4;
     background: #fafafa;

@@ -1,0 +1,22 @@
+.nonebux-page { min-height: calc(100vh - 40px); color: #191919; background: #f7f8fa; font-family: "Source Sans 3", Arial, sans-serif; }
+.nonebux-shell { width: min(960px, calc(100% - 36px)); margin: 0 auto; padding: 0 0 70px; }
+.nonebux-shell h1 { margin: 0 0 16px; font-size: 36px; line-height: 1.25; font-weight: 400; }
+.nonebux-mark { margin-left: 3px; font-size: 16px; vertical-align: super; }
+.nonebux-intro { display: flex; min-height: 170px; align-items: center; gap: 26px; margin-bottom: 10px; padding: 22px 40px; background: #fff; box-shadow: 0 1px 8px #19191922; }
+.nonebux-intro-icon { width: 64px; height: 64px; flex: 0 0 64px; background: #7b2cbf; -webkit-mask: url("/img/nonebux-icon.png") center / contain no-repeat; mask: url("/img/nonebux-icon.png") center / contain no-repeat; }
+.nonebux-intro-copy p { margin: 0; font-size: 16px; line-height: 1.5; }
+.nonebux-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.nonebux-card { min-height: 170px; padding: 13px 24px 16px; background: #fff; box-shadow: 0 1px 8px #19191922; }
+.nonebux-amount { display: flex; align-items: baseline; gap: 3px; white-space: nowrap; line-height: 1.2; }
+.nonebux-amount strong { color: #6a6d70; font-size: 36px; font-weight: 400; }
+.nonebux-amount span { color: #a9a9a9; font-size: 31px; font-weight: 300; }
+.nonebux-buy { width: 100%; min-height: 38px; border: 0; border-radius: 3px; color: #fff; background: #00b765; font-size: 16px; font-weight: 600; }
+.nonebux-buy:hover, .nonebux-buy:focus-visible { background: #009d55; }
+.nonebux-card p { margin: 9px 0 1px; font-size: 15px; }
+.nonebux-bonus-link { padding: 0; border: 0; color: #7b2cbf; background: none; font-size: 16px; text-align: left; }
+.nonebux-bonus-link:hover { text-decoration: underline; }
+.nonebux-footnote { margin: 16px 0 0; color: #686868; font-size: 12px; }
+.nonebux-notice { display: flex; justify-content: space-between; gap: 16px; margin: 0 0 10px; padding: 12px 16px; color: #4f3680; background: #f2eafa; border: 1px solid #d4b9ea; }
+.nonebux-notice button { border: 0; background: transparent; color: inherit; font-size: 24px; line-height: 16px; }
+@media (max-width: 800px) { .nonebux-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nonebux-intro { padding: 22px; } }
+@media (max-width: 580px) { .nonebux-grid { grid-template-columns: 1fr; } .nonebux-intro-icon { display: none; } .nonebux-shell h1 { font-size: 30px; } }
