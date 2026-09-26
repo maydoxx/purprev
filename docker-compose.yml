@@ -1,4 +1,4 @@
-# reads .env, only the db host is overridden
+
 services:
   db:
     image: docker.io/library/mysql:8
