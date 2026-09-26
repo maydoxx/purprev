@@ -48,7 +48,7 @@ export const currentTime = () => new Date().toLocaleString("en-US", {
     minute: "2-digit"
 });
 
-// php kept the read/unread icons in the session, so do we
+
 const seenKey = "forum_seen_threads";
 
 export const seenThreads = (): Set<number> => {

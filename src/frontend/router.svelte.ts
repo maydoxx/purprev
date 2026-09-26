@@ -2,6 +2,7 @@ const routes: [string, string][] = [
     ["/", "landing"],
     ["/login", "login"],
     ["/signup", "signup"],
+    ["/register", "signup"],
     ["/home", "home"],
     ["/user", "user"],
     ["/my/settings", "settings"],
@@ -16,6 +17,7 @@ const routes: [string, string][] = [
     ["/blog", "blog"],
     ["/search", "search"],
     ["/download", "download"],
+    ["/upgrades/nonebux", "nonebux"],
     ["/trade", "trade"],
     ["/my/messages", "messages"],
     ["/groups", "groups"],
@@ -72,7 +74,7 @@ const update = () => {
 
 window.addEventListener("popstate", update);
 
-// same site links go through pushState instead of reloading
+
 document.addEventListener("click", e => {
     const a = (e.target as HTMLElement).closest("a");
     if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -80,7 +82,7 @@ document.addEventListener("click", e => {
 
     const href = a.getAttribute("href") ?? "";
     if (href === "" || href.startsWith("#") || href.startsWith("/api/") || href.startsWith("/uploads/")) return;
-    // /discord, /setup/... and the client urls are the backends, let the browser go there
+
     const target = a.pathname.replace(/\/+$/, "") || "/";
     if (!routes.some(([p]) => p === target)) return;
 

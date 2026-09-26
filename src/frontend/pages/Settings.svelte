@@ -2,10 +2,21 @@
     import { api } from "../api";
     import { session } from "../session.svelte";
 
-    let tab = $state("account");
-    let open = $state<Record<string, boolean>>({});
-    let msg = $state<Record<string, { text: string; ok: boolean }>>({});
+    type Tab = "account" | "security" | "privacy" | "billing" | "notifications" | "invites";
+    const tabs: { id: Tab; label: string }[] = [
+        { id: "account", label: "Account Info" },
+        { id: "security", label: "Security" },
+        { id: "privacy", label: "Privacy" },
+        { id: "billing", label: "Billing" },
+        { id: "notifications", label: "Notifications" },
+        { id: "invites", label: "Invites" }
+    ];
 
+    let tab = $state<Tab>("account");
+    let editingEmail = $state(false);
+    let editingPassword = $state(false);
+    let busy = $state(false);
+    let notice = $state<{ text: string; ok: boolean } | null>(null);
     let newEmail = $state(session.me?.email ?? "");
     let newBio = $state(session.me?.about ?? "");
     let currentPassword = $state("");
@@ -13,38 +24,48 @@
     let confirmPassword = $state("");
     let inviteKey = $state("");
 
-    const send = async (which: string, path: string, body: unknown, done: string) => {
+    const show = (text: string, ok = true) => notice = { text, ok };
+
+    const save = async (path: string, body: unknown, done: string) => {
+        busy = true;
+        notice = null;
         try {
             await api(path, body);
-            msg[which] = {
-                text: done,
-                ok: true
-            };
             await session.refresh();
+            show(done);
+            editingEmail = false;
+            editingPassword = false;
+            currentPassword = "";
+            newPassword = "";
+            confirmPassword = "";
         } catch (err: any) {
-            msg[which] = {
-                text: err.message,
-                ok: false
-            };
+            show(err.message, false);
+        } finally {
+            busy = false;
         }
     };
 
     const generate = async () => {
+        busy = true;
+        notice = null;
         try {
             inviteKey = (await api("/user/invites/generate", {})).key;
-            msg.invite = {
-                text: "Invite key generated.",
-                ok: true
-            };
+            show("Invite key generated.");
         } catch (err: any) {
-            msg.invite = {
-                text: err.message,
-                ok: false
-            };
+            show(err.message, false);
+        } finally {
+            busy = false;
         }
     };
 
-    const copy = () => navigator.clipboard.writeText(inviteKey);
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(inviteKey);
+            show("Invite key copied.");
+        } catch {
+            show("Could not copy the invite key.", false);
+        }
+    };
 </script>
 
 <svelte:head>
@@ -52,134 +73,87 @@
     <link rel="stylesheet" href="/css/settings.css">
 </svelte:head>
 
-{#snippet message(which: string)}
-    <div class="settings-message" class:success={msg[which]?.ok} class:error={msg[which] && !msg[which].ok} style:display={msg[which] ? "block" : "none"}>{msg[which]?.text ?? ""}</div>
-{/snippet}
-
 <main class="settings-page" id="user-account">
-    <div class="settings-title-row">
-        <h1>My Settings</h1>
-    </div>
-
+    <h1>My Settings</h1>
     <div class="settings-layout">
-        <aside class="settings-navigation">
-            <button type="button" class="settings-nav-item" class:active={tab === "account"} onclick={() => tab = "account"}>Account Info</button>
-            <button type="button" class="settings-nav-item" class:active={tab === "security"} onclick={() => tab = "security"}>Security</button>
-            <button type="button" class="settings-nav-item" class:active={tab === "invites"} onclick={() => tab = "invites"}>Invites</button>
-        </aside>
+        <nav class="settings-navigation" aria-label="Settings sections">
+            {#each tabs as item}
+                <button type="button" class:active={tab === item.id} onclick={() => { tab = item.id; notice = null; }}>{item.label}</button>
+            {/each}
+        </nav>
 
-        <section class="settings-content">
-            <div class="settings-panel" class:active={tab === "account"}>
-                <div class="settings-panel-header">
+        <div class="settings-content">
+            {#if notice}
+                <div class="settings-message" class:success={notice.ok} class:error={!notice.ok} role="status">{notice.text}</div>
+            {/if}
+
+            {#if tab === "account"}
+                <section class="settings-section">
                     <h2>Account Info</h2>
-                </div>
-
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div class="settings-row-main">
-                            <div class="settings-label">Username</div>
-                            <div class="settings-value">{session.me?.username}</div>
-                        </div>
+                    <div class="settings-card settings-account-card">
+                        <div class="settings-info-row"><span>Username: <strong>{session.me?.username}</strong></span><span class="settings-readonly" title="Username changes are not available">✎</span></div>
+                        <div class="settings-info-row"><span>Password: <strong>••••••••</strong></span><button type="button" class="settings-edit-icon" aria-label="Change password" onclick={() => { tab = "security"; editingPassword = true; }}>✎</button></div>
+                        <div class="settings-info-row"><span>Email address: <strong>{session.me?.email || "Not set"}</strong></span><button type="button" class="settings-edit-icon" aria-label="Edit email address" onclick={() => editingEmail = !editingEmail}>✎</button></div>
+                        {#if editingEmail}
+                            <form class="settings-inline-editor" onsubmit={e => { e.preventDefault(); save("/user/settings/changeemail", { newEmail }, "Email updated."); }}>
+                                <label for="settings-email">Email address</label>
+                                <div class="settings-inline-controls"><input id="settings-email" type="email" bind:value={newEmail} required><button type="submit" disabled={busy}>Save</button><button type="button" onclick={() => editingEmail = false}>Cancel</button></div>
+                            </form>
+                        {/if}
                     </div>
+                </section>
 
-                    <div class="settings-row">
-                        <div class="settings-row-main">
-                            <div class="settings-label">Email Address</div>
-                            <div class="settings-value">{session.me?.email || "Not set"}</div>
-                        </div>
-                        <button type="button" class="settings-edit-btn" onclick={() => open.email = !open.email}>Edit</button>
-                    </div>
-
-                    <div class="settings-editor" style:display={open.email ? "block" : "none"}>
-                        <form onsubmit={e => { e.preventDefault(); send("email", "/user/settings/changeemail", { newEmail }, "Email updated."); }}>
-                            <label for="newEmail">Email Address</label>
-                            <input type="email" id="newEmail" bind:value={newEmail} required>
-                            <div class="settings-editor-actions">
-                                <button type="submit" class="settings-save-btn">Save</button>
-                                <button type="button" class="settings-cancel-btn" onclick={() => open.email = false}>Cancel</button>
-                            </div>
-                            {@render message("email")}
+                <section class="settings-section">
+                    <h2>Personal</h2>
+                    <div class="settings-card settings-personal-card">
+                        <form onsubmit={e => { e.preventDefault(); save("/user/settings/changebio", { newBio }, "Personal blurb saved."); }}>
+                            <label class="settings-visually-hidden" for="settings-bio">Describe yourself</label>
+                            <textarea id="settings-bio" bind:value={newBio} maxlength="1000" rows="4" placeholder="Describe yourself (1000 character limit)"></textarea>
+                            <p class="settings-help">Do not provide any details that can be used to identify you outside NoneRev.</p>
+                            <div class="settings-save-row"><button type="submit" disabled={busy}>Save</button></div>
                         </form>
                     </div>
+                </section>
 
-                    <div class="settings-row settings-row-bio">
-                        <div class="settings-row-main">
-                            <div class="settings-label">Personal Blurb</div>
-                            <div class="settings-value settings-bio-value" style="white-space: pre-line">{session.me?.about || "No bio yet."}</div>
-                        </div>
-                        <button type="button" class="settings-edit-btn" onclick={() => open.bio = !open.bio}>Edit</button>
+                <section class="settings-section">
+                    <h2>Social Networks</h2>
+                    <div class="settings-card settings-social-card">
+                        <p>Social profile links are not available for NoneRev accounts yet.</p>
+                        <label>Facebook<input type="text" placeholder="e.g. www.facebook.com/yourname" disabled></label>
+                        <label>Twitter<input type="text" placeholder="e.g. @yourname" disabled></label>
+                        <label>YouTube<input type="text" placeholder="e.g. youtube.com/yourchannel" disabled></label>
                     </div>
-
-                    <div class="settings-editor" style:display={open.bio ? "block" : "none"}>
-                        <form onsubmit={e => { e.preventDefault(); send("bio", "/user/settings/changebio", { newBio }, "Bio updated."); }}>
-                            <label for="newBio">Personal Blurb</label>
-                            <textarea id="newBio" bind:value={newBio} maxlength="500" rows="5"></textarea>
-                            <div class="settings-editor-actions">
-                                <button type="submit" class="settings-save-btn">Save</button>
-                                <button type="button" class="settings-cancel-btn" onclick={() => open.bio = false}>Cancel</button>
-                            </div>
-                            {@render message("bio")}
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="settings-panel" class:active={tab === "security"}>
-                <div class="settings-panel-header">
+                </section>
+            {:else if tab === "security"}
+                <section class="settings-section">
                     <h2>Security</h2>
-                </div>
-
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div class="settings-row-main">
-                            <div class="settings-label">Password</div>
-                            <div class="settings-value">********</div>
-                        </div>
-                        <button type="button" class="settings-edit-btn" onclick={() => open.password = !open.password}>Change</button>
+                    <div class="settings-card settings-security-card">
+                        <div class="settings-info-row"><span>Password: <strong>••••••••</strong></span><button type="button" class="settings-edit-icon" onclick={() => editingPassword = !editingPassword}>✎</button></div>
+                        {#if editingPassword}
+                            <form class="settings-password-form" onsubmit={e => { e.preventDefault(); save("/user/settings/changepassword", { currentPassword, newPassword, confirmPassword }, "Password changed."); }}>
+                                <label>Current password<input type="password" bind:value={currentPassword} autocomplete="current-password" required></label>
+                                <label>New password<input type="password" bind:value={newPassword} minlength="8" autocomplete="new-password" required></label>
+                                <label>Confirm new password<input type="password" bind:value={confirmPassword} minlength="8" autocomplete="new-password" required></label>
+                                <button type="submit" disabled={busy}>Change Password</button>
+                            </form>
+                        {/if}
                     </div>
-
-                    <div class="settings-editor" style:display={open.password ? "block" : "none"}>
-                        <form onsubmit={e => { e.preventDefault(); send("password", "/user/settings/changepassword", { currentPassword, newPassword, confirmPassword }, "Password changed."); }}>
-                            <label for="currentPassword">Current Password</label>
-                            <input type="password" id="currentPassword" bind:value={currentPassword} autocomplete="current-password" required>
-                            <label for="newPassword">New Password</label>
-                            <input type="password" id="newPassword" bind:value={newPassword} minlength="8" autocomplete="new-password" required>
-                            <label for="confirmPassword">Confirm New Password</label>
-                            <input type="password" id="confirmPassword" bind:value={confirmPassword} minlength="8" autocomplete="new-password" required>
-                            <div class="settings-editor-actions">
-                                <button type="submit" class="settings-save-btn">Change Password</button>
-                                <button type="button" class="settings-cancel-btn" onclick={() => open.password = false}>Cancel</button>
-                            </div>
-                            {@render message("password")}
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="settings-panel" class:active={tab === "invites"}>
-                <div class="settings-panel-header">
+                </section>
+            {:else if tab === "invites"}
+                <section class="settings-section">
                     <h2>Invites</h2>
-                </div>
-
-                <div class="settings-card">
-                    <div class="settings-row settings-invite-row">
-                        <div class="settings-row-main">
-                            <div class="settings-label">Invite Key</div>
-                            <div class="settings-value">Generate an invite key to invite someone to NoneRev.</div>
-                        </div>
-                        <button type="button" class="settings-primary-btn" onclick={generate}>Generate</button>
+                    <div class="settings-card settings-invite-card">
+                        <p>Generate a single-use invite key for someone joining NoneRev.</p>
+                        <button type="button" disabled={busy} onclick={generate}>Generate Invite Key</button>
+                        {#if inviteKey}<div class="settings-invite-result"><input aria-label="Invite key" value={inviteKey} readonly><button type="button" onclick={copy}>Copy</button></div>{/if}
                     </div>
-
-                    <div class="settings-invite-result" style:display={inviteKey ? "block" : "none"}>
-                        <label for="inviteKey">Your Invite Key</label>
-                        <div class="settings-key-wrap">
-                            <input type="text" id="inviteKey" value={inviteKey} readonly>
-                            <button type="button" class="settings-copy-btn" onclick={copy}>Copy</button>
-                        </div>
-                    </div>
-                    <div class="settings-message settings-message-block" class:success={msg.invite?.ok} class:error={msg.invite && !msg.invite.ok} style:display={msg.invite ? "block" : "none"}>{msg.invite?.text ?? ""}</div>
-                </div>
-            </div>
-        </section>
+                </section>
+            {:else}
+                <section class="settings-section">
+                    <h2>{tabs.find(item => item.id === tab)?.label}</h2>
+                    <div class="settings-card settings-empty-card">There are no {tabs.find(item => item.id === tab)?.label.toLowerCase()} options for this account yet.</div>
+                </section>
+            {/if}
+        </div>
     </div>
 </main>

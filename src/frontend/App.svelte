@@ -23,9 +23,10 @@
     import Blog from "./pages/Blog.svelte";
     import Search from "./pages/Search.svelte";
     import Download from "./pages/Download.svelte";
+    import Nonebux from "./pages/Nonebux.svelte";
     import Trade from "./pages/Trade.svelte";
     import Messages from "./pages/Messages.svelte";
-    import Group from "./pages/groups/Group.svelte";
+    import Groups from "./pages/groups/Groups.svelte";
     import GroupsMy from "./pages/groups/My.svelte";
     import ForumIndex from "./pages/forum/Index.svelte";
     import ForumShow from "./pages/forum/Forum.svelte";
@@ -54,7 +55,7 @@
 
     session.refresh();
 
-    // route name -> page
+
     const pages: Record<string, Component<any>> = {
         landing: Landing,
         login: Login,
@@ -73,9 +74,10 @@
         blog: Blog,
         search: Search,
         download: Download,
+        nonebux: Nonebux,
         trade: Trade,
         messages: Messages,
-        groups: Group,
+        groups: Groups,
         "groups-my": GroupsMy,
         forum: ForumIndex,
         "forum-show": ForumShow,
@@ -103,7 +105,7 @@
         "admin-blog": AdminBlog
     };
 
-    // these had their own look in php, no site header
+
     const landing = ["landing", "login", "signup"];
     const bare = ["blog", "download"];
 
@@ -126,7 +128,7 @@
         } else if (!session.me && needsLogin.includes(router.name)) {
             router.replace("/login");
         } else if (session.me?.ongoing_action_id && router.name !== "not-approved") {
-            // banned or warned, php sent everything to /not-approved
+
             router.replace("/not-approved");
         }
     });
@@ -135,7 +137,7 @@
         document.body.className = landing.includes(router.name) ? "none-landing" : (session.me && !bare.includes(router.name) ? "rbx-has-left-nav" : "");
     });
 
-    // stay online
+
     $effect(() => {
         if (!session.me) return;
         const timer = setInterval(() => api("/user/presence/register", {}).catch(() => {}), 60 * 1000);
@@ -144,7 +146,7 @@
 </script>
 
 {#if !session.loaded}
-    <!-- nothing till we know who you are, stops the login page flashing -->
+
 {:else if landing.includes(router.name) || bare.includes(router.name)}
     <Page />
 {:else}

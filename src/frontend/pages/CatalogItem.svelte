@@ -13,14 +13,18 @@
     let status = $state("");
     let statusError = $state(false);
     let busy = $state(false);
-    let shareLabel = $state("Share");
+    let recommended = $state<any[]>([]);
+    let range = $state(180);
 
     const load = async () => {
+        const currentId = id;
         try {
-            const d = await api(`/catalog/${id}`);
+            const d = await api(`/catalog/${currentId}`);
+            if (id !== currentId) return;
             item = d.id ? d : null;
             missing = !item;
         } catch {
+            if (id !== currentId) return;
             missing = true;
         }
     };
@@ -38,7 +42,6 @@
     const remaining = $derived(limitedUnique && item.limited_stock !== null ? Math.max(0, item.limited_stock - item.limited_sold) : null);
     const soldOut = $derived(limitedUnique && remaining !== null && remaining <= 0);
     const canWear = $derived(item && wearable.includes(item.category) && !!item.asset_id);
-    const balance = $derived(session.me?.currency ?? 0);
     const sales = $derived(item ? Number(limitedUnique ? item.limited_sold : item.sales ?? 0) : 0);
 
     const post = async (path: string, body: unknown, working: string) => {
@@ -65,40 +68,21 @@
         wear: !item.wearing
     }, "Updating your avatar...");
 
-    const share = async () => {
-        if (navigator.share) {
-            navigator.share({
-                title: document.title,
-                url: location.href
-            }).catch(() => {});
-            return;
-        }
-        await navigator.clipboard.writeText(location.href);
-        shareLabel = "Link Copied";
-        setTimeout(() => shareLabel = "Share", 1400);
-    };
+    $effect(() => {
+        const currentId = id;
+        recommended = [];
+        api("/catalog?category=all&sort=recent").then(d => {
+            if (id === currentId) recommended = (d.items || []).filter((v: any) => v.id !== currentId).slice(0, 7);
+        }).catch(() => {});
+    });
 
-    const date = (t: number) => t > 0 ? new Date(t * 1000).toLocaleDateString("en-US") : "N/A";
-    const ago = (t: number) => {
-        if (!(t > 0)) return "N/A";
-        const diff = Math.max(0, Date.now() / 1000 - t);
-        const units: [number, string][] = [
-            [31536000, "year"],
-            [2592000, "month"],
-            [604800, "week"],
-            [86400, "day"],
-            [3600, "hour"],
-            [60, "minute"]
-        ];
-        for (const [secs, name] of units) {
-            if (diff >= secs) {
-                const n = Math.floor(diff / secs);
-                return `${n} ${name}${n === 1 ? "" : "s"} ago`;
-            }
-        }
-        return "just now";
-    };
-    const n = (v: any) => Number(v ?? 0).toLocaleString();
+    const dates = $derived(Array.from({ length: 13 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - Math.round(range * (1 - i / 12)));
+        return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+    }));
+    const itemType = $derived(item?.category === "Hat" ? "Accessory | Hat" : item?.category);
+    const n = (v: any) => Number(v ?? 0).toLocaleString("en-US");
 </script>
 
 <svelte:head>
@@ -112,109 +96,86 @@
 <main class="rbx-content catalog-item-shell">
 {#if item}
     <div class="catalog-item-page">
-        <header class="catalog-item-heading">
-            <h1>{item.name}</h1>
-            <div class="catalog-item-type">NoneRev {item.category}</div>
-        </header>
-
-        <div class="catalog-item-layout">
-            <section class="catalog-item-picture-column">
+        <section class="catalog-item-hero">
+            <div class="catalog-item-preview">
                 <div class="catalog-item-picture-wrap">
                     <img class="catalog-item-picture" src={item.thumbnail || "/img/pending.png"} alt={item.name}>
                     {#if limited}
-                        <img class="catalog-item-limited-overlay" src={limitedUnique ? "/img/catalog/overlay-limited-unique.png" : "/img/catalog/overlay-limited.png"} alt={limitedUnique ? "Limited U" : "Limited"}>
+                        <span class="catalog-item-limited-label" class:unique={limitedUnique}>{limitedUnique ? "LIMITED U" : "LIMITED"}</span>
                     {/if}
                 </div>
-            </section>
-
-            <section class="catalog-item-information">
-                <div class="catalog-creator-block">
-                    <a class="catalog-creator-avatar" href="/user?id={item.creator_id ?? 0}">
-                        <img src="/api/user/getProfilePicture?userId={item.creator_id ?? 0}&type=full" alt={item.creator_name ?? "NoneRev"}>
-                    </a>
-                    <div class="catalog-creator-meta">
-                        <div><span>Creator:</span> <a href="/user?id={item.creator_id ?? 0}">{item.creator_name ?? "NoneRev"}</a></div>
-                        <div><span>Created:</span> {date(item.created_at)}</div>
-                        <div><span>Updated:</span> {ago(item.updated_at)}</div>
+                <div class="catalog-item-favorites" title="Favorites are not available yet">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 1.5 3.3 6.7 7.4 1.1-5.4 5.2 1.3 7.3-6.6-3.5-6.6 3.5 1.3-7.3-5.4-5.2 7.4-1.1z"/></svg>
+                    <span>{n(item.favorites)}</span>
+                </div>
+            </div>
+            <div class="catalog-item-information">
+                <header class="catalog-item-heading">
+                    <h1>{item.name}</h1>
+                    <div class="catalog-item-creator">By <a href="/user?id={item.creator_id}">{item.creator_name || "NoneRev"}</a></div>
+                </header>
+                <div class="catalog-item-purchase-row">
+                    <span class="catalog-field-label">{limited ? "Best Price" : "Price"}</span>
+                    <div class="catalog-item-price-details">
+                        {#if item.price === null}<span class="catalog-offsale">Off Sale</span>
+                        {:else if Number(item.price) === 0}<span class="catalog-price">Free</span>
+                        {:else}<span class="catalog-price"><span class="catalog-currency" aria-label="Nonebux"></span>{n(item.price)}</span>{/if}
+                        {#if limited}<span class="catalog-reseller-link">See more <a href="#resellers">Resellers</a></span>{/if}
+                    </div>
+                    <div class="catalog-item-buy">
+                        {#if item.owned}
+                            {#if canWear}<button class="catalog-buy-button" type="button" disabled={busy} onclick={wear}>{item.wearing ? "Remove" : "Wear Item"}</button>
+                            {:else}<span class="catalog-owned-label">Item Owned</span>{/if}
+                        {:else if soldOut}<button class="catalog-buy-button" disabled>Sold Out</button>
+                        {:else if item.price === null}<button class="catalog-buy-button" disabled>Off Sale</button>
+                        {:else if !session.me}<a class="catalog-buy-button" href="/login">Buy</a>
+                        {:else}<button type="button" class="catalog-buy-button" disabled={busy} onclick={buy}>{Number(item.price) === 0 ? "Get" : "Buy"}</button>{/if}
                     </div>
                 </div>
-
-                <div class="catalog-item-description" style="white-space: pre-line">{item.description || "No description available."}</div>
-
-                {#if limited}
-                    <div class="catalog-limited-details">
-                        <strong>{limitedUnique ? "Limited U" : "Limited"}</strong>
-                        <span>Tradeable</span>
-                        {#if limitedUnique}
-                            <span>{n(item.limited_sold)} of {n(item.limited_stock)} sold</span>
-                            {#if !soldOut}
-                                <span>{n(remaining)} remaining</span>
-                            {:else}
-                                <span>Sold Out</span>
-                            {/if}
-                        {/if}
-                        {#if item.serial_number != null}
-                            <span class="catalog-item-serial">Your serial: #{n(item.serial_number)} of {n(item.limited_stock)}</span>
-                        {/if}
+                <dl class="catalog-item-fields">
+                    <dt>Type</dt><dd>{itemType}</dd>
+                    <dt>Genres</dt><dd><a href="/catalog?category=all">All</a></dd>
+                    <dt>Description</dt><dd class="catalog-item-description">{item.description || "No description available."}</dd>
+                    {#if limitedUnique}<dt>Remaining</dt><dd>{n(remaining)} of {n(item.limited_stock)}</dd>{/if}
+                    {#if item.serial_number != null}<dt>Your Serial</dt><dd>#{n(item.serial_number)}</dd>{/if}
+                </dl>
+                {#if status}<p class="catalog-item-status" class:error={statusError} role="status">{status}</p>{/if}
+                {#if session.me && session.me.admin > 0}<a class="catalog-item-admin-link" href="/admi/catalog?edit={item.id}">Edit item</a>{/if}
+            </div>
+        </section>
+        {#if limited}
+            <section class="catalog-price-section" id="price-chart">
+                <h2>Price Chart</h2>
+                <div class="catalog-price-panel">
+                    <div class="catalog-chart-controls">
+                        <div class="catalog-chart-legend"><span><i class="price-key"></i>Recent Average Price</span><span><i class="volume-key"></i>Volume</span></div>
+                        <select aria-label="Price chart range" bind:value={range}><option value={30}>30 Days</option><option value={90}>90 Days</option><option value={180}>180 Days</option></select>
                     </div>
-                {/if}
-
-                <div class="catalog-item-report">Report Abuse</div>
-
-                <div class="catalog-item-rule"></div>
-
-                <div class="catalog-item-genre-label">Genres:</div>
-                <a class="catalog-item-genre" href="/catalog?category=all"><span class="catalog-genre-cube">◆</span> All</a>
-
-                {#if session.me && session.me.admin > 0}
-                    <div class="catalog-item-admin-link"><a href="/admi/catalog?edit={item.id}">Edit item</a></div>
-                {/if}
-            </section>
-
-            <aside class="catalog-item-actions">
-                <div class="catalog-buy-box">
-                    <div class="catalog-buy-price">
-                        {#if item.price === null}
-                            <span class="catalog-buy-label">Price:</span> <strong>Off Sale</strong>
-                        {:else if Number(item.price) === 0}
-                            <span class="catalog-buy-label">Price:</span> <strong class="catalog-buy-green">Free</strong>
-                        {:else}
-                            <span class="catalog-buy-label">Price:</span> <span class="robux">{n(item.price)}</span>
-                        {/if}
-                    </div>
-
-                    <div class="catalog-buy-action">
-                        {#if !session.me}
-                            <a class="catalog-buy-button catalog-login-button" href="/login">Log In to Buy</a>
-                        {:else if item.owned}
-                            <div class="catalog-owned-label">Item Owned</div>
-                            {#if canWear}
-                                <button type="button" class="catalog-buy-button" class:catalog-remove-button={item.wearing} disabled={busy} onclick={wear}>{item.wearing ? "Remove" : "Wear Item"}</button>
-                            {:else if !item.asset_id}
-                                <div class="catalog-action-note">No wearable model is attached.</div>
-                            {/if}
-                        {:else if soldOut}
-                            <button type="button" class="catalog-buy-button catalog-disabled-button" disabled>Sold Out</button>
-                        {:else if item.price === null}
-                            <button type="button" class="catalog-buy-button catalog-disabled-button" disabled>Off Sale</button>
-                        {:else}
-                            <button type="button" class="catalog-buy-button" disabled={busy || balance < Number(item.price)} onclick={buy}>
-                                {Number(item.price) === 0 ? "Get Item" : "Buy with N$"}
-                            </button>
-                            {#if balance < Number(item.price)}
-                                <div class="catalog-action-error">You need {n(Number(item.price) - balance)} more.</div>
-                            {/if}
-                        {/if}
-                    </div>
-
-                    <div class="catalog-sold-count">({n(sales)} Sold)</div>
+                    <div class="catalog-chart-area"><span>No price history available.</span></div>
+                    <div class="catalog-chart-dates">{#each dates as label}<span>{label}</span>{/each}</div>
+                    <div class="catalog-chart-volume"></div>
+                    <dl class="catalog-chart-summary"><div><dt>Quantity Sold</dt><dd>{n(sales)}</dd></div><div><dt>Original Price</dt><dd>{"N/A"}</dd></div><div><dt>Average Price</dt><dd>N/A</dd></div></dl>
                 </div>
-
-                <div class="catalog-item-status" class:error={statusError}>{status}</div>
-
-                <button type="button" class="catalog-share-button" onclick={share}><span>+</span> {shareLabel}</button>
-            </aside>
-        </div>
+            </section>
+            <section class="catalog-resellers-section" id="resellers">
+                <h2>Resellers</h2>
+                <div class="catalog-resellers-panel"><p>No resellers are available.</p></div>
+            </section>
+        {/if}
+        {#if recommended.length}
+            <section class="catalog-recommendations-section">
+                <h2>Recommended Items</h2>
+                <ul class="catalog-recommendations">
+                    {#each recommended as rec (rec.id)}
+                        <li class="catalog-recommended-card">
+                            <a href="/catalog/item?id={rec.id}"><img src={rec.thumbnail || "/img/pending.png"} alt={rec.name}><div class="catalog-recommended-name" title={rec.name}>{rec.name}</div></a>
+                            <div class="catalog-recommended-creator">By <a href="/user?id={rec.creator_id}">{rec.creator_name || "NoneRev"}</a></div>
+                            <div class="catalog-recommended-price">{#if rec.price !== null}<span class="catalog-currency" aria-label="Nonebux"></span>{Number(rec.price) === 0 ? "Free" : n(rec.price)}{:else}<span class="catalog-offsale">Off Sale</span>{/if}</div>
+                        </li>
+                    {/each}
+                </ul>
+            </section>
+        {/if}
     </div>
 {/if}
 </main>

@@ -9,11 +9,13 @@
     let missing = $state(false);
     let passes = $state<any[]>([]);
     let badges = $state<any[]>([]);
-    let tab = $state(location.hash === "#store" ? "store" : location.hash === "#servers" ? "servers" : "about");
+    let recommended = $state<any[]>([]);
+    let tab = $state(location.hash === "#store" ? "store" : location.hash === "#servers" ? "servers" : location.hash === "#leaderboards" ? "leaderboards" : "about");
     let storeMsg = $state("");
     let storeOk = $state(false);
     let buying = $state(0);
     let launching = $state(false);
+    let linkCopied = $state(false);
 
     const list = (d: any, key: string) => Array.isArray(d) ? d : Array.isArray(d?.[key]) ? d[key] : [];
 
@@ -39,9 +41,12 @@
         api(`/games/${id}/badges`).then(d => {
             badges = list(d, "badges");
         }).catch(() => {});
+        api("/games?page=1").then(d => {
+            recommended = list(d, "games").filter((item: any) => Number(item.id) !== id).slice(0, 6);
+        }).catch(() => {});
     });
 
-    // opens nonerev-launcher: which NoneRevLauncher.exe registered, the launcher reads the site url from placelauncherurl
+
     const play = async () => {
         try {
             const d = await api(`/games/${id}/launch`);
@@ -78,6 +83,16 @@
         if (!v) return "N/A";
         const d = typeof v === "number" ? new Date(v * 1000) : new Date(v);
         return isNaN(d.getTime()) ? "N/A" : d.toLocaleDateString("en-US");
+    };
+
+    const share = async () => {
+        try {
+            await navigator.clipboard.writeText(location.href);
+            linkCopied = true;
+            setTimeout(() => linkCopied = false, 2500);
+        } catch {
+            linkCopied = false;
+        }
     };
 
     const thumbnail = $derived(game?.thumbnail || "/img/DefaultThumb.png");
@@ -132,19 +147,22 @@
 
                     <ul class="share-rate-favorite-2016">
                         <li class="favorite-2016" title="Favorites">
-                            <span class="favorite-star">★</span>
+                            <svg class="game-rating-icon favorite-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 1.5 3.3 6.7 7.4 1.1-5.4 5.2 1.3 7.3-6.6-3.5-6.6 3.5 1.3-7.3-5.4-5.2 7.4-1.1z"/></svg>
                             <span>{compact(game.favorites)}</span>
                         </li>
                         <li class="voting-panel-2016">
-                            <div class="vote-counts-2016">
-                                <span>👍 {compact(up)}</span>
-                                <span>{compact(down)} 👎</span>
-                            </div>
-                            <div class="vote-track-2016" title="{ratio}% positive">
-                                <div class="vote-fill-2016" style="width: {ratio}%;"></div>
+                            <div class="vote-meter-2016">
+                                <div class="vote-counts-2016">
+                                    <span class="vote-count-up" aria-label={`${compact(up)} likes`}><img class="game-rating-icon" src="/img/game-like.svg" alt="">{compact(up)}</span>
+                                    <span class="vote-count-down" aria-label={`${compact(down)} dislikes`}>{compact(down)}<img class="game-rating-icon" src="/img/game-dislike.svg" alt=""></span>
+                                </div>
+                                <div class="vote-track-2016" class:neutral={up + down === 0} title={up + down === 0 ? "No votes yet" : `${ratio}% positive`}>
+                                    <div class="vote-fill-2016" style="width: {ratio}%;"></div>
+                                </div>
                             </div>
                         </li>
                     </ul>
+                    <div class="game-share-row"><button type="button" onclick={share}>{linkCopied ? "Link copied" : "Share game"}</button></div>
                 </div>
             </section>
 
@@ -152,22 +170,24 @@
                 <ul class="nav nav-tabs game-tab-list-2016" role="tablist">
                     {@render tabLink("about", "About")}
                     {@render tabLink("store", "Store")}
+                    {@render tabLink("leaderboards", "Leaderboards")}
                     {@render tabLink("servers", "Servers")}
                 </ul>
 
                 <div class="tab-content game-tab-content-2016">
                     <div class="tab-pane fade" class:show={tab === "about"} class:active={tab === "about"} id="about" role="tabpanel">
+                        <h2 class="game-section-heading">Description</h2>
                         <div class="section-2016 game-about-2016">
-                            <h3>Description</h3>
                             <p class="game-description-2016" style="white-space: pre-line">{game.description?.trim() || "No description available."}</p>
 
                             <ul class="game-stats-2016">
-                                <li><p class="stat-title">Active</p><p class="stat-value">{compact(game.playing)}</p></li>
+                                <li><p class="stat-title">Playing</p><p class="stat-value">{compact(game.playing)}</p></li>
                                 <li><p class="stat-title">Visits</p><p class="stat-value">{compact(game.visits)}</p></li>
                                 <li><p class="stat-title">Created</p><p class="stat-value">{date(game.created_at)}</p></li>
                                 <li><p class="stat-title">Updated</p><p class="stat-value">{date(game.updated_at)}</p></li>
                                 <li><p class="stat-title">Max Players</p><p class="stat-value">{(Number(game.max_players) || 50).toLocaleString()}</p></li>
                                 <li><p class="stat-title">Genre</p><p class="stat-value"><a href="/games">{game.genre || "All"}</a></p></li>
+                                <li><p class="stat-title">Allowed Gear</p><p class="stat-value">{game.allowed_gear ?? "—"}</p></li>
                             </ul>
 
                             <div class="game-stat-footer-2016">
@@ -176,11 +196,15 @@
                             </div>
                         </div>
 
-                        <div class="section-2016 game-badges-2016">
-                            <h3>Badges</h3>
-                            {#if badges.length === 0}
-                                <p class="game-store-empty">This game has no badges.</p>
-                            {:else}
+                        <h2 class="game-section-heading">VIP Servers</h2>
+                        <div class="section-2016 game-vip-2016">
+                            <p>Play this game with friends and other people you invite.<br>See all your VIP servers in the <button type="button" class="game-inline-link" onclick={() => tab = "servers"}>Servers</button> tab.</p>
+                            <button class="btn-2016-blue" type="button" disabled title="VIP servers are not available yet">Create VIP Server</button>
+                        </div>
+
+                        {#if badges.length > 0}
+                            <h2 class="game-section-heading">Badges</h2>
+                            <div class="section-2016 game-badges-2016">
                                 <div class="game-badge-grid">
                                     {#each badges as b (b.id)}
                                         <div class="game-badge-card" class:disabled={b.disabled}>
@@ -188,13 +212,26 @@
                                             <div>
                                                 <strong>{b.name}</strong>
                                                 <p>{b.description || ""}</p>
-                                                <span>{b.disabled ? "Disabled" : `Won by ${(Number(b.awarded) || 0).toLocaleString()} players`}</span>
+                                                <span>{b.disabled ? "Disabled" : `Won by ${(Number(b.awarded_count) || 0).toLocaleString()} players`}</span>
                                             </div>
                                         </div>
                                     {/each}
                                 </div>
-                            {/if}
-                        </div>
+                            </div>
+                        {/if}
+
+                        {#if recommended.length > 0}
+                            <h2 class="game-section-heading">Recommended Games</h2>
+                            <div class="game-recommended-grid">
+                                {#each recommended as item (item.id)}
+                                    <a class="game-recommended-card" href="/game?id={item.id}">
+                                        <img src={item.thumbnail || "/img/DefaultThumb.png"} alt="">
+                                        <span class="game-recommended-title">{item.title}</span>
+                                        <span class="game-recommended-playing">{compact(item.playing)} Playing</span>
+                                    </a>
+                                {/each}
+                            </div>
+                        {/if}
                     </div>
 
                     <div class="tab-pane fade" class:show={tab === "store"} class:active={tab === "store"} id="store" role="tabpanel">
@@ -228,6 +265,13 @@
                                     {/each}
                                 </div>
                             {/if}
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" class:show={tab === "leaderboards"} class:active={tab === "leaderboards"} id="leaderboards" role="tabpanel">
+                        <div class="section-2016 empty-tab-2016">
+                            <h3>Leaderboards</h3>
+                            <p>There are no leaderboards for this game.</p>
                         </div>
                     </div>
 

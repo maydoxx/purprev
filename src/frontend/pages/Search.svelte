@@ -1,4 +1,5 @@
 <script lang="ts">
+    import GameCard from "../GameCard.svelte";
     import { api } from "../api";
     import { router } from "../router.svelte";
     import { session } from "../session.svelte";
@@ -53,28 +54,16 @@
 </svelte:head>
 
     <div class="container">
-        <h1>Searching for {q} in {types[type]}</h1>
-        <div class={type === "games" ? "games-search-list gap-2 flex-wrap d-flex bg-white rounded" : "row"}>
-            {#if type === "games"}
+        <h1>{type === "games" && !q ? "All Games" : `Searching for ${q} in ${types[type]}`}</h1>
+        {#if type === "games"}
+            <ul class="games-search-list">
                 {#each results as game (game.id)}
-                    <div class="game-search-item p-3 m-0 position-relative text-body text-decoration-none" style="max-width: 180px;">
-                        <div data-testid="game-tile">
-                            <a class="game-card-link" href="/game?id={game.id}">
-                                <span class="thumbnail-2d-container game-card-thumb-container rounded">
-                                    <img class="rounded" src={game.icon || "/img/pending.png"} alt={game.title} width="150" height="150">
-                                </span>
-                                <div class="game-card-name game-name-title" title={game.title}>{game.title}</div>
-                                <div class="game-card-info" data-testid="game-tile-stats">
-                                    <span class="info-label icon-votes-gray"></span>
-                                    <span class="info-label vote-percentage-label">{game.like_ratio ?? 90}%</span>
-                                    <span class="info-label icon-playing-counts-gray"></span>
-                                    <span class="info-label playing-counts-label">{(game.playing ?? 0).toLocaleString()}</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
+                    <GameCard {game} />
                 {/each}
-            {:else if type === "groups"}
+            </ul>
+        {:else}
+            <div class="row">
+            {#if type === "groups"}
                 {#each results as group (group.id)}
                     <div class="user-search-item col col-12 bg-body-tertiary p-3 m-0 position-relative">
                         <div class="d-flex align-items-center">
@@ -107,7 +96,8 @@
                     </div>
                 {/each}
             {/if}
-        </div>
+            </div>
+        {/if}
         <nav aria-label="Page navigation" class="d-flex justify-content-center mt-3">
             <ul class="pagination">
                 {#each Array.from({ length: totalPages }, (_, i) => i + 1) as i}
@@ -118,3 +108,13 @@
             </ul>
         </nav>
     </div>
+
+<style>
+    .games-search-list {
+        display: flex;
+        flex-wrap: wrap;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+</style>

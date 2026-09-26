@@ -1,4 +1,5 @@
 <script lang="ts">
+    import AuthBackground from "../AuthBackground.svelte";
     import { api } from "../api";
     import { session } from "../session.svelte";
     import { router } from "../router.svelte";
@@ -8,10 +9,12 @@
     let confirmpassword = $state("");
     let invitekey = $state("");
     let error = $state("");
+    let busy = $state(false);
 
     const submit = async (e: Event) => {
         e.preventDefault();
         error = "";
+        busy = true;
         try {
             const res = await api("/auth/register", {
                 username,
@@ -23,28 +26,44 @@
             router.go("/home");
         } catch (err: any) {
             error = err.message;
+        } finally {
+            busy = false;
         }
     };
 </script>
 
 <svelte:head>
-    <title>NoneRev - Sign Up</title>
+    <title>Sign Up - None.</title>
     <link rel="stylesheet" href="/css/landing-2016.css">
 </svelte:head>
 
-<a class="auth-top-link" href="/">&larr; Back</a>
-<div class="auth-only">
-    <div class="auth-panel">
-        <div class="hero-logo"><img src="/img/nonelogo.png" alt="NoneRev"></div>
-        <h2>Sign up and start having fun!</h2>
-        <div class="form-error" style:display={error ? "block" : "none"}>{error}</div>
-        <form onsubmit={submit}>
-            <div class="auth-field"><input bind:value={username} type="text" placeholder="Username" autocomplete="username" maxlength="32"></div>
-            <div class="auth-field"><input bind:value={password} type="password" placeholder="Password" autocomplete="new-password"></div>
-            <div class="auth-field"><input bind:value={confirmpassword} type="password" placeholder="Confirm Password" autocomplete="new-password"></div>
-            <div class="auth-field"><input bind:value={invitekey} type="text" placeholder="Invite Key" autocomplete="off"></div>
-            <button class="signup-button" type="submit">Sign Up</button>
-        </form>
-        <p class="auth-note">Already have an account? <a href="/login">Log in</a></p>
+<AuthBackground />
+<main class="none-auth-main">
+    <div class="none-auth-container">
+        <a href="/" class="none-auth-logo-link"><img src="/img/nonelogo.png" alt="None."></a>
+        <div class="none-auth-panel">
+            <h1>Sign Up</h1>
+            {#if error}<div class="none-auth-error" role="alert">{error}</div>{/if}
+            <form onsubmit={submit}>
+                    <div class="none-auth-field">
+                        <label for="username">Username</label>
+                        <input id="username" name="username" type="text" required autocomplete="username" bind:value={username} maxlength="20" placeholder="Username">
+                    </div>
+                    <div class="none-auth-field">
+                        <label for="password">Password</label>
+                        <input id="password" name="password" type="password" required autocomplete="new-password" bind:value={password} placeholder="Password">
+                    </div>
+                    <div class="none-auth-field">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input id="confirm-password" name="password_confirmation" type="password" required autocomplete="new-password" bind:value={confirmpassword} placeholder="Confirm Password">
+                    </div>
+                    <div class="none-auth-field">
+                        <label for="invite-key">Invite Key</label>
+                        <input id="invite-key" name="invitekey" required autocomplete="off" bind:value={invitekey} placeholder="Invite Key">
+                    </div>
+                <button type="submit" class="none-auth-button" disabled={busy}>{busy ? "Please wait…" : "Sign Up"}</button>
+            </form>
+            <p class="none-auth-note">Already have an account? <a href="/login">Log In</a></p>
+        </div>
     </div>
-</div>
+</main>

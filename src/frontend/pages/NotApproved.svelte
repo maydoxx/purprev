@@ -16,7 +16,7 @@
         6: "Account Deleted"
     };
 
-    // TODO: no user route for the ongoing action yet, session only has its id
+
     let action = $state<any>(null);
 
     api("/user/moderation").then(d => {

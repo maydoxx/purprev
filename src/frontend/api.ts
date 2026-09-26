@@ -19,7 +19,7 @@ const request = async <T>(path: string, init: RequestInit): Promise<T> => {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-        // elysia validation errors have summary, ours have error
+
         const message = data.error ?? data.summary ?? data.message ?? res.statusText;
         console.error(`api ${init.method} ${path} -> ${res.status}: ${message}`, data);
         throw new ApiError(res.status, message);
