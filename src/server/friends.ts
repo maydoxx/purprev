@@ -1,6 +1,6 @@
 import { sql, now } from "./db";
 
-// seconds since lastOnlineSite to count as online
+
 export const ONLINE_WINDOW = 5 * 60;
 
 export const isOnline = (lastOnlineSite: number | null) =>
@@ -36,7 +36,7 @@ export const friendCount = async (userId: number): Promise<number> => {
     return Number(row.n);
 };
 
-// online first
+
 export const friendsOf = async (userId: number, limit: number, offset = 0) => {
     const rows = await sql`
         SELECT users.id, users.username, users.lastOnlineSite

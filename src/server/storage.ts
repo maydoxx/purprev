@@ -1,8 +1,8 @@
 import { join, dirname } from "path";
 import { mkdir, rename, unlink } from "fs/promises";
 
-// where uploads and renders live: the local uploads dir or an r2 bucket behind the cdn
-// keys look like avatars/12.png, the manager writes the same keys so both have to match
+
+
 const env = process.env;
 export const STORAGE = (env.STORAGE ?? "local").toLowerCase() === "cloudflare" ? "cloudflare" : "local";
 export const UPLOADS = env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
@@ -29,7 +29,7 @@ const objectKey = (key: string) => (PREFIX ? `${PREFIX}/${key}` : key);
 type Data = Blob | Uint8Array | string;
 
 export const storage = {
-    // temp + rename locally so a half written file is never the live one, r2 puts are atomic anyway
+
     put: async (key: string, data: Data, type: string) => {
         if (s3) {
             await s3.write(objectKey(key), data as any, {
@@ -59,7 +59,7 @@ export const storage = {
         await unlink(join(UPLOADS, key)).catch(() => {});
     },
 
-    // the bytes, null when there is nothing under that key
+
     open: async (key: string) => {
         if (s3) {
             const file = s3.file(objectKey(key));
@@ -69,7 +69,7 @@ export const storage = {
         return await file.exists() ? file : null;
     },
 
-    // rcc and the client fetch through the site, so stream from storage instead of bouncing them to the cdn
+
     stream: async (key: string, type: string, cache = "no-cache") => {
         const file = await storage.open(key);
         if (!file) {
@@ -92,7 +92,7 @@ export const storage = {
         return true;
     },
 
-    // every key with its size, one listing instead of a head per file (r2 only)
+
     list: async () => {
         if (!s3) {
             return null;

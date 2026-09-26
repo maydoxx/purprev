@@ -11,12 +11,12 @@ export const auth = new Elysia({ prefix: "/api/auth" })
     .use(logout)
     .use(register)
 
-    // frontend asks this on load
+
     .get("/me", ({ user }) => user, {
         auth: true
     })
 
-    // /myAuthTicket gives the token for -t argument
+
     .get("/ticket", ({ cookie }) => ({
         token: cookie.token?.value ?? null
     }), {

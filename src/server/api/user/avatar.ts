@@ -14,7 +14,7 @@ const DEFAULT_COLORS = {
     right_leg_color: 119
 };
 
-// how many of each you can wear at once
+
 const WEAR_LIMITS: Record<string, number> = {
     Hat: 3,
     Face: 1,
@@ -46,7 +46,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
     .get("/", async ({ user }) => ({
         colors: await bodyColors(user.id),
         wearing: await Promise.all((await wornItems(user.id)).map(withThumbnail)),
-        // everything you own, for the wardrobe
+
         owned: await Promise.all((await sql`
             SELECT catalog_items.id, catalog_items.name, catalog_items.category, catalog_items.thumbnail, catalog_items.asset_id, user_items.wearing
             FROM user_items JOIN catalog_items ON catalog_items.id = user_items.item_id
@@ -58,7 +58,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         auth: true
     })
 
-    // brickcolor numbers, unknown ones get ignored
+
     .post("/colors", async ({ body, user, status }) => {
         const colors = await bodyColors(user.id);
         let changed = false;
@@ -99,7 +99,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         })
     })
 
-    // wear or take off something you own, oldest worn one gets bumped when over the limit
+
     .post("/wear", async ({ body, user, status }) => {
         const [owned] = await sql`SELECT item_id FROM user_items WHERE user_id = ${user.id} AND item_id = ${body.itemId}`;
         if (!owned) {
@@ -152,7 +152,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         })
     })
 
-    // the "click here to re-draw it" link
+
     .post("/render", async ({ user }) => ({
         ok: await rcc.render.avatar(user.id),
         full: await mediaUrl("avatars", user.id)

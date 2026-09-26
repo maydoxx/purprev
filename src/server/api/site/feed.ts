@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 
-// home page status feed, you and your friends
+
 export const feed = new Elysia({ prefix: "/feed" })
     .use(session)
     .get("/", async ({ user }) => {

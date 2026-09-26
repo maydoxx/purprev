@@ -3,8 +3,8 @@ import { stat } from "fs/promises";
 import { sql, now } from "./db";
 import { storage, STORAGE, UPLOADS } from "./storage";
 
-// the media table says which uploads and renders exist, so pages never stat disk or ask r2
-// kind + id -> ext, key is <kind>/<id>.<ext> except headshots which sit next to the avatar
+
+
 export type MediaKind = "avatars" | "headshots" | "thumbnails" | "icons" | "catalog" | "badges" | "gamepasses" | "blog" | "groups" | "places" | "assets";
 
 export const TYPES: Record<string, string> = {
@@ -28,7 +28,7 @@ export const contentType = (ext: string) => TYPES[ext.toLowerCase()] ?? "applica
 export const mediaKey = (kind: string, id: number, ext: string) =>
     kind === "headshots" ? `avatars/${id}-headshot.${ext}` : `${kind}/${id}.${ext}`;
 
-// avatars/12-headshot.png -> headshots 12 png
+
 export const parseKey = (key: string) => {
     const m = /^([a-z]+)\/(\d+)(-headshot)?\.([a-z0-9]+)$/i.exec(key);
     if (!m) {
@@ -49,7 +49,7 @@ type Entry = {
 let cache: Map<string, Entry> | null = null;
 let loadedAt = 0;
 
-// reloaded every minute so media:sync or the manager writing while we run gets noticed
+
 const load = async () => {
     if (!cache || Date.now() - loadedAt > 60000) {
         const rows = await sql`SELECT kind, id, ext, updated_at FROM media`;
@@ -65,7 +65,7 @@ const load = async () => {
 const EXTS = ["png", "jpg", "jpeg", "gif", "webp", "rbxl", "rbxmx", "rbxm", "mp3", "ogg", "wav"];
 const misses = new Map<string, number>();
 
-// local mode: a file someone dropped into the folder by hand gets picked up and recorded
+
 const probe = async (kind: string, id: number) => {
     const k = `${kind}/${id}`;
     if (STORAGE !== "local" || (misses.get(k) ?? 0) > Date.now()) {
@@ -86,13 +86,13 @@ export const mediaEntry = async (kind: string, id: number) => (await load()).get
 
 export const mediaHas = async (kind: string, id: number) => (await mediaEntry(kind, id)) !== null;
 
-// "" when there is nothing, the ?v= busts the cdn after a re-render
+
 export const mediaUrl = async (kind: string, id: number) => {
     const e = await mediaEntry(kind, id);
     return e ? `${storage.publicUrl(mediaKey(kind, id, e.ext))}?v=${e.updated_at}` : "";
 };
 
-// row only, for renders the manager already wrote
+
 export const mediaRecord = async (kind: string, id: number, ext: string, size: number) => {
     const old = await mediaEntry(kind, id);
     if (old && old.ext !== ext) {
@@ -141,7 +141,7 @@ export const mediaCopy = async (from: string, to: string, id: number) => {
     return mediaUrl(to, id);
 };
 
-// the file itself, for /asset/?id= and the in game friend pics
+
 export const mediaStream = async (kind: string, id: number, cache = "no-cache") => {
     const e = await mediaEntry(kind, id);
     return e ? storage.stream(mediaKey(kind, id, e.ext), contentType(e.ext), cache) : null;

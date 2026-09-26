@@ -13,7 +13,7 @@ const id = t.Object({
 
 class PurchaseError extends Error {}
 
-// the games table only has id, creator_id and title, the rest is what the php page defaulted to
+
 const withMedia = async (game: any, playing = 0) => ({
     ...game,
     description: game.description ?? "",
@@ -75,7 +75,7 @@ export const games = new Elysia({ prefix: "/api/games" })
         params: id
     })
 
-    // the page cant read the token cookie, so the launcher url gets built here
+
     .get("/:id/launch", ({ params, token }) => {
         const launcher = `${SITE_URL}/Game/PlaceLauncher.ashx?request=RequestGame&placeId=${params.id}`;
         return {

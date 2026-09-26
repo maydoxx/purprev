@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { sql, now } from "./db";
 
-// 7 days to die
+
 const TOKEN_LIFE = 60 * 60 * 24 * 7;
 
 export type User = {
@@ -11,7 +11,7 @@ export type User = {
     about: string | null;
     admin: number;
     currency: number;
-    // set when banned/warned, /not-approved
+
     ongoing_action_id: number | null;
 };
 
@@ -26,7 +26,7 @@ export const session = new Elysia({ name: "session" })
     .resolve({
         as: "global"
     }, async ({ cookie }) => {
-        // the client only has .ROBLOSECURITY, the launcher sets it from the token
+
         const token = cookie.token?.value ?? cookie[".ROBLOSECURITY"]?.value;
         let user: User | null = null;
 
@@ -70,8 +70,8 @@ export const session = new Elysia({ name: "session" })
         };
     })
 
-    // auth: true on a route = 401 when not logged in, and user is never null in there
-    // admin: true = same but 403 when not admin
+
+
     .macro({
         auth: {
             resolve({ user, status }) {

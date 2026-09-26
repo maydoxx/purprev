@@ -1,5 +1,5 @@
-// bun run media:sync [folder], records every file in the media table and copies it into storage
-// run it once after moving to r2, or after copying the old uploads/ over from the php site
+
+
 import { join, resolve } from "path";
 import { readdir, stat } from "fs/promises";
 import { sql } from "./db";
@@ -7,12 +7,12 @@ import { STORAGE, UPLOADS, storage } from "./storage";
 import { mediaEntry, mediaKey, mediaRecord, parseKey, contentType } from "./media";
 
 const from = process.argv[2] ?? UPLOADS;
-// another folder in local mode = copy it in, r2 = push it up
+
 const copy = STORAGE === "cloudflare" || resolve(from) !== resolve(UPLOADS);
 const PARALLEL = 16;
 const KINDS = ["avatars", "thumbnails", "icons", "catalog", "badges", "gamepasses", "blog", "groups", "places", "assets"];
 
-// what the bucket already holds, so nothing gets pushed twice
+
 const inBucket = copy ? await storage.list() : null;
 const sizes = new Map((await sql`SELECT kind, id, size FROM media`).map((r: any) => [`${r.kind}/${r.id}`, Number(r.size)]));
 

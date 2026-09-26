@@ -11,5 +11,5 @@ export const sql = new SQL({
     password: env.MYSQL_PASSWORD ?? ""
 });
 
-// unix time like the php did
+
 export const now = () => Math.floor(Date.now() / 1000);

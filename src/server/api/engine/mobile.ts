@@ -5,12 +5,12 @@ import { mediaUrl } from "../../paths";
 import { SITE_URL } from "../../site";
 import { rcc } from "../../rcc";
 
-// 1x1 gif
+
 const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
 
 const USERNAME = /^[A-Za-z0-9_]{3,20}$/;
 
-// every field has to be there or the app logs itself back out
+
 const userInfo = async (id: number) => {
     const user = await getUser(id);
     if (!user) {
@@ -28,11 +28,11 @@ const userInfo = async (id: number) => {
     };
 };
 
-// android client, everything has to be json
+
 const mobileapi = new Elysia({ prefix: "/mobileapi" })
     .use(session)
 
-    // Status: OK / MissingRequiredField / InvalidUsername / InvalidPassword
+
     .post("/login", async ({ body, login }) => {
         const username = body.username.trim();
         if (username === "" || body.password === "") {
@@ -63,8 +63,8 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
         })
     })
 
-    // Status strings are in signup/SignUpResult.java
-    // TODO: add invite key to client, until then the app cant sign up
+
+
     .post("/securesignup", async ({ body, login }) => {
         const username = body.userName.trim();
         if (username === "" || body.password === "") {
@@ -142,9 +142,9 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
         message: ""
     }))
 
-// signup form checks these as you type
+
 const usercheck = new Elysia({ prefix: "/UserCheck" })
-    // data 0 = ok
+
     .get("/checkifinvalidusernameforsignup", async ({ query }) => {
         const username = query.username.trim();
         let invalid = !USERNAME.test(username);
@@ -189,7 +189,7 @@ export const mobile = new Elysia()
     .use(mobileapi)
     .use(usercheck)
 
-    // AgeBracket 1 = under 13, 2 = 13+
+
     .get("/my/account/json", ({ user }) => ({
         AgeBracket: 2,
         UserEmail: user?.email ?? "",
@@ -202,7 +202,7 @@ export const mobile = new Elysia()
         ErrorMessage: ""
     }))
 
-    // app spams these on launch, 404 makes it slow so just answer
+
     .all("/device/initialize", () => ({
         success: true,
         deviceId: ""

@@ -14,7 +14,7 @@ const BANNER_STYLES = ["info", "warning", "success"];
 const ITEM_CATEGORIES = ["Hat", "Face", "T-Shirt", "Shirt", "Pants", "Gear", "Package"];
 const ROBLOX_TIMEOUT = 10000;
 
-// type -> [action, seconds]
+
 const MODERATION: Record<string, [number, number]> = {
     warning: [1, 0],
     ban1d: [2, 86400],
@@ -24,7 +24,7 @@ const MODERATION: Record<string, [number, number]> = {
     account_deletion: [6, 0]
 };
 
-// roblox AssetTypeId -> our category, every accessory is a Hat here
+
 const ROBLOX_TYPES: Record<number, string> = {
     2: "T-Shirt",
     8: "Hat",
@@ -70,7 +70,7 @@ const post = t.Object({
     image: t.Optional(t.File({ type: "image" }))
 });
 
-// creator is a username
+
 const item = t.Object({
     name: t.Optional(t.String()),
     description: t.Optional(t.String()),
@@ -122,7 +122,7 @@ const bannerState = (b: any) => {
     return "Live";
 };
 
-// datetime-local string -> unix seconds, 0 when blank or garbage
+
 const toStamp = (value?: string) => {
     const ms = Date.parse((value ?? "").trim());
     return Number.isNaN(ms) ? 0 : Math.floor(ms / 1000);
@@ -205,7 +205,7 @@ const lookupRobloxAsset = async (assetId: number) => {
     };
 };
 
-// copy of the roblox thumb lands in uploads/catalog/<id>.png, the column stays empty
+
 const storeThumbnail = async (itemId: number, url: string) => {
     const res = await fetch(url, {
         signal: AbortSignal.timeout(20000)
@@ -228,7 +228,7 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
     const assetId = body.asset_id ?? null;
     let remote = "";
 
-    // dont fetch the roblox thumb again when a render already sits on disk
+
     const wantsThumb = thumbnail === "" && !(existing && await mediaUrl("catalog", existing.id));
     if (assetId && (name === "" || wantsThumb)) {
         const importing = name === "";
@@ -296,7 +296,7 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
 export const admin = new Elysia({ prefix: "/api/admin" })
     .use(session)
 
-    // banners
+
     .get("/banners", async () => {
         const rows = await sql`SELECT * FROM site_banners ORDER BY id DESC`;
         return rows.map((b: any) => ({
@@ -378,7 +378,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: id
     })
 
-    // blog, drafts too
+
     .get("/blog", async () => sql`
         SELECT blog_posts.*, users.username AS author_name FROM blog_posts
         LEFT JOIN users ON users.id = blog_posts.author_id
@@ -464,7 +464,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: id
     })
 
-    // catalog
+
     .get("/catalog", async ({ query }) => {
         const like = `%${(query.q ?? "").trim()}%`;
         const where = sql`catalog_items.name LIKE ${like} OR users.username LIKE ${like}`;
@@ -539,7 +539,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         body: item
     })
 
-    // rcc draws the item on a default character, the png replaces whatever thumbnail was set
+
     .post("/catalog/:id/render", async ({ params, status }) => {
         const [row] = await sql`SELECT id, asset_id FROM catalog_items WHERE id = ${params.id}`;
         if (!row?.asset_id) {
@@ -571,7 +571,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: id
     })
 
-    // invite keys, no cooldown for admins
+
     .get("/invitekeys", ({ query }) => paginate(
         sql`SELECT COUNT(*) AS n FROM invites`,
         query.page,
@@ -608,7 +608,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: id
     })
 
-    // moderation
+
     .get("/moderation", ({ query }) => paginate(
         sql`SELECT COUNT(*) AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
         query.page,
@@ -672,7 +672,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         })
     })
 
-    // undo, id is the user
+
     .delete("/moderation/:id", async ({ params }) => {
         await sql`DELETE FROM moderation_actions WHERE user_id = ${params.id}`;
         await sql`UPDATE users SET ongoing_action_id = NULL WHERE id = ${params.id}`;
@@ -684,7 +684,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: id
     })
 
-    // users
+
     .get("/users", ({ query }) => {
         const like = `%${(query.q ?? "").trim()}%`;
         const where = sql`username LIKE ${like} OR email LIKE ${like}`;

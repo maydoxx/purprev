@@ -1,10 +1,10 @@
 import { Elysia, t } from "elysia";
 
-// launcher and client zips, package.ps1 puts version.txt next to them. SETUP_URL when they live somewhere other than the uploads bucket
+
 const CDN = (process.env.SETUP_URL || process.env.CDN_URL || "").replace(/\/+$/, "");
 
 const routes = (prefix: string) => new Elysia({ prefix })
-    // the launcher asks this to know which client zip to grab
+
     .get("/version", async ({ status }) => {
         if (!CDN) {
             return status(503, "CDN_URL is not set");
@@ -28,7 +28,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         });
     })
 
-    // ?os=linux gives the launcher script instead of the exe
+
     .get("/download", ({ query, redirect, status }) => {
         if (!CDN) {
             return status(503, "CDN_URL is not set");
@@ -40,7 +40,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // /setup/<version>-NoneRevPlayer.zip etc
+
     .get("/:file", ({ params, redirect, status }) => {
         if (!CDN) {
             return status(503, "CDN_URL is not set");

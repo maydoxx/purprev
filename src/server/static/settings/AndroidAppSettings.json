@@ -1,10 +1,10 @@
 <?php
-// Setting/QuietGet/AndroidAppSettings - flags the android app pulls at startup
-// (AndroidAppSettings.java). the important ones here:
-//   EnableLoginLogoutSignupWithApi false -> use /mobileapi/* instead of an api. subdomain
-//     we dont have. see SessionManager.startLogin()
-//   EnableXBOXSignupRules false -> the signup form uses the {"data":0} / {"success":true}
-//     checks that UserCheck/ serves
+
+
+
+
+
+
 header("Content-Type: application/json");
 ?>
 {

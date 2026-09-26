@@ -7,8 +7,8 @@ import { mediaStream } from "../../media";
 import { SITE_URL, assetUrl } from "../../site";
 import { text } from "./sign";
 
-// remember what roblox refused or every place load re-asks the same dead ids at 1.5s each
-// only roblox ids, a miss on one of ours just means the upload isnt done (develop ids start at 3 billion)
+
+
 const MISS_DIR = join(UPLOADS, "assetcache");
 const MISS_TTL = 86400;
 const cacheable = (id: number) => id >= 1000000 && id < 3000000000;
@@ -40,7 +40,7 @@ const unavailable = () =>
         }
     });
 
-// 401/403/404/409 from roblox has to be answered as 404, 409 makes the engine retry forever
+
 const proxy = async (id: number) => {
     const cookie = process.env.ROBLOX_COOKIE ?? "";
     if (!cookie) {
@@ -114,7 +114,7 @@ const bodyColorsXml = async (userId: number) => {
 };
 
 const routes = (prefix: string) => new Elysia({ prefix })
-    // uploaded place > develop upload > roblox through the cookie
+
     .get("/", async ({ query }) => {
         const id = query.id;
         const place = await mediaStream("places", id);
@@ -148,8 +148,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // asset urls separated by ";", the first one is the BodyColors.ashx url
-    // ?assetId= gives just that one, the thumbnailer puts a single catalog item on a default character
+
+
     .get("/CharacterFetch.ashx", async ({ query, status }) => {
         if (query.assetId !== undefined) {
             return text(assetUrl(query.assetId));

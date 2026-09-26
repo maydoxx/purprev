@@ -22,10 +22,10 @@ const accept = (from: number, to: number) =>
 const remove = (a: number, b: number) =>
     sql`DELETE FROM friendships WHERE (requester_id = ${a} AND target_id = ${b}) OR (requester_id = ${b} AND target_id = ${a})`;
 
-// ingame player menu, only game servers may call the posts
+
 const friend = new Elysia({ prefix: "/Friend" })
-    // ?userId=1&otherUserIds=2&otherUserIds=3 -> ",2,"
-    // engine skips the first char and reads "id," so the commas stay
+
+
     .get("/AreFriends", async ({ request }) => {
         const params = new URL(request.url).searchParams;
         const userId = Number(params.get("userId")) || 0;
@@ -60,7 +60,7 @@ const friend = new Elysia({ prefix: "/Friend" })
             return text("ok");
         })
 
-        // request might of been made on the site or in another server, make sure it exists then accept
+
         .post("/CreateFriend", async ({ query }) => {
             const a = query.firstUserId;
             const b = query.secondUserId;
@@ -83,11 +83,11 @@ const friend = new Elysia({ prefix: "/Friend" })
         })
     )
 
-// the client asks these without /api
+
 const user = new Elysia({ prefix: "/user" })
     .use(session)
 
-    // we dont have following so friends is following
+
     .get("/following-exists", async ({ query, user }) => {
         const other = query.UserID ?? query.userId ?? 0;
         return {
@@ -102,7 +102,7 @@ const user = new Elysia({ prefix: "/user" })
         })
     })
 
-    // logged in user if no userId
+
     .get("/get-friendship-count", async ({ query, user }) => {
         const id = query.userId ?? user?.id ?? 0;
         return {
@@ -120,7 +120,7 @@ export const social = new Elysia()
     .use(friend)
     .use(user)
 
-    // corescripts get friend pics here
+
     .get("/thumbs/avatar.ashx", async ({ query }) =>
         await mediaStream("headshots", query.userId, "private, max-age=300")
         ?? new Response(Bun.file(PENDING), {
@@ -136,8 +136,8 @@ export const social = new Elysia()
         })
     })
 
-    // game server posts every chat line here, white = under 13, black = 13+
-    // broken or empty json makes the message vanish, so always answer
+
+
     .post("/moderation/filtertext", ({ body }) => ({
         data: {
             white: white(body.text),

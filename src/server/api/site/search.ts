@@ -41,7 +41,7 @@ const paginate = async (from: any, page: number) => {
 export const search = new Elysia({ prefix: "/search" })
     .use(session)
 
-    // anything that isnt games or groups searched users on the old page too
+
     .get("/", async ({ query }) => {
         const like = "%" + query.q.trim() + "%";
         const type = query.type ?? "games";
@@ -113,7 +113,7 @@ export const search = new Elysia({ prefix: "/search" })
         })
     })
 
-    // navbar dropdown. old site gave html <li> give json for now
+
     .get("/suggestions", ({ query }) => {
         const q = query.q.trim();
         return SUGGESTIONS.map(([type, label]) => ({

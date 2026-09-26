@@ -18,7 +18,7 @@ const BULK = {
     unread: sql`is_read = 0`
 };
 
-// sender_id 0 is the site
+
 const senderName = (username: string | null, type: string) => username ?? (type === "news" ? "NoneRev" : "Unknown");
 
 export const messages = new Elysia({ prefix: "/api/messages" })
@@ -68,7 +68,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
         })
     })
 
-    // navbar badge
+
     .get("/unread", async ({ user }) => {
         const [count] = await sql`
             SELECT COUNT(*) AS n FROM messages
@@ -81,7 +81,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
         auth: true
     })
 
-    // marks it read
+
     .get("/:id", async ({ params, user, status }) => {
         const [message] = await sql`
             SELECT m.*, sender.username AS sender_username, recipient.username AS recipient_username
@@ -112,7 +112,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
         })
     })
 
-    // to is a username
+
     .post("/", async ({ body, user, status }) => {
         const subject = body.subject.trim();
         const text = body.body.trim();

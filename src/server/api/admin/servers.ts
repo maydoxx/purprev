@@ -3,7 +3,7 @@ import { session } from "../../session";
 import { sql } from "../../db";
 import { rcc, RccError } from "../../rcc";
 
-// running game servers, straight from rccmanager
+
 export const servers = new Elysia({ prefix: "/api/admin/servers" })
     .use(session)
 

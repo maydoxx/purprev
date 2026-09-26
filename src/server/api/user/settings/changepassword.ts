@@ -21,7 +21,7 @@ export const changepassword = new Elysia()
         const hash = await Bun.password.hash(body.newPassword, "bcrypt");
         await sql`UPDATE users SET password = ${hash} WHERE id = ${user.id}`;
 
-        // log out everywhere else
+
         await sql`DELETE FROM tokens WHERE user_id = ${user.id} AND token != ${cookie.token!.value}`;
 
         return {

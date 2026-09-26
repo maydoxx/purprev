@@ -8,8 +8,8 @@ const iso = (t: any) => (Number(t) > 0 ? new Date(Number(t) * 1000).toISOString(
 export const marketplace = new Elysia()
     .use(session)
 
-    // GetProductInfo, catalog item > place > gamepass, else a blank one
-    // KEEP THE BLANK DESCRIPTION EMPTY, pizza place builds its ban list from the description words
+
+
     .get("/marketplace/productinfo", async ({ query }) => {
         const id = query.assetId;
         const [item] = await sql`SELECT * FROM catalog_items WHERE id = ${id}`;
@@ -53,7 +53,7 @@ export const marketplace = new Elysia()
             ProductId: id,
             Name: item?.name ?? game?.title ?? pass?.name ?? "",
             Description: item?.description ?? pass?.description ?? "",
-            // 9 = place, 34 = gamepass, 1 = whatever
+
             AssetTypeId: game ? 9 : pass ? 34 : 1,
             Creator: creator,
             IconImageAssetId: id,
@@ -77,14 +77,14 @@ export const marketplace = new Elysia()
         })
     })
 
-    // LoadPlaceInfo points here
+
     .get("/marketplace/productDetails", () => ({}), {
         query: t.Object({
             productId: t.Numeric()
         })
     })
 
-    // PlayerOwnsAsset, the item id or anything using that asset id
+
     .get("/ownership/hasAsset", async ({ query }) => {
         const [row] = await sql`
             SELECT 1 FROM user_items

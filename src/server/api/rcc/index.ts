@@ -10,7 +10,7 @@ const authed = (header: string | null) => {
     return PASSWORD !== "" && got.length === want.length && timingSafeEqual(got, want);
 };
 
-// the manager tells us when a render landed so the media table knows about it
+
 export const rcc = new Elysia({ prefix: "/api/rcc" })
     .post("/rendered", async ({ body, request, status }) => {
         if (!authed(request.headers.get("authorization"))) {

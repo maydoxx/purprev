@@ -15,7 +15,7 @@ const creatorOf = async (placeId: number) => {
     return game ? Number(game.creator_id) || 1 : 1;
 };
 
-// the client hits PlaceLauncher with .ROBLOSECURITY, then Join.ashx with ?token= too
+
 const userFromToken = async (token: string) => {
     const [row] = await sql`
         SELECT users.id, users.username FROM tokens
@@ -25,11 +25,11 @@ const userFromToken = async (token: string) => {
     return row ?? null;
 };
 
-// client uses /Game and /game both
+
 const routes = (prefix: string) => new Elysia({ prefix })
     .use(session)
 
-    // keep IsRobloxPlace false or a bad LocalScript freezes the client
+
     .all("/Join.ashx", async ({ query, user, status }) => {
         const who = user ?? (query.token ? await userFromToken(query.token) : null);
         if (!who) {
@@ -45,7 +45,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         const appearance = appearanceUrl(who.id);
         const time = String(now());
 
-        // ServerReplicator rebuilds both halves: install = userId\nname\nappearance\njobId\ntime, preauth = userId\njobId\ntime
+
         const ticket = time
             + ";" + sign([who.id, who.username, appearance, server.jobId, time].join("\n"))
             + ";" + sign([who.id, server.jobId, time].join("\n"));
@@ -98,9 +98,9 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // status 0 = still starting (client retries), 2 = ready, anything else = give up
-    // dont put a slash before the ? in joinScriptUrl or the client wont fetch it
-    // the launcher posts, the browser gets
+
+
+
     .all("/PlaceLauncher.ashx", async ({ query, user, token, status }) => {
         if (!user || !token) {
             return status(403, "invalid auth ticket");
@@ -152,12 +152,11 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // rcc loads this from gameserver.txt right after the game starts, only the game server fetches it so internal url
+
     .get("/LoadPlaceInfo.ashx", async ({ query }) => {
         const site = SITE_INTERNAL_URL;
         const social = `${site}/Game/LuaWebService/HandleSocialRequest.ashx?method=`;
         const lua = [
-            "-- Loaded by StartGameSharedScript --",
             `pcall(function() game:SetCreatorID(${await creatorOf(query.PlaceId)}, Enum.CreatorType.User) end)`,
             `pcall(function() game:GetService("SocialService"):SetFriendUrl("${social}IsFriendsWith&playerid=%d&userid=%d") end)`,
             `pcall(function() game:GetService("SocialService"):SetBestFriendUrl("${social}IsBestFriendsWith&playerid=%d&userid=%d") end)`,
@@ -190,7 +189,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // studio, signed with the other key and no --rbxsig
+
     .get("/studio.ashx", () => {
         const site = SITE_URL;
         const social = `${site}/Game/LuaWebService/HandleSocialRequest.ashx?method=`;
@@ -238,10 +237,10 @@ const routes = (prefix: string) => new Elysia({ prefix })
         success: true
     }))
 
-    // client sends its specs here, nobody reads them
+
     .all("/MachineConfiguration.ashx", () => "")
 
-    // game servers only, the url in LoadPlaceInfo is internal
+
     .all("/Badges/AwardBadge.ashx", async ({ query, request, server }) => {
         if (!isInternal(request, server)) {
             return bool(false);
@@ -274,7 +273,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // unknown badge = disabled
+
     .get("/Badges/IsBadgeDisabled.ashx", async ({ query }) => {
         const [badge] = await sql`SELECT enabled FROM game_badges WHERE id = ${query.BadgeID}`;
         return bool(!badge || !badge.enabled);
@@ -284,7 +283,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // Action is always HasPass
+
     .get("/GamePass/GamePassHandler.ashx", async ({ query, set }) => {
         if (query.Action !== "HasPass") {
             set.status = 400;
@@ -300,7 +299,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    // IsBestFriendsWith is always false, the admin "group" is what the php had
+
     .get("/LuaWebService/HandleSocialRequest.ashx", async ({ query }) => {
         const isAdmin = async () => {
             const [row] = await sql`SELECT admin FROM users WHERE id = ${query.playerid}`;
@@ -339,7 +338,7 @@ export const game = new Elysia()
     .use(routes("/Game"))
     .use(routes("/game"))
 
-    // rcc checks the client against these on join, the hash is the 2016 player exe
+
     .get("/GetAllowedMD5Hashes", () => ({
         data: ["3000f74eb7ffca5c3b5fc7d93f80de30"]
     }))
@@ -354,7 +353,7 @@ export const game = new Elysia()
 
     .get("/discord", ({ redirect }) => redirect("https://discord.gg/qvYkJ6q6A9", 302))
 
-    // android app catches this url and launches the game itself
+
     .get("/games/start", ({ query, redirect }) => {
         const placeId = query.placeid ?? query.placeId;
         return redirect(placeId === undefined ? "/games" : `/game?id=${placeId}`);
@@ -365,7 +364,7 @@ export const game = new Elysia()
         })
     })
 
-    // suggest is the ticket, good = set .ROBLOSECURITY and echo it, bad = 403 "false"
+
     .get("/Login/Negotiate.ashx", async ({ query, cookie, status }) => {
         const who = await userFromToken(query.suggest);
         if (!who) {

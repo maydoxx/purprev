@@ -4,7 +4,7 @@ import { sql, now } from "../../db";
 
 const COOLDOWN = 60 * 60 * 12;
 
-// one key per 12 hours
+
 export const invites = new Elysia({ prefix: "/invites" })
     .use(session)
     .post("/generate", async ({ user, status }) => {

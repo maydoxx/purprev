@@ -4,8 +4,8 @@ import { mkdir } from "fs/promises";
 import { UPLOADS } from "../../paths";
 import { isInternal } from "./internal";
 
-// datastores for the 2016 game server, one json file per (place, type, scope, store)
-// values are json strings the engine makes itself, we just keep them and echo them back
+
+
 const ROOT = join(UPLOADS, "datastore");
 
 const store = {
@@ -19,7 +19,7 @@ const safe = (s: string) => s.slice(0, 40).replace(/[^A-Za-z0-9_.-]/g, "_") + "_
 const pathOf = (placeId: number, type: string, scope: string, name: string) =>
     join(ROOT, String(placeId), safe(type), safe(scope), safe(name) + ".json");
 
-// one writer per file, bun has no flock
+
 const locks = new Map<string, Promise<unknown>>();
 
 const withStore = async <T>(path: string, fn: (data: Record<string, string>) => T, write: boolean): Promise<T> => {
@@ -51,14 +51,14 @@ const withStore = async <T>(path: string, fn: (data: Record<string, string>) => 
     return run;
 };
 
-// body is qkeys[0].scope= etc, php mangles those names so parse it by hand
+
 const fields = (body: string) =>
     body.split("&").filter(p => p !== "").map(p => {
         const [k, v = ""] = p.split("=", 2) as [string, string?];
         return [decodeURIComponent(k.replace(/\+/g, " ")), decodeURIComponent(v.replace(/\+/g, " "))] as [string, string];
     });
 
-// old GetGlobalDataStore requests have an empty target, then the key is in "key"
+
 const keyOf = (target: string, key: string): [string, string] => (target === "" ? ["", key] : [key, target]);
 
 const numberOf = (v: string | undefined) => {
@@ -118,7 +118,7 @@ export const persistence = new Elysia({ prefix: "/persistence" })
             query: t.Object(store)
         })
 
-        // expected doesnt match = UpdateAsync lost the race, engine refetches and retries
+
         .post("/set", async ({ body, query, status }) => {
             const [store, key] = keyOf(query.target ?? "", query.key);
             if (key === "") {
@@ -199,7 +199,7 @@ export const persistence = new Elysia({ prefix: "/persistence" })
             })
         })
 
-        // exclusiveStartKey is target$value of the last entry on the previous page
+
         .post("/getSortedValues", async ({ query }) => {
             const pageSize = Math.max(1, Math.min(100, query.pageSize ?? 50));
             const ascending = (query.ascending ?? "").toLowerCase() === "true";

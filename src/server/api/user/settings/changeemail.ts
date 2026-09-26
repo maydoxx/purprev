@@ -7,7 +7,7 @@ export const changeemail = new Elysia()
     .post("/changeemail", async ({ body, user, status }) => {
         const email = body.newEmail.trim().toLowerCase();
 
-        // email is unique
+
         const [taken] = await sql`SELECT id FROM users WHERE email = ${email} AND id != ${user.id}`;
         if (taken) {
             return status(400, {

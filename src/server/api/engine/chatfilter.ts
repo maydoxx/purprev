@@ -15,7 +15,7 @@ const LEET: Record<string, string> = {
 
 const escape = (ch: string) => ch.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&");
 
-// catches leet (sh1t) and split (s.h.i.t) spellings, whole words only
+
 const pattern = (word: string) => {
     const body = [...word].map(ch => LEET[ch] ?? escape(ch)).join("[\\s.\\-_*]{0,2}");
     return new RegExp(`(?<![\\p{L}\\p{N}])${body}(?![\\p{L}\\p{N}])`, "giu");
@@ -28,7 +28,7 @@ const words = readFileSync(join(import.meta.dir, "..", "..", "static", "chatfilt
 
 const PATTERNS = words.map(pattern);
 
-// under 13 also loses links, emails and phone numbers
+
 const EXTRA = [
     /https?:\/\/\S+|www\.\S+|\S+\.(com|net|org|gg|io|co|xyz|me|tv|ru)(\/\S*)?/giu,
     /[\w.+-]+@[\w-]+\.[\w.]+/gu,

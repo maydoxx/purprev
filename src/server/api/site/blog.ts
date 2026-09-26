@@ -14,7 +14,7 @@ const POST = sql`blog_posts.*, users.username AS author_name`;
 const PUBLISHED = () => sql`blog_posts.is_published = 1 AND blog_posts.published_at <= ${now()}`;
 const NEWEST = sql`blog_posts.published_at DESC, blog_posts.id DESC`;
 
-// published only, drafts are in admin
+
 export const blog = new Elysia({ prefix: "/blog" })
     .get("/", async ({ query }) => {
         const category = (query.category ?? "").trim().toLowerCase();

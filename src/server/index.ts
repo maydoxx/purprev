@@ -23,7 +23,7 @@ import { rcc } from "./api/rcc";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
 
-    // every error goes to the console, validation and 404 keep elysias answer
+
     .onError({ as: "global" }, ({ code, error, request, set }) => {
         const where = `${request.method} ${new URL(request.url).pathname}`;
         const message = error instanceof Error ? error.message : String(error);
@@ -60,7 +60,7 @@ const app = new Elysia()
     .get("/api", () => "meow :3")
     .listen(Number(process.env.API_PORT ?? 3000));
 
-// rcc refuses a base url with a port in it, so ALSO_LISTEN=127.0.0.1:80 gives it one without
+
 for (const addr of (process.env.ALSO_LISTEN ?? "").split(",").filter(Boolean)) {
     const [host, port] = addr.includes(":") ? addr.split(":") : ["0.0.0.0", addr];
     Bun.serve({

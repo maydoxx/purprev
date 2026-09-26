@@ -3,7 +3,7 @@ import { session, getUser } from "../../session";
 import { sql, now } from "../../db";
 import { rcc } from "../../rcc";
 
-// TODO: captcha, cloudflare turnstile
+
 export const register = new Elysia()
     .use(session)
     .post("/register", async ({ body, login, status }) => {
@@ -33,7 +33,7 @@ export const register = new Elysia()
             });
         }
 
-        // deleting it is the check, so two people cant use the same key
+
         const deleted = await sql`DELETE FROM invites WHERE inviteKey = ${inviteKey}`;
         if (!deleted.affectedRows) {
             return status(400, {

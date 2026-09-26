@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { PENDING } from "../../paths";
 import { mediaUrl } from "../../media";
 
-// sends you to the render, or the placeholder until the manager made one
+
 export const getProfilePicture = new Elysia()
     .get("/getProfilePicture", async ({ query, redirect }) => {
         const url = await mediaUrl(query.type === "headshot" ? "headshots" : "avatars", query.userId);

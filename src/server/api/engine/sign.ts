@@ -1,7 +1,7 @@
 import { createSign } from "crypto";
 import { readFileSync } from "fs";
 
-// the public half is baked into the 2016 client and rcc, everything they fetch has to be signed with this
+
 const load = (env: string, fallback: string) => {
     const path = process.env[env] ?? fallback;
     try {
@@ -22,7 +22,7 @@ export const sign = (data: string, key = JOIN_KEY) => {
     return createSign("RSA-SHA1").update(data).sign(key, "base64");
 };
 
-// what the client and rcc expect: --rbxsig%<sig>%\r\n<body>, the \r\n is part of the signed bytes
+
 export const rbxsig = (body: string) => "--rbxsig%" + sign("\r\n" + body) + "%\r\n" + body;
 
 export const studiosig = (body: string) => "%" + sign("\r\n" + body, STUDIO_KEY) + "%\r\n" + body;

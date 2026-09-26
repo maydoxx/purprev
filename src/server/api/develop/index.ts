@@ -18,7 +18,7 @@ const MAX_PRICE = 2000000000;
 const TEMPLATE_WIDTH = 585;
 const TEMPLATE_HEIGHT = 559;
 const TSHIRT_MAX_SIDE = 1024;
-// our asset ids start here, anything lower is a roblox id
+
 const ASSET_ID_BASE = 3000000000;
 const CHUNKS = join(tmpdir(), "nonerev-place-uploads");
 
@@ -30,7 +30,7 @@ const clothing = t.Union([
     t.Literal("pants"),
     t.Literal("t-shirts")
 ]);
-// no price = not for sale
+
 const price = t.Optional(t.Numeric({ minimum: 0 }));
 
 const CATEGORIES = {
@@ -39,7 +39,7 @@ const CATEGORIES = {
     "t-shirts": "T-Shirt"
 };
 
-// class, template property, object name
+
 const CLOTHING_CLASSES: Record<string, [string, string, string]> = {
     Shirt: ["Shirt", "ShirtTemplate", "Shirt"],
     Pants: ["Pants", "PantsTemplate", "Pants"],
@@ -113,7 +113,7 @@ const savePlace = (placeId: number, file: Blob) => mediaPut("places", placeId, "
 
 const chunkPath = (dir: string, index: number) => join(dir, `${String(index).padStart(4, "0")}.part`);
 
-// png ihdr, gif header, jpeg sof, enough for a size check without an image library
+
 const imageSize = (bytes: Uint8Array) => {
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     if (bytes.length >= 24 && view.getUint32(0) === 0x89504e47) {
@@ -137,7 +137,7 @@ const imageSize = (bytes: Uint8Array) => {
                 return null;
             }
             const marker = bytes[offset + 1]!;
-            // fill bytes and standalone markers carry no length
+
             if (marker === 0xff) {
                 offset += 1;
                 continue;
@@ -175,7 +175,7 @@ const checkTexture = async (category: string, file: File) => {
     if (!image || image.type === "gif") {
         throw new DevelopError("That file is not a PNG or JPG image.");
     }
-    // tshirts can be any size but not stupid big, every client has to decode it
+
     if (category === "T-Shirt") {
         if (image.width > TSHIRT_MAX_SIDE || image.height > TSHIRT_MAX_SIDE) {
             throw new DevelopError(`T-Shirt images can be up to ${TSHIRT_MAX_SIDE}x${TSHIRT_MAX_SIDE} pixels (this one is ${image.width}x${image.height}).`);
@@ -189,13 +189,13 @@ const checkTexture = async (category: string, file: File) => {
     };
 };
 
-// grab an id first so u know where to write the file
+
 const reserveAsset = async (tx: any, userId: number, type: string, name: string, extension: string, parentId: number | null = null) => {
     const created = await tx`INSERT INTO assets (creator_id, type, name, extension, parent_id, created_at) VALUES (${userId}, ${type}, ${name.trim().slice(0, 100) || "Untitled"}, ${extension}, ${parentId}, ${now()})`;
     return Number(created.lastInsertRowid);
 };
 
-// row + file + children, no checks
+
 const deleteAssetTree = async (tx: any, assetId: number, userId: number) => {
     for (const child of await tx`SELECT id FROM assets WHERE parent_id = ${assetId} AND creator_id = ${userId}`) {
         await deleteAssetTree(tx, Number(child.id), userId);
@@ -204,7 +204,7 @@ const deleteAssetTree = async (tx: any, assetId: number, userId: number) => {
     await clearMedia("assets", assetId);
 };
 
-// wont touch textures or anything a catalog item still points at
+
 const deleteOwnedAsset = async (assetId: number, userId: number) => {
     const [asset] = await sql`SELECT parent_id FROM assets WHERE id = ${assetId} AND creator_id = ${userId}`;
     const [used] = await sql`SELECT 1 FROM catalog_items WHERE asset_id = ${assetId}`;
@@ -217,7 +217,7 @@ const deleteOwnedAsset = async (assetId: number, userId: number) => {
 
 const escapeXml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// the url has whatever host we run on, the engine swaps it for its own baseurl anyway
+
 const clothingXml = (category: string, textureId: number) => {
     const [className, property, objectName] = CLOTHING_CLASSES[category]!;
     return [
@@ -235,7 +235,7 @@ const clothingXml = (category: string, textureId: number) => {
     ].join("\n");
 };
 
-// saves the texture + writes the rbxmx, gives back the rbxmx id. pass an objectId to swap the texture under it
+
 const storeClothing = async (userId: number, category: string, name: string, file: File, objectId = 0) => {
     const texture = await checkTexture(category, file);
     const fresh = objectId <= 0;
@@ -285,7 +285,7 @@ const cleanName = (name: string) => {
 
 const cleanDescription = (description?: string) => (description ?? "").trim().slice(0, 2000);
 
-// blank = off sale (null), 0 = free
+
 const parsePrice = (price?: number) => {
     if (price === undefined) {
         return null;
@@ -299,7 +299,7 @@ const parsePrice = (price?: number) => {
     return price;
 };
 
-// bigints come out of bun as strings, the pages compare ids with ===
+
 const numericId = (value: any) => value === null || value === undefined ? null : Number(value);
 
 const withItemMedia = async (item: any) => ({
@@ -368,11 +368,11 @@ const passPrice = (price?: number) => {
     return price;
 };
 
-// everything in here is for logged in user
+
 export const develop = new Elysia({ prefix: "/api/develop" })
     .use(session)
 
-    // places
+
     .get("/places", async ({ user }) => {
         const rows = await sql`SELECT * FROM games WHERE creator_id = ${user.id} ORDER BY id ASC`;
         return await Promise.all(rows.map(withMedia));
@@ -449,7 +449,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         params: id
     })
 
-    // chunked .rbxl upload, 768KB chunks, 50MB max
+
     .post("/places/:id/upload", async ({ params, body, user, status }) => {
         try {
             const [game] = await sql`SELECT 1 FROM games WHERE id = ${params.id} AND creator_id = ${user.id}`;
@@ -466,7 +466,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             }
 
             const dir = join(CHUNKS, `${user.id}-${params.id}`);
-            // a fresh upload starts clean or parts of a dead one get glued in
+
             if (chunkIndex === 0) {
                 await rm(dir, {
                     recursive: true,
@@ -531,7 +531,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         })
     })
 
-    // upload your own thumbnail, creator only
+
     .post("/places/:id/thumbnail", async ({ params, body, user, status }) => {
         try {
             await ownedGame(params.id, user.id);
@@ -555,7 +555,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             }
 
             const thumbnail = await saveImage("thumbnails", params.id, image, IMAGE_MAX);
-            // nothing to resize with, the icon is the same file and the css crops it square
+
             const icon = await mediaCopy("thumbnails", "icons", params.id);
 
             return {
@@ -574,7 +574,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         })
     })
 
-    // shirts, pants, t-shirts
+
     .get("/clothing/:category", async ({ params, user }) => {
         const rows = await sql`SELECT * FROM catalog_items WHERE creator_id = ${user.id} AND category = ${CATEGORIES[params.category]} ORDER BY id DESC`;
         return await Promise.all(rows.map(withItemMedia));
@@ -630,14 +630,14 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             let assetId = numericId(item.asset_id);
             const newImage = hasFile(body.texture_file);
 
-            // a new image keeps the asset id (ppl use it in scripts) unless it wasnt one of ours
+
             if (newImage) {
                 const [existing] = assetId !== null && assetId >= ASSET_ID_BASE ? await sql`SELECT * FROM assets WHERE id = ${assetId}` : [null];
                 const reusable = existing && Number(existing.creator_id) === user.id && existing.parent_id === null && existing.type in CLOTHING_CLASSES;
                 assetId = await storeClothing(user.id, category, name, body.texture_file!, reusable ? assetId! : 0);
             }
 
-            // clear thumbnail on a new image so the new render shows
+
             await sql`
                 UPDATE catalog_items SET name = ${name}, description = ${description}, asset_id = ${assetId}, price = ${price},
                     thumbnail = ${newImage ? "" : item.thumbnail}, updated_at = ${now()}
@@ -670,10 +670,10 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         try {
             const item = await ownedItem(params.id, user.id, CATEGORIES[params.category]);
             await sql`DELETE FROM catalog_items WHERE id = ${params.id} AND creator_id = ${user.id}`;
-            // take it off everyone or CharacterFetch keeps asking for it
+
             await sql`DELETE FROM user_items WHERE item_id = ${params.id}`;
 
-            // stays if some other item still uses it
+
             const assetId = numericId(item.asset_id);
             if (assetId !== null && assetId >= ASSET_ID_BASE) {
                 await deleteOwnedAsset(assetId, user.id);
@@ -693,7 +693,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         })
     })
 
-    // audio
+
     .get("/audio", async ({ user }) => {
         const rows = await sql`SELECT * FROM assets WHERE creator_id = ${user.id} AND type = 'Audio' ORDER BY id DESC`;
         return rows.map((asset: any) => ({
@@ -756,7 +756,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         params: id
     })
 
-    // badges
+
     .get("/badges", async ({ user }) => {
         const rows = await sql`
             SELECT b.*, g.title AS game_title, (SELECT COUNT(*) FROM user_badges ub WHERE ub.badge_id = b.id) AS awarded_count
@@ -859,7 +859,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         params: id
     })
 
-    // game passes
+
     .get("/game-passes", async ({ user }) => {
         const rows = await sql`
             SELECT p.*, g.title AS game_title FROM game_passes p

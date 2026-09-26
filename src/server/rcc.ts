@@ -1,6 +1,6 @@
 import { SITE_INTERNAL_URL } from "./site";
 
-// talks to rccmanager, a dead manager never breaks a page so everything here has a fallback
+
 const env = process.env;
 const BASE = `http://${env.RCCMANAGER_HOST ?? "localhost"}:${env.RCCMANAGER_PORT ?? 25500}`;
 const TIMEOUT = 5000;
@@ -60,7 +60,7 @@ const quiet = async <T>(fallback: T, fn: () => Promise<T>) => {
 };
 
 export const rcc = {
-    // OpenJob can take a while, the launcher polls anyway
+
     findOrCreate: (placeId: number) => call<GameServer>("POST", `/servers/${placeId}`, undefined, 40000),
 
     server: (jobId: string) => quiet<GameServer | null>(null, () => call("GET", `/servers/${jobId}`)),
@@ -86,7 +86,7 @@ export const rcc = {
 
     health: () => quiet<any>(null, () => call("GET", "/health")),
 
-    // fire and forget, the png lands in uploads/ when its done
+
     render: {
         avatar: (userId: number) => quiet(false, async () => {
             await call("POST", `/render/avatar/${userId}`, {

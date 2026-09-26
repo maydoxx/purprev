@@ -1,4 +1,4 @@
--- run with bun run src/server/db/migrate.ts
+
 
 SET NAMES utf8mb4;
 
@@ -299,7 +299,7 @@ CREATE TABLE IF NOT EXISTS `forum_subscriptions` (
     KEY `idx_forum_subscriptions_thread` (`thread_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- these got made by ensureTable() in the php classes
+
 
 CREATE TABLE IF NOT EXISTS `user_avatar` (
     `user_id` int(10) UNSIGNED NOT NULL,
@@ -363,7 +363,7 @@ CREATE TABLE IF NOT EXISTS `site_banners` (
     KEY `idx_banners_live` (`enabled`, `startsAt`, `endsAt`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- develop uploads, ids start at 3 billion so they dont clash with roblox ids
+
 CREATE TABLE IF NOT EXISTS `assets` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `creator_id` int(10) UNSIGNED NOT NULL,
@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS `assets` (
     KEY `parent_id` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=3000000000;
 
--- rcc manager owns this one now, here so the old rows dont break
+
 CREATE TABLE IF NOT EXISTS `game_servers` (
     `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `placeId` int(10) UNSIGNED NOT NULL,
@@ -395,7 +395,7 @@ CREATE TABLE IF NOT EXISTS `game_servers` (
     KEY `idx_port_open` (`port`, `closed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- which uploads and renders exist in storage (local or r2), kind + id -> extension
+
 CREATE TABLE IF NOT EXISTS `media` (
     `kind` varchar(32) NOT NULL,
     `id` bigint(20) UNSIGNED NOT NULL,

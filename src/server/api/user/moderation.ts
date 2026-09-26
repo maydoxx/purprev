@@ -2,13 +2,13 @@ import { Elysia } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 
-// account_deletion never comes back
+
 const TERMINATED = 6;
 
 export const moderation = new Elysia({ prefix: "/moderation" })
     .use(session)
 
-    // the action behind /not-approved, {} when the account is fine
+
     .get("/", async ({ user }) => {
         if (!user.ongoing_action_id) {
             return {};
@@ -25,7 +25,7 @@ export const moderation = new Elysia({ prefix: "/moderation" })
         auth: true
     })
 
-    // warnings expire at 0 so they clear right away, bans once their time is up
+
     .post("/reactivate", async ({ user, status }) => {
         const [row] = await sql`SELECT action, expiresAt FROM moderation_actions WHERE id = ${user.ongoing_action_id ?? 0}`;
         if (!row || Number(row.action) === TERMINATED || Number(row.expiresAt) > now()) {

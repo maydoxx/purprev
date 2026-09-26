@@ -28,7 +28,7 @@ export const site = new Elysia({ prefix: "/api/site" })
     .use(feed)
     .use(blog)
 
-    // only the active ones
+
     .get("/banners", async () => {
         const rows = await sql`
             SELECT id, message, linkText, linkUrl, style, dismissible, updatedAt FROM site_banners

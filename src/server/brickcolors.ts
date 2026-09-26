@@ -1,4 +1,4 @@
-// classic brickcolor palette, number => [r, g, b, name]
+
 export const brickcolors: Record<number, [number, number, number, string]> = {
     1: [242, 243, 243, "White"],
     2: [161, 165, 162, "Grey"],

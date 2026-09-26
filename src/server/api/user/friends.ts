@@ -8,7 +8,7 @@ const pendingCount = async (userId: number) => {
     return Number(row.n);
 };
 
-// requests = people who asked me, sent = people i asked
+
 const pending = async (userId: number, direction: "requests" | "sent") => {
     const rows = direction === "requests"
         ? await sql`
@@ -54,7 +54,7 @@ export const friends = new Elysia({ prefix: "/friends" })
         })
     })
 
-    // decline also cancels a request you sent
+
     .post("/", async ({ body, user, status }) => {
         const me = user.id;
         const other = body.userId;
@@ -86,7 +86,7 @@ export const friends = new Elysia({ prefix: "/friends" })
                         error: "Friend request already sent"
                     });
                 }
-                // they already asked me, so just accept
+
                 if (current === "pending_in") {
                     await sql`UPDATE friendships SET status = 'accepted', accepted_at = ${now()} WHERE requester_id = ${other} AND target_id = ${me}`;
                     next = "friends";

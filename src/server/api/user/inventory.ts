@@ -5,7 +5,7 @@ import { withThumbnail } from "../../paths";
 
 const PER_PAGE = 30;
 
-// tab name => catalog category. badges and game-passes are their own tables
+
 const CATEGORIES: Record<string, string | null> = {
     hats: "Hat",
     faces: "Face",

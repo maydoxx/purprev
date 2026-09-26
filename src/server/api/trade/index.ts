@@ -23,7 +23,7 @@ const handle = (err: unknown, status: any) => {
 
 const expirePending = () => sql`UPDATE trades SET status = 'expired' WHERE status = 'pending' AND expires_at <= ${now()}`;
 
-// only limiteds, no dupes, 8 max
+
 const normalize = (items: number[]) => [...new Set(items.filter(i => i > 0))].slice(0, MAX_ITEMS_PER_SIDE);
 
 const assertOwnsLimiteds = async (tx: any, userId: number, items: number[]) => {

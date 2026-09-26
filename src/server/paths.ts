@@ -17,7 +17,7 @@ const IMAGE_TYPES: Record<string, string> = {
     "image/gif": "gif"
 };
 
-// stores <kind>/<id>.<ext>, drops any other extension for that id, gives back the url
+
 export const saveImage = async (kind: string, id: number, file: File, maxBytes = 4 * 1024 * 1024) => {
     if (file.size > maxBytes) {
         throw new UploadError(`Images must be ${Math.round(maxBytes / 1024 / 1024)} MB or smaller.`);
@@ -29,7 +29,7 @@ export const saveImage = async (kind: string, id: number, file: File, maxBytes =
     return mediaPut(kind, id, ext, file);
 };
 
-// catalog thumbnail column, else the rcc render
+
 export const withThumbnail = async <T extends { id: number, thumbnail?: string }>(item: T) => ({
     ...item,
     thumbnail: item.thumbnail || await mediaUrl("catalog", item.id)

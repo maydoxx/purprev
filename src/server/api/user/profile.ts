@@ -4,7 +4,7 @@ import { sql } from "../../db";
 import { isOnline, friendStatus, friendCount, friendsOf } from "../../friends";
 import { withThumbnail } from "../../paths";
 
-// account_deletion, only admins can see those
+
 const TERMINATED = 6;
 
 export const profile = new Elysia({ prefix: "/profile" })

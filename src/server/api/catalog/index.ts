@@ -36,7 +36,7 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
         if (category !== "featured" && category !== "all" && !(category in CATEGORIES)) {
             category = "featured";
         }
-        // searching on featured searches everything
+
         if (q !== "" && category === "featured") {
             category = "all";
         }

@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { join } from "path";
 import { STORAGE, UPLOADS, CDN_URL } from "../storage";
 
-// /uploads/thumbnails/12.png etc, on r2 the cdn has it
+
 export const uploads = new Elysia({ prefix: "/uploads" })
     .get("/:kind/:file", async ({ params, status, redirect }) => {
         if (STORAGE === "cloudflare") {
