@@ -1,5 +1,5 @@
-# behind cloudflare, so :80 with no acme and the cloudflare ranges as trusted proxies
-# rcc and the game servers must reach bun on :3000 directly (lan), never through here
+
+
 {
     servers {
         trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
@@ -7,25 +7,25 @@
 }
 
 nonerev.pw:80 {
-    # only the lan address, bun has 127.0.0.1:80 for rcc
+
     bind 10.10.0.8
 
-    # vite build output
+
     root * C:\nonerev\dist
     encode gzip
 
-    # everything the api, the 2016 client, the launcher and the android app ask for
+
     @backend path /api/* /uploads/* /Game/* /game/* /Asset/* /asset/* /Setting/* /user/* /Friend/* /marketplace/* /ownership/* /currency/* /persistence/* /thumbs/* /moderation/* /mobileapi/* /UserCheck/* /Login/* /device/* /notifications/* /sponsoredpage/* /v1.1/* /my/account/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
     reverse_proxy @backend 127.0.0.1:3000
 
-    # vite hashes its bundles so they can be cached forever, index.html must not be
+
     @bundles path /assets/*
     header @bundles Cache-Control "public, max-age=31536000, immutable"
     @static path /css/* /img/*
     header @static Cache-Control "public, max-age=86400"
     header /index.html Cache-Control "no-cache"
 
-    # the svelte app owns every other url
+
     try_files {path} /index.html
     file_server
 }
