@@ -1,16 +1,33 @@
-
-
 import { join, resolve } from "path";
 import { readdir, stat } from "fs/promises";
 import { sql } from "./db";
 import { STORAGE, UPLOADS, storage } from "./storage";
 import { mediaEntry, mediaKey, mediaRecord, parseKey, contentType } from "./media";
 
+const PARALLEL = 16;
+const KINDS = ["avatars", "thumbnails", "icons", "catalog", "badges", "gamepasses", "blog", "groups", "places", "assets"];
+
+if (!process.argv[2] && STORAGE === "cloudflare") {
+    let added = 0;
+    for (const [key, size] of await storage.list() ?? []) {
+        const parsed = parseKey(key);
+        if (!parsed || !KINDS.includes(parsed.kind)) {
+            continue;
+        }
+        const known = await mediaEntry(parsed.kind, parsed.id);
+        if (!known || known.ext !== parsed.ext) {
+            await mediaRecord(parsed.kind, parsed.id, parsed.ext, size);
+            added++;
+        }
+    }
+    console.log(`done: ${added} recorded from the bucket`);
+    await sql.close();
+    process.exit(0);
+}
+
 const from = process.argv[2] ?? UPLOADS;
 
 const copy = STORAGE === "cloudflare" || resolve(from) !== resolve(UPLOADS);
-const PARALLEL = 16;
-const KINDS = ["avatars", "thumbnails", "icons", "catalog", "badges", "gamepasses", "blog", "groups", "places", "assets"];
 
 
 const inBucket = copy ? await storage.list() : null;
