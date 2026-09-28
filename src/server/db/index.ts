@@ -8,7 +8,8 @@ export const sql = new SQL({
     port: Number(env.MYSQL_PORT ?? 3306),
     database: env.MYSQL_DATABASE ?? "nonerev",
     username: env.MYSQL_USER ?? "nonerev",
-    password: env.MYSQL_PASSWORD ?? ""
+    password: env.MYSQL_PASSWORD ?? "",
+    allowPublicKeyRetrieval: true
 });
 
 
