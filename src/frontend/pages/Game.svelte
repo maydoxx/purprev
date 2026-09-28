@@ -46,7 +46,11 @@
         }).catch(() => {});
     });
 
+    // the app is a webview, it watches for /games/start?placeid= and launches the game itself
+    const isApp = /ROBLOX (Android|iOS) App/i.test(navigator.userAgent);
+    const isPhone = !isApp && /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
 
+    // opens nonerev-launcher: which NoneRevLauncher.exe registered, the launcher reads the site url from placelauncherurl
     const play = async () => {
         try {
             const d = await api(`/games/${id}/launch`);
@@ -139,9 +143,14 @@
                     <div class="game-play-area">
                         {#if !session.me}
                             <a class="btn-play-2016" href="/login">Play</a>
+                        {:else if isApp}
+                            <button id="MobileVisitButton" type="button" class="btn-play-2016" onclick={() => location.href = `/games/start?placeid=${id}`}>Play</button>
+                        {:else if isPhone}
+                            <a class="btn-play-2016" href="/download">Play</a>
+                            <p class="text-center mt-2">Playing on a phone needs the NoneRev app.</p>
                         {:else}
-                            <button type="button" class="btn-play-2016" onclick={play}>Play</button>
-                            <p class="text-center mt-2" hidden={!launching}>Nothing happened? <a href="/download">Get the launcher</a>.</p>
+                            <button id="MultiplayerVisitButton" type="button" class="btn-play-2016" onclick={play}>Play</button>
+                            <p id="launcher-hint" class="text-center mt-2" hidden={!launching}>Nothing happened? <a href="/setup/download">Download the NoneRev launcher</a>, run it once, then press Play again.</p>
                         {/if}
                     </div>
 
