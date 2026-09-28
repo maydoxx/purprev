@@ -32,6 +32,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
     .all("/Join.ashx", async ({ query, user, status }) => {
         const who = user ?? (query.token ? await userFromToken(query.token) : null);
+        console.log(`Join: job ${query.jobId ?? "?"} for ${who ? who.username : "nobody"}`);
         if (!who) {
             return status(401, "invalid auth ticket");
         }
@@ -98,15 +99,13 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-
-
-
-    .all("/PlaceLauncher.ashx", async ({ query, user, token, status }) => {
+    .all("/PlaceLauncher.ashx", async ({ query, user, token, status, request }) => {
+        const placeId = query.placeId ?? query.placeid ?? query.PlaceId ?? 0;
+        console.log(`PlaceLauncher: place ${placeId} for ${user ? user.username : "nobody"} via ${request.headers.get("user-agent") ?? "?"}`);
         if (!user || !token) {
             return status(403, "invalid auth ticket");
         }
 
-        const placeId = query.placeId ?? query.placeid ?? query.PlaceId ?? 0;
         const [game] = placeId > 0 ? await sql`SELECT id FROM games WHERE id = ${placeId}` : [];
         if (!game) {
             return {
@@ -136,6 +135,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
             };
         }
 
+        console.log(`PlaceLauncher: ${user.username} -> ${server.jobId} on ${server.address}:${server.port}`);
         return {
             jobId: server.jobId,
             status: 2,
@@ -367,6 +367,7 @@ export const game = new Elysia()
 
     .get("/Login/Negotiate.ashx", async ({ query, cookie, status }) => {
         const who = await userFromToken(query.suggest);
+        console.log(`Negotiate: ${who ? who.username : "bad ticket"}`);
         if (!who) {
             return status(403, "false");
         }
