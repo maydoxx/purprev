@@ -5,6 +5,7 @@
     import { api } from "./api";
 
     import Header from "./Header.svelte";
+    import Banners from "./Banners.svelte";
     import Landing from "./pages/Landing.svelte";
     import Login from "./pages/Login.svelte";
     import Signup from "./pages/Signup.svelte";
@@ -120,6 +121,9 @@
 
     const Page = $derived(pages[router.name] ?? NotFound);
 
+    // the android app draws its own bar, so no header or left nav inside its webview
+    const inApp = /ROBLOX (Android|iOS) App/i.test(navigator.userAgent);
+
     $effect(() => {
         if (!session.loaded) return;
 
@@ -134,7 +138,7 @@
     });
 
     $effect(() => {
-        document.body.className = landing.includes(router.name) ? "none-landing" : (session.me && !bare.includes(router.name) ? "rbx-has-left-nav" : "");
+        document.body.className = inApp ? "rbx-in-app" : landing.includes(router.name) ? "none-landing" : (session.me && !bare.includes(router.name) ? "rbx-has-left-nav" : "");
     });
 
 
@@ -146,7 +150,10 @@
 </script>
 
 {#if !session.loaded}
-
+    <!-- nothing till we know who you are, stops the login page flashing -->
+{:else if inApp}
+    <Banners />
+    <Page />
 {:else if landing.includes(router.name) || bare.includes(router.name)}
     <Page />
 {:else}

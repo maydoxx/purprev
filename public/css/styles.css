@@ -122,6 +122,11 @@ body {
     padding-top: 40px;
 }
 
+/* inside the android app, it draws its own bar */
+body.rbx-in-app {
+    padding-top: 0;
+}
+
 .rbx-header {
     position: fixed;
     top: 0;
