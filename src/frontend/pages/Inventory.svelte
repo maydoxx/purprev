@@ -25,7 +25,7 @@
     const category = $derived(categories.some(c => c[0] === router.query.category) ? router.query.category! : "hats");
     const page = $derived(Math.max(1, Number(router.query.page) || 1));
     const info = $derived(categories.find(c => c[0] === category)!);
-    const special = $derived(category === "badges" || category === "game-passes");
+    const special = $derived(category === "badges" || category === "game-passes" || category === "places");
 
     let data = $state<any>(null);
     let error = $state("");
@@ -86,8 +86,13 @@
                     </div>
 
                     <div class="inventory-get-more">
-                        <span>Explore the catalog to<br>find more {info[1].toLowerCase()}!</span>
-                        <a href={info[2] ? `/catalog?category=${info[2]}` : "/catalog"}>Get More</a>
+                        {#if category === "places"}
+                            <span>Build something new<br>in Studio or Develop!</span>
+                            <a href="/develop/places">Develop</a>
+                        {:else}
+                            <span>Explore the catalog to<br>find more {info[1].toLowerCase()}!</span>
+                            <a href={info[2] ? `/catalog?category=${info[2]}` : "/catalog"}>Get More</a>
+                        {/if}
                     </div>
                 </div>
 
@@ -115,6 +120,8 @@
                                         <div class="inventory-serial">{item.game_title || "Game Badge"}</div>
                                     {:else if category === "game-passes"}
                                         <div class="inventory-serial">{item.game_title || "Game Pass"}</div>
+                                    {:else if category === "places"}
+                                        <div class="inventory-serial">Place</div>
                                     {/if}
                                     <div class="inventory-creator">
                                         By
