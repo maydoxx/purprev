@@ -2,10 +2,13 @@ import { Elysia, t } from "elysia";
 import { join } from "path";
 import { session } from "../../session";
 import { sql, now } from "../../db";
-import { saveImage, mediaUrl, clearMedia, UploadError } from "../../paths";
+import { saveImage, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
 import { mediaPut } from "../../media";
 import { rcc } from "../../rcc";
 import { CATEGORIES as BLOG_CATEGORIES } from "../site/blog";
+import { siteSettings, setSiteSetting } from "../../settings";
+import { isTier } from "../../membership";
+import { ONLINE_WINDOW } from "../../friends";
 
 const PER_PAGE = 20;
 const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
@@ -82,7 +85,8 @@ const item = t.Object({
     is_featured: t.Optional(t.Boolean()),
     is_limited: t.Optional(t.Boolean()),
     is_limited_unique: t.Optional(t.Boolean()),
-    limited_stock: t.Optional(t.Numeric({ minimum: 0 }))
+    limited_stock: t.Optional(t.Numeric({ minimum: 0 })),
+    bc_only: t.Optional(t.Boolean())
 });
 
 class AdminError extends Error {}
@@ -286,6 +290,7 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
         price: body.price ?? null,
         thumbnail,
         is_featured: body.is_featured ? 1 : 0,
+        bc_only: body.bc_only ? 1 : 0,
         is_limited: limited,
         is_limited_unique: limitedUnique,
         limited_stock: stock,
@@ -491,8 +496,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         try {
             const c = await cleanItem(body, null);
             const created = await sql`
-                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
-                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.thumbnail}, ${c.is_featured}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()})
+                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, bc_only, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
+                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()})
             `;
             const itemId = Number(created.lastInsertRowid);
             if (c.remote !== "") {
@@ -519,7 +524,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             const c = await cleanItem(body, existing);
             await sql`
                 UPDATE catalog_items SET name = ${c.name}, description = ${c.description}, creator_id = ${c.creator_id}, category = ${c.category},
-                    asset_id = ${c.asset_id}, price = ${c.price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured},
+                    asset_id = ${c.asset_id}, price = ${c.price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured}, bc_only = ${c.bc_only},
                     is_limited = ${c.is_limited}, is_limited_unique = ${c.is_limited_unique}, limited_stock = ${c.limited_stock}, updated_at = ${now()}
                 WHERE id = ${params.id}
             `;
@@ -539,6 +544,23 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         body: item
     })
 
+
+    // manager queues them
+    .post("/render/avatars", async ({ user }) => {
+        const users = await sql`SELECT id FROM users ORDER BY id ASC`;
+        console.log(`admin: ${user.username} queued avatar renders for ${users.length} users`);
+        (async () => {
+            for (const u of users) {
+                await rcc.render.avatar(Number(u.id));
+            }
+        })();
+        return {
+            ok: true,
+            queued: users.length
+        };
+    }, {
+        admin: true
+    })
 
     .post("/catalog/:id/render", async ({ params, status }) => {
         const [row] = await sql`SELECT id, asset_id FROM catalog_items WHERE id = ${params.id}`;
@@ -571,6 +593,155 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: id
     })
 
+
+    .get("/stats", async () => {
+        const today = Math.floor(now() / 86400) * 86400;
+        const [[u], [g], [c], [m], [i], [a], servers, health] = await Promise.all([
+            sql`
+                SELECT COUNT(*) AS users, SUM(lastOnlineSite > ${now() - ONLINE_WINDOW}) AS online, SUM(created_at >= ${today}) AS today,
+                    SUM(admin > 0) AS admins, SUM(membership <> 'None' AND (membership_expires = 0 OR membership_expires > ${now()})) AS club
+                FROM users
+            `,
+            sql`SELECT COUNT(*) AS games, (SELECT COUNT(*) FROM media WHERE kind = 'places') AS published FROM games`,
+            sql`SELECT COUNT(*) AS n FROM catalog_items`,
+            sql`SELECT COUNT(*) AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
+            sql`SELECT COUNT(*) AS n FROM invites`,
+            sql`SELECT COUNT(*) AS n FROM assets WHERE type = 'Model' AND parent_id IS NULL`,
+            rcc.servers(),
+            rcc.health()
+        ]);
+        return {
+            users: Number(u.users),
+            online: Number(u.online ?? 0),
+            signups_today: Number(u.today ?? 0),
+            admins: Number(u.admins ?? 0),
+            club: Number(u.club ?? 0),
+            games: Number(g.games),
+            published: Number(g.published),
+            catalog: Number(c.n),
+            moderation: Number(m.n),
+            invites: Number(i.n),
+            models: Number(a.n),
+            servers: servers.length,
+            players: servers.reduce((sum, s: any) => sum + Number(s.players ?? 0), 0),
+            rcc: health?.rcc === "up" ? "up" : health ? "down" : "unreachable"
+        };
+    }, {
+        admin: true
+    })
+
+
+    .get("/games", async ({ query }) => {
+        const like = `%${(query.q ?? "").trim()}%`;
+        const where = sql`(games.title LIKE ${like} OR users.username LIKE ${like})`;
+        const result = await paginate(
+            sql`SELECT COUNT(*) AS n FROM games LEFT JOIN users ON users.id = games.creator_id WHERE ${where}`,
+            query.page,
+            limit => sql`
+                SELECT games.id, games.title, games.creator_id, users.username AS creator_name, media.updated_at AS published_at, media.size AS file_size
+                FROM games
+                LEFT JOIN users ON users.id = games.creator_id
+                LEFT JOIN media ON media.kind = 'places' AND media.id = games.id
+                WHERE ${where}
+                ORDER BY games.id DESC ${limit}
+            `
+        );
+        const playing = await rcc.players(result.items.map((g: any) => Number(g.id)));
+        return {
+            ...result,
+            items: await Promise.all(result.items.map(async (g: any) => ({
+                ...g,
+                icon: await mediaUrl("icons", Number(g.id)),
+                thumbnail: await mediaUrl("thumbnails", Number(g.id)),
+                playing: playing[Number(g.id)] ?? 0
+            })))
+        };
+    }, {
+        admin: true,
+        query: list
+    })
+
+    .post("/games/:id/render", async ({ params, status }) => {
+        const [game] = await sql`SELECT id FROM games WHERE id = ${params.id}`;
+        if (!game) {
+            return status(404, {
+                error: "Game not found."
+            });
+        }
+        if (!(await mediaHas("places", params.id))) {
+            return status(400, {
+                error: "That place has no file to render."
+            });
+        }
+        if (!(await rcc.render.place(params.id))) {
+            return status(502, {
+                error: "RCCManager did not take the render."
+            });
+        }
+        return {
+            ok: true
+        };
+    }, {
+        admin: true,
+        params: id
+    })
+
+    .delete("/games/:id", async ({ params, user, status }) => {
+        const [game] = await sql`SELECT title FROM games WHERE id = ${params.id}`;
+        if (!game) {
+            return status(404, {
+                error: "Game not found."
+            });
+        }
+        await sql`DELETE FROM games WHERE id = ${params.id}`;
+        await sql`DELETE FROM game_favorites WHERE game_id = ${params.id}`;
+        await Promise.all(["places", "thumbnails", "icons"].map(kind => clearMedia(kind, params.id)));
+        console.log(`admin: ${user.username} deleted place ${params.id} (${game.title})`);
+        return {
+            ok: true
+        };
+    }, {
+        admin: true,
+        params: id
+    })
+
+
+    .get("/settings", () => siteSettings(), {
+        admin: true
+    })
+
+    .patch("/settings", async ({ body, user }) => {
+        if (body.registration_enabled !== undefined) {
+            await setSiteSetting("registration_enabled", body.registration_enabled, user.id);
+        }
+        if (body.invites_enabled !== undefined) {
+            await setSiteSetting("invites_enabled", body.invites_enabled, user.id);
+        }
+        return siteSettings();
+    }, {
+        admin: true,
+        body: t.Object({
+            registration_enabled: t.Optional(t.Boolean()),
+            invites_enabled: t.Optional(t.Boolean())
+        })
+    })
+
+    // used keys
+    .get("/invitekeys/log", ({ query }) => paginate(
+        sql`SELECT COUNT(*) AS n FROM invite_log`,
+        query.page,
+        limit => sql`
+            SELECT invite_log.*, maker.username AS creator_name, joiner.username AS user_name FROM invite_log
+            LEFT JOIN users maker ON maker.id = invite_log.created_by
+            LEFT JOIN users joiner ON joiner.id = invite_log.used_by
+            ORDER BY invite_log.id DESC ${limit}
+        `
+    ), {
+        admin: true,
+        query: t.Object({
+            page: t.Optional(t.Numeric())
+        })
+    })
 
     .get("/invitekeys", ({ query }) => paginate(
         sql`SELECT COUNT(*) AS n FROM invites`,
@@ -687,14 +858,19 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .get("/users", ({ query }) => {
         const like = `%${(query.q ?? "").trim()}%`;
-        const where = sql`username LIKE ${like} OR email LIKE ${like}`;
+        const where = sql`(users.username LIKE ${like} OR users.email LIKE ${like})`;
         return paginate(
             sql`SELECT COUNT(*) AS n FROM users WHERE ${where}`,
             query.page,
             limit => sql`
-                SELECT id, username, email, admin, currency, ongoing_action_id, created_at FROM users
+                SELECT users.id, users.username, users.email, users.admin, users.currency, users.ongoing_action_id, users.created_at, users.membership, users.membership_expires,
+                    joined.created_by AS invited_by_id, maker.username AS invited_by,
+                    (SELECT COUNT(*) FROM invite_log l WHERE l.created_by = users.id) AS invited
+                FROM users
+                LEFT JOIN invite_log joined ON joined.used_by = users.id
+                LEFT JOIN users maker ON maker.id = joined.created_by
                 WHERE ${where}
-                ORDER BY id DESC ${limit}
+                ORDER BY users.id DESC ${limit}
             `
         );
     }, {
@@ -702,8 +878,46 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         query: list
     })
 
+    // alt hunting
+    .get("/users/:id/history", async ({ params }) => {
+        const [joined] = await sql`
+            SELECT invite_log.*, maker.username AS creator_name FROM invite_log
+            LEFT JOIN users maker ON maker.id = invite_log.created_by
+            WHERE invite_log.used_by = ${params.id} ORDER BY invite_log.id LIMIT 1
+        `;
+        const invited = await sql`
+            SELECT invite_log.used_by AS id, joiner.username, invite_log.used_at, invite_log.ip, joiner.ongoing_action_id FROM invite_log
+            LEFT JOIN users joiner ON joiner.id = invite_log.used_by
+            WHERE invite_log.created_by = ${params.id} ORDER BY invite_log.id DESC
+        `;
+        const ips = (await sql`
+            SELECT ip FROM invite_log WHERE used_by = ${params.id} AND ip != ''
+            UNION SELECT ip FROM username_history WHERE user_id = ${params.id} AND ip != ''
+        `).map((r: any) => r.ip);
+        const sameIp = ips.length > 0 ? await sql`
+            SELECT DISTINCT users.id, users.username, users.ongoing_action_id, invite_log.ip FROM invite_log
+            JOIN users ON users.id = invite_log.used_by
+            WHERE invite_log.ip IN ${sql(ips)} AND invite_log.used_by != ${params.id}
+            UNION
+            SELECT DISTINCT users.id, users.username, users.ongoing_action_id, username_history.ip FROM username_history
+            JOIN users ON users.id = username_history.user_id
+            WHERE username_history.ip IN ${sql(ips)} AND username_history.user_id != ${params.id}
+        ` : [];
+        const usernames = await sql`SELECT old_username, new_username, changed_at, ip FROM username_history WHERE user_id = ${params.id} ORDER BY changed_at DESC`;
+        return {
+            invitedBy: joined ?? null,
+            invited,
+            ips,
+            sameIp,
+            usernames
+        };
+    }, {
+        admin: true,
+        params: id
+    })
+
     .patch("/users/:id", async ({ params, body, user, status }) => {
-        const [target] = await sql`SELECT admin, currency FROM users WHERE id = ${params.id}`;
+        const [target] = await sql`SELECT admin, currency, membership, membership_expires FROM users WHERE id = ${params.id}`;
         if (!target) {
             return status(400, {
                 error: "User not found."
@@ -716,7 +930,20 @@ export const admin = new Elysia({ prefix: "/api/admin" })
                 error: "You cannot remove your own admin access here."
             });
         }
-        await sql`UPDATE users SET admin = ${adminLevel}, currency = ${currency} WHERE id = ${params.id}`;
+        // days blank = keep the expiry, 0 = never expires
+        const membership = body.membership ?? target.membership;
+        if (!isTier(membership)) {
+            return status(400, {
+                error: "Unknown membership."
+            });
+        }
+        let expires = Number(target.membership_expires);
+        if (body.membership_days !== undefined) {
+            expires = body.membership_days > 0 ? now() + body.membership_days * 86400 : 0;
+        } else if (membership !== target.membership) {
+            expires = 0;
+        }
+        await sql`UPDATE users SET admin = ${adminLevel}, currency = ${currency}, membership = ${membership}, membership_expires = ${expires} WHERE id = ${params.id}`;
         return {
             ok: true
         };
@@ -725,6 +952,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: id,
         body: t.Object({
             admin_level: t.Optional(t.Numeric({ minimum: 0 })),
-            currency: t.Optional(t.Numeric({ minimum: 0 }))
+            currency: t.Optional(t.Numeric({ minimum: 0 })),
+            membership: t.Optional(t.String()),
+            membership_days: t.Optional(t.Numeric({ minimum: 0 }))
         })
     })
