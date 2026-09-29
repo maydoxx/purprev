@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { sql, now } from "./db";
+import { membershipOf, type Tier } from "./membership";
 
 
 const TOKEN_LIFE = 60 * 60 * 24 * 7;
@@ -13,13 +14,22 @@ export type User = {
     currency: number;
 
     ongoing_action_id: number | null;
+    membership: Tier;
+    membership_expires: number;
 };
 
-const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.ongoing_action_id`;
+const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.ongoing_action_id, users.membership, users.membership_expires`;
+
+// expired clubs read as None everywhere
+const withMembership = (row: any): User | null => row ? {
+    ...row,
+    membership: membershipOf(row),
+    membership_expires: Number(row.membership_expires)
+} : null;
 
 export const getUser = async (id: number): Promise<User | null> => {
     const [user] = await sql`SELECT ${USER_COLS} FROM users WHERE id = ${id}`;
-    return user ?? null;
+    return withMembership(user);
 };
 
 export const session = new Elysia({ name: "session" })
@@ -36,7 +46,7 @@ export const session = new Elysia({ name: "session" })
                 JOIN users ON users.id = tokens.user_id
                 WHERE token = ${token} AND expires > ${now()}
             `;
-            user = row ?? null;
+            user = withMembership(row);
         }
 
         return {

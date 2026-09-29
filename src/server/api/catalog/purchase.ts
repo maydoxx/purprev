@@ -21,6 +21,9 @@ export const purchase = new Elysia()
                 if (item.price === null) {
                     throw new PurchaseError("This item is off sale");
                 }
+                if (item.bc_only && user.membership === "None") {
+                    throw new PurchaseError("This item is for Builders Club members only");
+                }
 
                 const price = Number(item.price);
                 let serial: number | null = null;
