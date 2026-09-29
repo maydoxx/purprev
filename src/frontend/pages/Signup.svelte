@@ -10,6 +10,9 @@
     let invitekey = $state("");
     let error = $state("");
     let busy = $state(false);
+    let closed = $state(false);
+
+    api("/site/settings").then(d => closed = !d.registration_enabled).catch(() => {});
 
     const submit = async (e: Event) => {
         e.preventDefault();
@@ -44,6 +47,9 @@
         <div class="none-auth-panel">
             <h1>Sign Up</h1>
             {#if error}<div class="none-auth-error" role="alert">{error}</div>{/if}
+            {#if closed}
+                <div class="none-auth-error" role="alert">Registration is closed right now, check back later.</div>
+            {:else}
             <form onsubmit={submit}>
                     <div class="none-auth-field">
                         <label for="username">Username</label>
@@ -63,6 +69,7 @@
                     </div>
                 <button type="submit" class="none-auth-button" disabled={busy}>{busy ? "Please wait…" : "Sign Up"}</button>
             </form>
+            {/if}
             <p class="none-auth-note">Already have an account? <a href="/login">Log In</a></p>
         </div>
     </div>
