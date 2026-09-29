@@ -4,6 +4,8 @@ import { sql, now } from "../../db";
 import { mediaUrl } from "../../paths";
 import { SITE_URL } from "../../site";
 import { rcc } from "../../rcc";
+import { siteSetting } from "../../settings";
+import { claimInvite, logInvite } from "../../invites";
 
 
 const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
@@ -23,7 +25,7 @@ const userInfo = async (id: number) => {
         RobuxBalance: user.currency,
         TicketsBalance: 0,
         ThumbnailUrl: headshot ? (headshot.startsWith("/") ? SITE_URL + headshot : headshot) : SITE_URL + "/img/pending.png",
-        IsAnyBuildersClubMember: false,
+        IsAnyBuildersClubMember: user.membership !== "None",
         IsPremium: false
     };
 };
@@ -65,8 +67,14 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
 
 
 
-    .post("/securesignup", async ({ body, login }) => {
+    .post("/securesignup", async ({ body, login, request, server }) => {
         const username = body.userName.trim();
+        if (!(await siteSetting("registration_enabled"))) {
+            return {
+                Status: "StatusServerError",
+                error: "registration is closed"
+            };
+        }
         if (username === "" || body.password === "") {
             return {
                 Status: "MissingRequiredField"
@@ -93,8 +101,8 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
                 Status: "PasswordInvalid"
             };
         }
-        const deleted = await sql`DELETE FROM invites WHERE inviteKey = ${body.inviteKey ?? ""}`;
-        if (!deleted.affectedRows) {
+        const invite = await claimInvite(body.inviteKey ?? "");
+        if (!invite) {
             return {
                 Status: "StatusServerError",
                 error: "invite key needed"
@@ -104,6 +112,7 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
         const hash = await Bun.password.hash(body.password, "bcrypt");
         const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${username}, ${hash}, ${now()})`;
         const id = Number(created.lastInsertRowid);
+        await logInvite(invite, id, request, server);
         rcc.render.avatar(id);
         await login(id);
         return {

@@ -2,13 +2,21 @@ import { Elysia, t } from "elysia";
 import { session, getUser } from "../../session";
 import { sql, now } from "../../db";
 import { rcc } from "../../rcc";
+import { siteSetting } from "../../settings";
+import { claimInvite, logInvite } from "../../invites";
 
 
 export const register = new Elysia()
     .use(session)
-    .post("/register", async ({ body, login, status }) => {
+    .post("/register", async ({ body, login, status, request, server }) => {
         const username = body.username.trim();
         const inviteKey = body.invitekey.trim();
+
+        if (!(await siteSetting("registration_enabled"))) {
+            return status(403, {
+                error: "Registration is closed right now"
+            });
+        }
 
         if (body.password !== body.confirmpassword) {
             return status(400, {
@@ -34,8 +42,8 @@ export const register = new Elysia()
         }
 
 
-        const deleted = await sql`DELETE FROM invites WHERE inviteKey = ${inviteKey}`;
-        if (!deleted.affectedRows) {
+        const invite = await claimInvite(inviteKey);
+        if (!invite) {
             return status(400, {
                 error: "Invalid invite key"
             });
@@ -45,6 +53,7 @@ export const register = new Elysia()
         const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${username}, ${hash}, ${now()})`;
 
         const id = Number(created.lastInsertRowid);
+        await logInvite(invite, id, request, server);
         rcc.render.avatar(id);
         await login(id);
         return {

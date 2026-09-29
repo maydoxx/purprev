@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { sql, now } from "../../db";
+import { siteSettings } from "../../settings";
 
 import { search } from "./search";
 import { feed } from "./feed";
@@ -15,6 +16,11 @@ const DOWNLOADS = [
         title: "None 2016 Client (Linux)",
         description: "Runs the client through Proton, no Steam needed. Save it, then run: chmod +x nonerev && ./nonerev install",
         fileUrl: "/api/setup/download?os=linux"
+    },
+    {
+        title: "None 2016 Client (Android)",
+        description: "The app for your phone. Allow installs from unknown sources, then open the apk.",
+        fileUrl: "/api/setup/download?os=android"
     },
     {
         title: "None 2016 Studio",
@@ -44,3 +50,6 @@ export const site = new Elysia({ prefix: "/api/site" })
     })
 
     .get("/downloads", () => DOWNLOADS)
+
+    // signup and the invites tab check these
+    .get("/settings", () => siteSettings())
