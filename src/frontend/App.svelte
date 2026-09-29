@@ -5,7 +5,6 @@
     import { api } from "./api";
 
     import Header from "./Header.svelte";
-    import Banners from "./Banners.svelte";
     import Landing from "./pages/Landing.svelte";
     import Login from "./pages/Login.svelte";
     import Signup from "./pages/Signup.svelte";
@@ -25,10 +24,7 @@
     import Search from "./pages/Search.svelte";
     import Download from "./pages/Download.svelte";
     import Nonebux from "./pages/Nonebux.svelte";
-    import Membership from "./pages/Membership.svelte";
-    import Badges from "./pages/Badges.svelte";
-    import Favorites from "./pages/Favorites.svelte";
-    import MembershipCheckout from "./pages/MembershipCheckout.svelte";
+    import BuildersClub from "./pages/BuildersClub.svelte";
     import Trade from "./pages/Trade.svelte";
     import Messages from "./pages/Messages.svelte";
     import Groups from "./pages/groups/Groups.svelte";
@@ -57,10 +53,9 @@
     import AdminInviteKeys from "./pages/admin/InviteKeys.svelte";
     import AdminBanners from "./pages/admin/Banners.svelte";
     import AdminBlog from "./pages/admin/Blog.svelte";
-    import AdminGames from "./pages/admin/Games.svelte";
-    import AdminSettings from "./pages/admin/Settings.svelte";
 
     session.refresh();
+
 
     const pages: Record<string, Component<any>> = {
         landing: Landing,
@@ -81,10 +76,7 @@
         search: Search,
         download: Download,
         nonebux: Nonebux,
-        membership: Membership,
-        badges: Badges,
-        favorites: Favorites,
-        "membership-checkout": MembershipCheckout,
+        "builders-club": BuildersClub,
         trade: Trade,
         messages: Messages,
         groups: Groups,
@@ -112,52 +104,23 @@
         "admin-viewmoderation": AdminViewModeration,
         "admin-invitekeys": AdminInviteKeys,
         "admin-banners": AdminBanners,
-        "admin-blog": AdminBlog,
-        "admin-games": AdminGames,
-        "admin-settings": AdminSettings,
+        "admin-blog": AdminBlog
     };
+
 
     const landing = ["landing", "login", "signup"];
     const bare = ["blog", "download"];
 
     const needsLogin = [
-        "membership-checkout",
-        "home",
-        "settings",
-        "friends",
-        "avatar",
-        "inventory",
-        "trade",
-        "messages",
-        "groups-my",
-        "forum-new",
-        "forum-reply",
-        "forum-my",
-        "forum-moderate",
-        "develop",
-        "develop-places",
-        "develop-create",
-        "develop-configure",
-        "develop-clothing",
-        "develop-audio",
-        "develop-badges",
-        "develop-game-passes",
-        "admin",
-        "admin-users",
-        "admin-catalog",
-        "admin-moderation",
-        "admin-viewmoderation",
-        "admin-invitekeys",
-        "admin-banners",
-        "admin-blog",
-        "admin-games",
-        "admin-settings",
+        "home", "settings", "friends", "avatar", "inventory", "trade", "messages", "groups-my",
+        "forum-new", "forum-reply", "forum-my", "forum-moderate",
+        "develop", "develop-places", "develop-create", "develop-configure", "develop-clothing",
+        "develop-audio", "develop-badges", "develop-game-passes",
+        "admin", "admin-users", "admin-catalog", "admin-moderation", "admin-viewmoderation",
+        "admin-invitekeys", "admin-banners", "admin-blog"
     ];
 
     const Page = $derived(pages[router.name] ?? NotFound);
-
-    // the android app draws its own bar, so no header or left nav inside its webview
-    const inApp = /ROBLOX (Android|iOS) App/i.test(navigator.userAgent);
 
     $effect(() => {
         if (!session.loaded) return;
@@ -166,39 +129,28 @@
             router.replace("/home");
         } else if (!session.me && needsLogin.includes(router.name)) {
             router.replace("/login");
-        } else if (
-            session.me?.ongoing_action_id &&
-            router.name !== "not-approved"
-        ) {
+        } else if (session.me?.ongoing_action_id && router.name !== "not-approved") {
+
             router.replace("/not-approved");
         }
     });
 
     $effect(() => {
-        document.body.className = inApp
-            ? "rbx-in-app"
-            : landing.includes(router.name)
-              ? "none-landing"
-              : session.me && !bare.includes(router.name)
-                ? "rbx-has-left-nav"
-                : "";
+        document.body.className = landing.includes(router.name) ? "none-landing" : (session.me && !bare.includes(router.name) ? "rbx-has-left-nav" : "");
     });
+
 
     $effect(() => {
         if (!session.me) return;
-        const timer = setInterval(
-            () => api("/user/presence/register", {}).catch(() => {}),
-            60 * 1000,
-        );
+        const timer = setInterval(() => api("/user/presence/register", {}).catch(() => {}), 60 * 1000);
         return () => clearInterval(timer);
     });
 </script>
 
 {#if !session.loaded}
-    <!-- nothing till we know who you are, stops the login page flashing -->
-{:else if inApp}
-    <Banners />
-    <Page />
+
+{:else if !session.me && needsLogin.includes(router.name)}
+    <Login />
 {:else if landing.includes(router.name) || bare.includes(router.name)}
     <Page />
 {:else}

@@ -122,11 +122,6 @@ body {
     padding-top: 40px;
 }
 
-/* inside the android app, it draws its own bar */
-body.rbx-in-app {
-    padding-top: 0;
-}
-
 .rbx-header {
     position: fixed;
     top: 0;
@@ -618,7 +613,8 @@ a:hover .icon-nav-shop {
     bottom: 0;
     width: 175px;
     z-index: 999;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     background-color: #F2F2F2;
     box-shadow: 0 0 60px rgba(25, 25, 25, 0.5);
     font-size: 16px;
@@ -677,12 +673,51 @@ a:hover .icon-nav-shop {
 }
 
 .rbx-left-col .rbx-upgrade-now {
-    margin: 12px 0;
+    margin: 10px 0 12px;
 }
 
 .rbx-left-col .rbx-upgrade-now a {
     display: block;
+    width: 155px;
     text-align: center;
+    padding: 9px 6px;
+    color: #fff;
+    background: #7B2CBF;
+    border-radius: 3px;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+.rbx-left-col .rbx-upgrade-now a:hover,
+.rbx-left-col .rbx-upgrade-now a:focus-visible {
+    color: #fff;
+    background: #9D4EDD;
+    text-decoration: none;
+}
+
+.rbx-left-col .rbx-sidebar-events {
+    margin-top: 8px;
+    width: 155px;
+}
+
+.rbx-left-col .rbx-sidebar-events-title {
+    display: block;
+    margin: 0 3px 8px;
+    font-size: 14px;
+}
+
+.rbx-left-col .rbx-sidebar-events a {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.rbx-left-col .rbx-sidebar-events img {
+    display: block;
+    width: 136px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
 }
 
 .btn-primary-md {

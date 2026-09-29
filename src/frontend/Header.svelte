@@ -117,7 +117,13 @@
             <li><a href="/my/forums"><span class="icon-nav-forum"></span><span class="rbx-text-nav">Forum</span></a></li>
             <li><a href="/blog"><span class="icon-nav-blog"></span><span class="rbx-text-nav">Blog</span></a></li>
             <li><a href="/catalog"><span class="icon-nav-shop"></span><span class="rbx-text-nav">Shop</span></a></li>
-            <li class="rbx-upgrade-now"><a class="btn-primary-md" href="/premium/membership">Upgrade Now</a></li>
+            <li class="rbx-upgrade-now"><a href="/upgrades/builders-club">Upgrade Now</a></li>
+            <li class="rbx-sidebar-events">
+                <span class="rbx-sidebar-events-title">Events</span>
+                <a href="/blog?category=events" title="NONE BETA events">
+                    <img src="/img/none-beta.png" alt="NONE BETA">
+                </a>
+            </li>
         </ul>
     </div>
 {/if}

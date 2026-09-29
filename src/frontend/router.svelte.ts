@@ -18,10 +18,7 @@ const routes: [string, string][] = [
     ["/search", "search"],
     ["/download", "download"],
     ["/upgrades/nonebux", "nonebux"],
-    ["/premium/membership", "membership"],
-    ["/badges", "badges"],
-    ["/favorites", "favorites"],
-    ["/upgrades/paymentmethods", "membership-checkout"],
+    ["/upgrades/builders-club", "builders-club"],
     ["/trade", "trade"],
     ["/my/messages", "messages"],
     ["/groups", "groups"],
@@ -51,14 +48,11 @@ const routes: [string, string][] = [
     ["/admi/viewmoderation", "admin-viewmoderation"],
     ["/admi/invitekeys", "admin-invitekeys"],
     ["/admi/banners", "admin-banners"],
-    ["/admi/blog", "admin-blog"],
-    ["/admi/games", "admin-games"],
-    ["/admi/settings", "admin-settings"]
+    ["/admi/blog", "admin-blog"]
 ];
 
 const parse = () => {
-    // paths match case blind, the old site had /Badges and friends capitalised
-    const path = (location.pathname.replace(/\/+$/, "") || "/").toLowerCase();
+    const path = location.pathname.replace(/\/+$/, "") || "/";
     const query: Record<string, string> = {};
     new URLSearchParams(location.search).forEach((v, k) => {
         query[k] = v;
@@ -90,7 +84,7 @@ document.addEventListener("click", e => {
     const href = a.getAttribute("href") ?? "";
     if (href === "" || href.startsWith("#") || href.startsWith("/api/") || href.startsWith("/uploads/")) return;
 
-    const target = (a.pathname.replace(/\/+$/, "") || "/").toLowerCase();
+    const target = a.pathname.replace(/\/+$/, "") || "/";
     if (!routes.some(([p]) => p === target)) return;
 
     e.preventDefault();

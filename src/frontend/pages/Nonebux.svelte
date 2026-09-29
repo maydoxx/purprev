@@ -46,12 +46,12 @@
                 <section class="nonebux-card" aria-label={`${pack.amount.toLocaleString("en-US")} Nonebux package`}>
                     <div class="nonebux-amount"><strong>{pack.amount.toLocaleString("en-US")}</strong><span>NONEBUX</span></div>
                     <button class="nonebux-buy" type="button" onclick={unavailable}>Buy for ${pack.price}</button>
-                    <p>Want {pack.bonus.toLocaleString("en-US")} NONEBUX every month?</p>
-                    <a class="nonebux-bonus-link" href="/premium/membership">Join Builders Club</a>
+                    <p>Want to get {pack.bonus.toLocaleString("en-US")} Bonus NONEBUX?</p>
+                    <a class="nonebux-bonus-link" href="/upgrades/builders-club">Join Builders Club</a>
                 </section>
             {/each}
         </div>
 
-        <p class="nonebux-footnote">Package prices shown for the page preview. Checkout is not available yet; no payment will be taken.</p>
+        <p class="nonebux-footnote">Package prices shown for the page preview. Checkout and Builders Club are not available yet; no payment will be taken.</p>
     </div>
 </main>
