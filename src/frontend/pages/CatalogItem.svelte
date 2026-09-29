@@ -123,12 +123,14 @@
                         {#if limited}<span class="catalog-reseller-link">See more <a href="#resellers">Resellers</a></span>{/if}
                     </div>
                     <div class="catalog-item-buy">
+                        {#if item.bc_only}<div class="catalog-bc-only"><img src="/img/catalog/legend-bc.png" alt=""> Builders Club Only</div>{/if}
                         {#if item.owned}
                             {#if canWear}<button class="catalog-buy-button" type="button" disabled={busy} onclick={wear}>{item.wearing ? "Remove" : "Wear Item"}</button>
                             {:else}<span class="catalog-owned-label">Item Owned</span>{/if}
                         {:else if soldOut}<button class="catalog-buy-button" disabled>Sold Out</button>
                         {:else if item.price === null}<button class="catalog-buy-button" disabled>Off Sale</button>
                         {:else if !session.me}<a class="catalog-buy-button" href="/login">Buy</a>
+                        {:else if item.bc_only && session.me.membership === "None"}<button class="catalog-buy-button" disabled title="Builders Club members only">Buy</button>
                         {:else}<button type="button" class="catalog-buy-button" disabled={busy} onclick={buy}>{Number(item.price) === 0 ? "Get" : "Buy"}</button>{/if}
                     </div>
                 </div>

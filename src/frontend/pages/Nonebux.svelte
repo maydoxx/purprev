@@ -10,10 +10,8 @@
 
     let notice = $state("");
 
-    const unavailable = (kind: "checkout" | "membership") => {
-        notice = kind === "checkout"
-            ? "Nonebux checkout is not available yet. No purchase was made."
-            : "Membership plans are not available yet.";
+    const unavailable = () => {
+        notice = "Nonebux checkout is not available yet. No purchase was made.";
     };
 </script>
 
@@ -47,13 +45,13 @@
             {#each packages as pack}
                 <section class="nonebux-card" aria-label={`${pack.amount.toLocaleString("en-US")} Nonebux package`}>
                     <div class="nonebux-amount"><strong>{pack.amount.toLocaleString("en-US")}</strong><span>NONEBUX</span></div>
-                    <button class="nonebux-buy" type="button" onclick={() => unavailable("checkout")}>Buy for ${pack.price}</button>
-                    <p>Want to get {pack.bonus.toLocaleString("en-US")} Bonus NONEBUX?</p>
-                    <button class="nonebux-bonus-link" type="button" onclick={() => unavailable("membership")}>Join Builders Club</button>
+                    <button class="nonebux-buy" type="button" onclick={unavailable}>Buy for ${pack.price}</button>
+                    <p>Want {pack.bonus.toLocaleString("en-US")} NONEBUX every month?</p>
+                    <a class="nonebux-bonus-link" href="/premium/membership">Join Builders Club</a>
                 </section>
             {/each}
         </div>
 
-        <p class="nonebux-footnote">Package prices shown for the page preview. Checkout and Builders Club are not available yet; no payment will be taken.</p>
+        <p class="nonebux-footnote">Package prices shown for the page preview. Checkout is not available yet; no payment will be taken.</p>
     </div>
 </main>

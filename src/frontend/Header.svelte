@@ -117,6 +117,7 @@
             <li><a href="/my/forums"><span class="icon-nav-forum"></span><span class="rbx-text-nav">Forum</span></a></li>
             <li><a href="/blog"><span class="icon-nav-blog"></span><span class="rbx-text-nav">Blog</span></a></li>
             <li><a href="/catalog"><span class="icon-nav-shop"></span><span class="rbx-text-nav">Shop</span></a></li>
+            <li class="rbx-upgrade-now"><a class="btn-primary-md" href="/premium/membership">Upgrade Now</a></li>
         </ul>
     </div>
 {/if}

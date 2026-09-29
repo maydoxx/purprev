@@ -8,6 +8,8 @@ export type Me = {
     admin: number;
     currency: number;
     ongoing_action_id: number | null;
+    membership: "None" | "BC" | "TBC" | "OBC";
+    membership_expires: number;
 };
 
 let me = $state<Me | null>(null);
