@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS `catalog_items` (
     `is_limited_unique` tinyint(1) NOT NULL DEFAULT 0,
     `limited_stock` int(10) UNSIGNED DEFAULT NULL,
     `limited_sold` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `bc_only` tinyint(1) NOT NULL DEFAULT 0,
     `created_at` int(10) UNSIGNED NOT NULL,
     `updated_at` int(10) UNSIGNED NOT NULL,
     PRIMARY KEY (`id`),
@@ -59,6 +60,8 @@ CREATE TABLE IF NOT EXISTS `games` (
     `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `creator_id` int(10) UNSIGNED NOT NULL,
     `title` varchar(100) NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `updated_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     KEY `idx_games_creator` (`creator_id`),
     KEY `idx_games_title` (`title`)
@@ -123,6 +126,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     `lastInviteKeyCreated` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `lastOnlineSite` int(10) UNSIGNED DEFAULT NULL,
     `created_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `membership` enum('None','BC','TBC','OBC') NOT NULL DEFAULT 'None',
+    `membership_expires` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `last_stipend` int(10) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_users_username` (`username`),
     UNIQUE KEY `uq_users_email` (`email`)
@@ -252,6 +258,14 @@ CREATE TABLE IF NOT EXISTS `game_badges` (
     KEY `creator_id` (`creator_id`),
     KEY `enabled` (`enabled`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=5000000000;
+
+CREATE TABLE IF NOT EXISTS `game_favorites` (
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`user_id`, `game_id`),
+    KEY `game_id` (`game_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `user_badges` (
     `user_id` int(10) UNSIGNED NOT NULL,
@@ -403,4 +417,41 @@ CREATE TABLE IF NOT EXISTS `media` (
     `size` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `updated_at` int(10) UNSIGNED NOT NULL,
     PRIMARY KEY (`kind`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- admin toggles, registration_enabled and invites_enabled
+CREATE TABLE IF NOT EXISTS `site_settings` (
+    `name` varchar(32) NOT NULL,
+    `value` varchar(255) NOT NULL,
+    `updated_at` int(10) UNSIGNED NOT NULL,
+    `updated_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- every used invite key, who made it and who signed up with it from where
+CREATE TABLE IF NOT EXISTS `invite_log` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `inviteKey` char(32) NOT NULL,
+    `created_by` int(10) UNSIGNED NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    `used_by` int(10) UNSIGNED NOT NULL,
+    `used_at` int(10) UNSIGNED NOT NULL,
+    `ip` varchar(45) NOT NULL DEFAULT '',
+    `user_agent` varchar(255) NOT NULL DEFAULT '',
+    PRIMARY KEY (`id`),
+    KEY `created_by` (`created_by`),
+    KEY `used_by` (`used_by`),
+    KEY `ip` (`ip`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `username_history` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `old_username` varchar(32) NOT NULL,
+    `new_username` varchar(32) NOT NULL,
+    `changed_at` int(10) UNSIGNED NOT NULL,
+    `ip` varchar(45) NOT NULL DEFAULT '',
+    PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    KEY `old_username` (`old_username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
