@@ -20,6 +20,8 @@ import { servers } from "./api/admin/servers";
 import { engine } from "./api/engine";
 import { uploads } from "./api/uploads";
 import { rcc } from "./api/rcc";
+import { membership } from "./api/membership";
+import { studio } from "./api/studio";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
 
@@ -57,6 +59,8 @@ const app = new Elysia()
     .use(engine)
     .use(uploads)
     .use(rcc)
+    .use(membership)
+    .use(studio)
     .get("/api", () => "meow :3")
     .listen(Number(process.env.API_PORT ?? 3000));
 

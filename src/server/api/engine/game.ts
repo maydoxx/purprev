@@ -7,6 +7,7 @@ import { friendStatus } from "../../friends";
 import { sign, rbxsig, studiosig, text } from "./sign";
 import { isInternal } from "./internal";
 import { bool, xmlBool, xml } from "./respond";
+import { TIERS, membershipOf } from "../../membership";
 
 const ADMIN_GROUP = 1200769;
 
@@ -18,11 +19,40 @@ const creatorOf = async (placeId: number) => {
 
 const userFromToken = async (token: string) => {
     const [row] = await sql`
-        SELECT users.id, users.username FROM tokens
+        SELECT users.id, users.username, users.membership, users.membership_expires FROM tokens
         JOIN users ON users.id = tokens.user_id
         WHERE token = ${token} AND expires > ${now()}
     `;
     return row ?? null;
+};
+
+
+// studio setup, also in the edit script
+export const studioSetup = (site: string) => {
+    const social = `${site}/Game/LuaWebService/HandleSocialRequest.ashx?method=`;
+    return [
+        `pcall(function() game:GetService("InsertService"):SetFreeModelUrl("${site}/Game/Tools/InsertAsset.ashx?type=fm&q=%s&pg=%d&rs=%d") end)`,
+        `pcall(function() game:GetService("InsertService"):SetFreeDecalUrl("${site}/Game/Tools/InsertAsset.ashx?type=fd&q=%s&pg=%d&rs=%d") end)`,
+        `game:GetService("ScriptInformationProvider"):SetAssetUrl("${site}/Asset/")`,
+        `game:GetService("InsertService"):SetBaseSetsUrl("${site}/Game/Tools/InsertAsset.ashx?nsets=10&type=base")`,
+        `game:GetService("InsertService"):SetUserSetsUrl("${site}/Game/Tools/InsertAsset.ashx?nsets=20&type=user&userid=%d")`,
+        `game:GetService("InsertService"):SetCollectionUrl("${site}/Game/Tools/InsertAsset.ashx?sid=%d")`,
+        `game:GetService("InsertService"):SetAssetUrl("${site}/Asset/?id=%d")`,
+        `game:GetService("InsertService"):SetAssetVersionUrl("${site}/Asset/?assetversionid=%d")`,
+        `pcall(function() game:GetService("SocialService"):SetFriendUrl("${social}IsFriendsWith&playerid=%d&userid=%d") end)`,
+        `pcall(function() game:GetService("SocialService"):SetBestFriendUrl("${social}IsBestFriendsWith&playerid=%d&userid=%d") end)`,
+        `pcall(function() game:GetService("SocialService"):SetGroupUrl("${social}IsInGroup&playerid=%d&groupid=%d") end)`,
+        `pcall(function() game:GetService("SocialService"):SetGroupRankUrl("${social}GetGroupRank&playerid=%d&groupid=%d") end)`,
+        `pcall(function() game:GetService("SocialService"):SetGroupRoleUrl("${social}GetGroupRole&playerid=%d&groupid=%d") end)`,
+        `pcall(function() game:GetService("GamePassService"):SetPlayerHasPassUrl("${site}/Game/GamePass/GamePassHandler.ashx?Action=HasPass&UserID=%d&PassID=%d") end)`,
+        `pcall(function() game:GetService("BadgeService"):SetPlaceId(game.PlaceId) end)`,
+        `pcall(function() game:GetService("BadgeService"):SetAwardBadgeUrl("${site}/Game/Badges/AwardBadge.ashx?UserID=%d&BadgeID=%d&PlaceID=%d") end)`,
+        `pcall(function() game:GetService("BadgeService"):SetHasBadgeUrl("${site}/Game/Badges/HasBadge.ashx?UserID=%d&BadgeID=%d") end)`,
+        `pcall(function() game:GetService("BadgeService"):SetIsBadgeDisabledUrl("${site}/Game/Badges/IsBadgeDisabled.ashx?BadgeID=%d") end)`,
+        `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
+        `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasasset?userId=%d&assetId=%d") end)`,
+        `game:GetService("ScriptContext"):AddStarterScript(37801172)`
+    ];
 };
 
 
@@ -74,7 +104,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
             VideoInfo: "",
             CreatorId: await creatorOf(placeId),
             CreatorTypeEnum: "User",
-            MembershipType: "None",
+            MembershipType: TIERS[membershipOf(who)].enum,
             AccountAge: 100,
             CookieStoreFirstTimePlayKey: "rbx_evt_ftp",
             CookieStoreFiveMinutePlayKey: "rbx_evt_fmp",
@@ -190,40 +220,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
     })
 
 
-    .get("/studio.ashx", () => {
-        const site = SITE_URL;
-        const social = `${site}/Game/LuaWebService/HandleSocialRequest.ashx?method=`;
-        const lua = [
-            "",
-            `pcall(function() game:GetService("InsertService"):SetFreeModelUrl("${site}/Game/Tools/InsertAsset.ashx?type=fm&q=%s&pg=%d&rs=%d") end)`,
-            `pcall(function() game:GetService("InsertService"):SetFreeDecalUrl("${site}/Game/Tools/InsertAsset.ashx?type=fd&q=%s&pg=%d&rs=%d") end)`,
-            "",
-            `game:GetService("ScriptInformationProvider"):SetAssetUrl("${site}/Asset/")`,
-            `game:GetService("InsertService"):SetBaseSetsUrl("${site}/Game/Tools/InsertAsset.ashx?nsets=10&type=base")`,
-            `game:GetService("InsertService"):SetUserSetsUrl("${site}/Game/Tools/InsertAsset.ashx?nsets=20&type=user&userid=%d")`,
-            `game:GetService("InsertService"):SetCollectionUrl("${site}/Game/Tools/InsertAsset.ashx?sid=%d")`,
-            `game:GetService("InsertService"):SetAssetUrl("${site}/Asset/?id=%d")`,
-            `game:GetService("InsertService"):SetAssetVersionUrl("${site}/Asset/?assetversionid=%d")`,
-            "",
-            `pcall(function() game:GetService("SocialService"):SetFriendUrl("${social}IsFriendsWith&playerid=%d&userid=%d") end)`,
-            `pcall(function() game:GetService("SocialService"):SetBestFriendUrl("${social}IsBestFriendsWith&playerid=%d&userid=%d") end)`,
-            `pcall(function() game:GetService("SocialService"):SetGroupUrl("${social}IsInGroup&playerid=%d&groupid=%d") end)`,
-            `pcall(function() game:GetService("SocialService"):SetGroupRankUrl("${social}GetGroupRank&playerid=%d&groupid=%d") end)`,
-            `pcall(function() game:GetService("SocialService"):SetGroupRoleUrl("${social}GetGroupRole&playerid=%d&groupid=%d") end)`,
-            `pcall(function() game:GetService("GamePassService"):SetPlayerHasPassUrl("${site}/Game/GamePass/GamePassHandler.ashx?Action=HasPass&UserID=%d&PassID=%d") end)`,
-            `pcall(function() game:GetService("BadgeService"):SetPlaceId(game.PlaceId) end)`,
-            `pcall(function() game:GetService("BadgeService"):SetAwardBadgeUrl("${site}/Game/Badges/AwardBadge.ashx?UserID=%d&BadgeID=%d&PlaceID=%d") end)`,
-            `pcall(function() game:GetService("BadgeService"):SetHasBadgeUrl("${site}/Game/Badges/HasBadge.ashx?UserID=%d&BadgeID=%d") end)`,
-            `pcall(function() game:GetService("BadgeService"):SetIsBadgeDisabledUrl("${site}/Game/Badges/IsBadgeDisabled.ashx?BadgeID=%d") end)`,
-            `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
-            `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasasset?userId=%d&assetId=%d") end)`,
-            "",
-            `game:GetService("ScriptContext"):AddStarterScript(37801172)`,
-            ""
-        ].join("\n");
-
-        return text(studiosig(lua));
-    })
+    .get("/studio.ashx", () => text(studiosig(["", ...studioSetup(SITE_URL), ""].join("\n"))))
 
     .get("/players/:userId", () => ({
         ChatFilter: "blacklist"
@@ -377,7 +374,8 @@ export const game = new Elysia()
             httpOnly: true,
             sameSite: "lax"
         });
-        return text(query.suggest);
+        // studio wants an empty body
+        return text("");
     }, {
         query: t.Object({
             suggest: t.String()

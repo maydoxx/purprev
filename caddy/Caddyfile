@@ -15,7 +15,7 @@ nonerev.pw:80 {
     encode gzip
 
 
-    @backend path /api/* /uploads/* /Game/* /game/* /Asset/* /asset/* /Setting/* /user/* /Friend/* /marketplace/* /ownership/* /currency/* /persistence/* /thumbs/* /moderation/* /mobileapi/* /UserCheck/* /Login/* /device/* /notifications/* /sponsoredpage/* /v1.1/* /my/account/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
+    @backend path /api/* /uploads/* /Game/* /game/* /Asset /asset /Asset/* /asset/* /Setting/* /user/* /Friend/* /marketplace/* /ownership/* /currency/* /persistence/* /thumbs/* /moderation/* /mobileapi/* /UserCheck/* /Login/* /login/* /device/* /notifications/* /sponsoredpage/* /v1.1/* /my/account/* /my/places.aspx /My/* /IDE/* /ide/* /Data/* /UI/* /universes/* /developerproducts/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
     reverse_proxy @backend 127.0.0.1:3000
 
 

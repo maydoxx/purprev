@@ -115,8 +115,12 @@ const bodyColorsXml = async (userId: number) => {
 
 const routes = (prefix: string) => new Elysia({ prefix })
 
-    .get("/", async ({ query }) => {
-        const id = query.id;
+    .get("/", async ({ query, status }) => {
+        // studio writes texture ids as /Asset?ID=
+        const id = query.id ?? query.ID;
+        if (id === undefined) {
+            return status(400, "id missing");
+        }
         const place = await mediaStream("places", id);
         if (place) {
             return place;
@@ -133,7 +137,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
         return proxy(id);
     }, {
         query: t.Object({
-            id: t.Numeric()
+            id: t.Optional(t.Numeric()),
+            ID: t.Optional(t.Numeric())
         })
     })
 

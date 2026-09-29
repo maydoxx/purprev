@@ -58,6 +58,7 @@ cp .env.example .env
 | `RCCMANAGER_PORT` | RCCManager binding port, default `25500` |
 | `RCCMANAGER_PASSWORD` | RCCManager password |
 | `SETUP_URL` | Where the launcher and client zips are hosted |
+| `TOOLBOX_ROBLOX` | `0` keeps studio's free models site only |
 | `CDN_URL` | The uploads bucket's custom domain, only for `STORAGE=cloudflare` |
 | `ROBLOX_COOKIE` | A `.ROBLOSECURITY` cookie, needed for pulling assets from Roblox |
 | `SITE_URL` | Public url, ends up in the join scripts the client gets |
@@ -105,6 +106,17 @@ bun run dev:web
 `bun run start` runs the API without the watcher.
 
 Moving to R2 or bringing an old `uploads/` folder over: set `STORAGE=cloudflare` and run `bun run media:sync [folder]`. It records every file in the `media` table and pushes it to the bucket, skipping what is already there.
+
+### Roblox Studio
+
+| What | Where |
+| - | - |
+| Start page, log in here | `/ide/welcome` |
+| Toolbox | `/IDE/ClientToolbox.aspx` |
+| Publish to Roblox | `/IDE/publishas`, the place file goes to `/Data/Upload.ashx` |
+| Publish Selection | `/UI/Save.aspx`, ends up in `assets` and under My Models |
+
+Free Models also searches Roblox's toolbox, `TOOLBOX_ROBLOX=0` turns that off.
 
 ### Docker
 
