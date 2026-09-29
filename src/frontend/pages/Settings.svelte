@@ -23,8 +23,18 @@
     let newPassword = $state("");
     let confirmPassword = $state("");
     let inviteKey = $state("");
+    let editingUsername = $state(false);
+    let newUsername = $state(session.me?.username ?? "");
+    let usernamePassword = $state("");
+    let invitesOn = $state(true);
+
+    api("/site/settings").then(d => invitesOn = !!d.invites_enabled).catch(() => {});
 
     const show = (text: string, ok = true) => notice = { text, ok };
+
+    // 1000 like roblox
+    const USERNAME_PRICE = 1000;
+    const canBuy = $derived(newUsername.trim().length >= 3 && usernamePassword.length > 0 && !busy);
 
     const save = async (path: string, body: unknown, done: string) => {
         busy = true;
@@ -35,6 +45,8 @@
             show(done);
             editingEmail = false;
             editingPassword = false;
+            editingUsername = false;
+            usernamePassword = "";
             currentPassword = "";
             newPassword = "";
             confirmPassword = "";
@@ -68,6 +80,27 @@
     };
 </script>
 
+{#if editingUsername}
+    <div class="settings-modal-backdrop" role="presentation" onclick={() => editingUsername = false}>
+        <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="change-username-title" onclick={e => e.stopPropagation()}>
+            <div class="settings-modal-header">
+                <h3 id="change-username-title">Change Username</h3>
+                <button type="button" class="settings-modal-close" aria-label="Close" onclick={() => editingUsername = false}>&times;</button>
+            </div>
+            <form class="settings-modal-body" onsubmit={e => { e.preventDefault(); if (canBuy) save("/user/settings/changeusername", { newUsername: newUsername.trim(), password: usernamePassword }, "Username changed."); }}>
+                <p class="settings-modal-price">Change username for <img src="/img/nonebux-icon-but-with-the-purple.png" alt="Nonebux"> <span>{USERNAME_PRICE.toLocaleString("en-US")}</span>?</p>
+                <input type="text" bind:value={newUsername} placeholder="Username" maxlength="20" autocomplete="off" aria-label="New username">
+                <input type="password" bind:value={usernamePassword} placeholder="Account Password" autocomplete="current-password" aria-label="Account password">
+                <p class="settings-modal-note"><strong>Important:</strong> Original account creation date and forum post count will carry over to your new username.<br>Previous forum posts will appear under your old username and will NOT carry over to your new username.</p>
+                {#if notice && !notice.ok}
+                    <p class="settings-modal-error">{notice.text}</p>
+                {/if}
+                <button type="submit" class="settings-modal-buy" disabled={!canBuy}>Buy</button>
+            </form>
+        </div>
+    </div>
+{/if}
+
 <svelte:head>
     <title>My Settings - NoneRev</title>
     <link rel="stylesheet" href="/css/settings.css">
@@ -91,7 +124,7 @@
                 <section class="settings-section">
                     <h2>Account Info</h2>
                     <div class="settings-card settings-account-card">
-                        <div class="settings-info-row"><span>Username: <strong>{session.me?.username}</strong></span><span class="settings-readonly" title="Username changes are not available">✎</span></div>
+                        <div class="settings-info-row"><span>Username: <strong>{session.me?.username}</strong></span><button type="button" class="settings-edit-icon" aria-label="Change username" onclick={() => { newUsername = ""; usernamePassword = ""; notice = null; editingUsername = true; }}>✎</button></div>
                         <div class="settings-info-row"><span>Password: <strong>••••••••</strong></span><button type="button" class="settings-edit-icon" aria-label="Change password" onclick={() => { tab = "security"; editingPassword = true; }}>✎</button></div>
                         <div class="settings-info-row"><span>Email address: <strong>{session.me?.email || "Not set"}</strong></span><button type="button" class="settings-edit-icon" aria-label="Edit email address" onclick={() => editingEmail = !editingEmail}>✎</button></div>
                         {#if editingEmail}
@@ -139,12 +172,29 @@
                         {/if}
                     </div>
                 </section>
+            {:else if tab === "billing"}
+                <section class="settings-section">
+                    <h2>Builders Club</h2>
+                    <div class="settings-card settings-billing-card">
+                        {#if session.me?.membership && session.me.membership !== "None"}
+                            <p>You are a <strong>{session.me.membership === "BC" ? "Builders Club" : session.me.membership === "TBC" ? "Turbo Builders Club" : "Outrageous Builders Club"}</strong> member{#if session.me.membership_expires > 0} until {new Date(session.me.membership_expires * 1000).toLocaleDateString("en-US")}{/if}.</p>
+                            <p class="settings-help">You get {session.me.membership === "BC" ? 15 : session.me.membership === "TBC" ? 35 : 60} Nonebux every day you visit, and you can buy Builders Club only items.</p>
+                        {:else}
+                            <p>You are not a Builders Club member.</p>
+                            <p class="settings-help">Builders Club gives you daily Nonebux and the club only items in the catalog. <a href="/premium/membership">Upgrade now</a>.</p>
+                        {/if}
+                    </div>
+                </section>
             {:else if tab === "invites"}
                 <section class="settings-section">
                     <h2>Invites</h2>
                     <div class="settings-card settings-invite-card">
-                        <p>Generate a single-use invite key for someone joining NoneRev.</p>
-                        <button type="button" disabled={busy} onclick={generate}>Generate Invite Key</button>
+                        {#if invitesOn}
+                            <p>Generate a single-use invite key for someone joining NoneRev.</p>
+                            <button type="button" disabled={busy} onclick={generate}>Generate Invite Key</button>
+                        {:else}
+                            <p>Invite keys are turned off right now.</p>
+                        {/if}
                         {#if inviteKey}<div class="settings-invite-result"><input aria-label="Invite key" value={inviteKey} readonly><button type="button" onclick={copy}>Copy</button></div>{/if}
                     </div>
                 </section>

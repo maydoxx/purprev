@@ -1,46 +1,433 @@
 .settings-page,
 .settings-page input,
 .settings-page textarea,
-.settings-page button { font-family: "Source Sans 3", Arial, sans-serif; }
-.settings-page { max-width: 980px; min-height: calc(100vh - 40px); margin: 0 auto; padding: 18px 20px 80px; color: #343b40; font-size: 15px; }
-.settings-page > h1 { margin: 0 0 9px; font-size: 32px; line-height: 1.25; font-weight: 400; }
-.settings-layout { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; align-items: start; }
-.settings-navigation { display: flex; flex-direction: column; background: #fff; box-shadow: 0 1px 3px #0002; }
-.settings-navigation button { min-height: 39px; padding: 9px 12px; border: 0; border-left: 3px solid transparent; background: #fff; color: #58636b; font-size: 14px; font-weight: 400; text-align: left; }
-.settings-navigation button:hover { background: #f5f8fa; }
-.settings-navigation button.active { border-left-color: #7b2cbf; color: #353535; }
-.settings-content { min-width: 0; }
-.settings-section { margin: 0 0 21px; }
-.settings-section h2 { margin: 0 0 4px; color: #68727a; font-size: 22px; line-height: 1.2; font-weight: 300; }
-.settings-card { padding: 14px 16px 16px; background: #fff; box-shadow: 0 1px 3px #0002; }
-.settings-info-row { display: flex; align-items: center; justify-content: space-between; min-height: 30px; gap: 12px; color: #68717a; font-size: 14px; }
-.settings-info-row strong { color: #68717a; font-weight: 400; }
-.settings-edit-icon, .settings-readonly { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border: 0; color: #30353a; background: transparent; font-size: 20px; line-height: 1; }
-.settings-edit-icon:hover { color: #6a1b9a; }
-.settings-readonly { opacity: .35; }
-.settings-personal-card textarea { display: block; width: 100%; min-height: 80px; padding: 8px; border: 1px solid #c9cdd0; border-radius: 2px; color: #343b40; resize: vertical; }
-.settings-personal-card textarea::placeholder, .settings-social-card input::placeholder { color: #a4aaaf; }
-.settings-help { margin: 4px 0 10px; color: #4c545b; font-size: 12px; }
-.settings-save-row { display: flex; justify-content: flex-end; margin-top: 8px; }
-.settings-save-row button, .settings-inline-controls button, .settings-password-form button, .settings-invite-card button { min-height: 34px; padding: 4px 12px; border: 1px solid #c6ccd0; border-radius: 2px; color: #4d5962; background: #fff; }
-.settings-save-row button:hover, .settings-inline-controls button:hover, .settings-password-form button:hover, .settings-invite-card button:hover { background: #eef3f6; }
-.settings-save-row button:disabled, .settings-inline-controls button:disabled, .settings-password-form button:disabled, .settings-invite-card button:disabled { opacity: .6; }
-.settings-social-card p { margin: 0 0 9px; color: #68717a; font-size: 12px; }
-.settings-social-card label, .settings-password-form label, .settings-inline-editor label { display: block; margin: 0 0 9px; color: #6c747b; font-size: 12px; }
-.settings-social-card input, .settings-password-form input, .settings-inline-editor input, .settings-invite-result input { display: block; width: 100%; min-height: 36px; margin-top: 3px; padding: 5px 7px; border: 1px solid #cbd0d4; border-radius: 2px; background: #fff; color: #343b40; }
-.settings-social-card input:disabled { background: #fafafa; }
-.settings-inline-editor { margin: 7px 0 4px; padding: 10px; background: #f7f9fa; }
-.settings-inline-controls { display: flex; gap: 6px; }
-.settings-inline-controls input { flex: 1; width: auto; margin: 0; }
-.settings-security-card, .settings-invite-card, .settings-empty-card { min-height: 70px; }
-.settings-password-form { display: grid; gap: 4px; max-width: 370px; margin-top: 12px; }
-.settings-password-form button { justify-self: start; }
-.settings-invite-card p { margin: 0 0 12px; }
-.settings-invite-result { display: flex; gap: 7px; margin-top: 10px; }
-.settings-invite-result input { width: min(100%, 380px); margin: 0; }
-.settings-empty-card { color: #68717a; }
-.settings-message { margin-bottom: 10px; padding: 9px 12px; border: 1px solid; }
-.settings-message.success { color: #267249; border-color: #b7dcc6; background: #ebf8f0; }
-.settings-message.error { color: #9b3030; border-color: #e6b6b6; background: #fff1f1; }
-.settings-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-@media (max-width: 680px) { .settings-page { padding: 16px 12px 60px; } .settings-layout { grid-template-columns: 1fr; } .settings-navigation { flex-direction: row; overflow-x: auto; } .settings-navigation button { flex: 0 0 auto; border-left: 0; border-bottom: 3px solid transparent; white-space: nowrap; } .settings-navigation button.active { border-bottom-color: #7b2cbf; } }
+.settings-page button {
+    font-family: "Source Sans 3", Arial, sans-serif;
+}
+
+.settings-page {
+    max-width: 980px;
+    min-height: calc(100vh - 40px);
+    margin: 0 auto;
+    padding: 18px 20px 80px;
+    color: #343b40;
+    font-size: 15px;
+}
+
+.settings-page>h1 {
+    margin: 0 0 9px;
+    font-size: 32px;
+    line-height: 1.25;
+    font-weight: 400;
+}
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.settings-navigation {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 0 1px 3px #0002;
+}
+
+.settings-navigation button {
+    min-height: 39px;
+    padding: 9px 12px;
+    border: 0;
+    border-left: 3px solid transparent;
+    background: #fff;
+    color: #58636b;
+    font-size: 14px;
+    font-weight: 400;
+    text-align: left;
+}
+
+.settings-navigation button:hover {
+    background: #f5f8fa;
+}
+
+.settings-navigation button.active {
+    border-left-color: #7b2cbf;
+    color: #353535;
+}
+
+.settings-content {
+    min-width: 0;
+}
+
+.settings-section {
+    margin: 0 0 21px;
+}
+
+.settings-section h2 {
+    margin: 0 0 4px;
+    color: #68727a;
+    font-size: 22px;
+    line-height: 1.2;
+    font-weight: 300;
+}
+
+.settings-card {
+    padding: 14px 16px 16px;
+    background: #fff;
+    box-shadow: 0 1px 3px #0002;
+}
+
+.settings-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 30px;
+    gap: 12px;
+    color: #68717a;
+    font-size: 14px;
+}
+
+.settings-info-row strong {
+    color: #68717a;
+    font-weight: 400;
+}
+
+.settings-edit-icon,
+.settings-readonly {
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    color: #30353a;
+    background: transparent;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.settings-edit-icon:hover {
+    color: #6a1b9a;
+}
+
+.settings-readonly {
+    opacity: .35;
+}
+
+.settings-personal-card textarea {
+    display: block;
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    border: 1px solid #c9cdd0;
+    border-radius: 2px;
+    color: #343b40;
+    resize: vertical;
+}
+
+.settings-personal-card textarea::placeholder,
+.settings-social-card input::placeholder {
+    color: #a4aaaf;
+}
+
+.settings-help {
+    margin: 4px 0 10px;
+    color: #4c545b;
+    font-size: 12px;
+}
+
+.settings-save-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.settings-save-row button,
+.settings-inline-controls button,
+.settings-password-form button,
+.settings-invite-card button {
+    min-height: 34px;
+    padding: 4px 12px;
+    border: 1px solid #c6ccd0;
+    border-radius: 2px;
+    color: #4d5962;
+    background: #fff;
+}
+
+.settings-save-row button:hover,
+.settings-inline-controls button:hover,
+.settings-password-form button:hover,
+.settings-invite-card button:hover {
+    background: #eef3f6;
+}
+
+.settings-save-row button:disabled,
+.settings-inline-controls button:disabled,
+.settings-password-form button:disabled,
+.settings-invite-card button:disabled {
+    opacity: .6;
+}
+
+.settings-social-card p {
+    margin: 0 0 9px;
+    color: #68717a;
+    font-size: 12px;
+}
+
+.settings-social-card label,
+.settings-password-form label,
+.settings-inline-editor label {
+    display: block;
+    margin: 0 0 9px;
+    color: #6c747b;
+    font-size: 12px;
+}
+
+.settings-social-card input,
+.settings-password-form input,
+.settings-inline-editor input,
+.settings-invite-result input {
+    display: block;
+    width: 100%;
+    min-height: 36px;
+    margin-top: 3px;
+    padding: 5px 7px;
+    border: 1px solid #cbd0d4;
+    border-radius: 2px;
+    background: #fff;
+    color: #343b40;
+}
+
+.settings-social-card input:disabled {
+    background: #fafafa;
+}
+
+.settings-inline-editor {
+    margin: 7px 0 4px;
+    padding: 10px;
+    background: #f7f9fa;
+}
+
+.settings-inline-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.settings-inline-controls input {
+    flex: 1;
+    width: auto;
+    margin: 0;
+}
+
+.settings-security-card,
+.settings-invite-card,
+.settings-empty-card {
+    min-height: 70px;
+}
+
+.settings-password-form {
+    display: grid;
+    gap: 4px;
+    max-width: 370px;
+    margin-top: 12px;
+}
+
+.settings-password-form button {
+    justify-self: start;
+}
+
+.settings-invite-card p {
+    margin: 0 0 12px;
+}
+
+.settings-invite-result {
+    display: flex;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+.settings-invite-result input {
+    width: min(100%, 380px);
+    margin: 0;
+}
+
+.settings-empty-card {
+    color: #68717a;
+}
+
+.settings-message {
+    margin-bottom: 10px;
+    padding: 9px 12px;
+    border: 1px solid;
+}
+
+.settings-message.success {
+    color: #267249;
+    border-color: #b7dcc6;
+    background: #ebf8f0;
+}
+
+.settings-message.error {
+    color: #9b3030;
+    border-color: #e6b6b6;
+    background: #fff1f1;
+}
+
+.settings-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+    .settings-page {
+        padding: 16px 12px 60px;
+    }
+
+    .settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-navigation {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .settings-navigation button {
+        flex: 0 0 auto;
+        border-left: 0;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+    }
+
+    .settings-navigation button.active {
+        border-bottom-color: #7b2cbf;
+    }
+}
+
+.settings-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, .55);
+}
+
+.settings-modal {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
+    color: #343434;
+}
+
+.settings-modal-header {
+    position: relative;
+    padding: 14px 40px 12px 20px;
+    border-bottom: 1px solid #e3e3e3;
+}
+
+.settings-modal-header h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -.5px;
+}
+
+.settings-modal-close {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    border: 0;
+    background: none;
+    color: #b8b8b8;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.settings-modal-close:hover {
+    color: #757575;
+}
+
+.settings-modal-body {
+    padding: 18px 20px 20px;
+}
+
+.settings-modal-price {
+    margin: 0 0 12px;
+    font-size: 16px;
+}
+
+.settings-modal-price img {
+    width: 18px;
+    height: 18px;
+    vertical-align: -3px;
+}
+
+.settings-modal-price span {
+    color: #02b757;
+    font-weight: 600;
+}
+
+.settings-modal-body input {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 40px;
+    margin: 0 0 14px;
+    padding: 6px 10px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    font-size: 16px;
+    color: #343434;
+}
+
+.settings-modal-body input:focus {
+    border-color: #757575;
+    outline: none;
+}
+
+.settings-modal-note {
+    margin: 4px 0 18px;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.settings-modal-error {
+    margin: -8px 0 14px;
+    color: #cb0000;
+    font-size: 13px;
+}
+
+.settings-modal-buy {
+    display: block;
+    width: 100px;
+    margin: 0 auto;
+    padding: 8px 0;
+    border: 1px solid #02b757;
+    border-radius: 3px;
+    background: #02b757;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.settings-modal-buy:hover:not(:disabled) {
+    background: #3fc679;
+    border-color: #3fc679;
+}
+
+.settings-modal-buy:disabled {
+    background: #a5e3c4;
+    border-color: #a5e3c4;
+    cursor: default;
+}
