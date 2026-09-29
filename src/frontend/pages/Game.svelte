@@ -49,6 +49,7 @@
     // the app is a webview, it watches for /games/start?placeid= and launches the game itself
     const isApp = /ROBLOX (Android|iOS) App/i.test(navigator.userAgent);
     const isPhone = !isApp && /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+    const isAndroid = isPhone && /Android/i.test(navigator.userAgent);
 
     // opens nonerev-launcher: which NoneRevLauncher.exe registered, the launcher reads the site url from placelauncherurl
     const play = async () => {
@@ -100,6 +101,25 @@
     };
 
     const thumbnail = $derived(game?.thumbnail || "/img/DefaultThumb.png");
+
+    let favoriting = $state(false);
+    const favorite = async () => {
+        if (!session.me) {
+            router.go("/login");
+            return;
+        }
+        if (favoriting) return;
+        favoriting = true;
+        try {
+            const d = await api(`/games/${id}/favorite`, {});
+            game.favorited = d.favorited;
+            game.favorites = d.favorites;
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            favoriting = false;
+        }
+    };
     const up = $derived(Number(game?.up_votes ?? game?.likes) || 0);
     const down = $derived(Number(game?.down_votes ?? game?.dislikes) || 0);
     const ratio = $derived(up + down > 0 ? Math.round(up / (up + down) * 100) : 0);
@@ -145,9 +165,12 @@
                             <a class="btn-play-2016" href="/login">Play</a>
                         {:else if isApp}
                             <button id="MobileVisitButton" type="button" class="btn-play-2016" onclick={() => location.href = `/games/start?placeid=${id}`}>Play</button>
+                        {:else if isAndroid}
+                            <a class="btn-play-2016" href="/api/setup/download?os=android">Play</a>
+                            <p class="text-center mt-2">Playing on a phone needs the NoneRev app. This gets you the apk.</p>
                         {:else if isPhone}
                             <a class="btn-play-2016" href="/download">Play</a>
-                            <p class="text-center mt-2">Playing on a phone needs the NoneRev app.</p>
+                            <p class="text-center mt-2">Playing on a phone needs the NoneRev app, which is Android only for now.</p>
                         {:else}
                             <button id="MultiplayerVisitButton" type="button" class="btn-play-2016" onclick={play}>Play</button>
                             <p id="launcher-hint" class="text-center mt-2" hidden={!launching}>Nothing happened? <a href="/setup/download">Download the NoneRev launcher</a>, run it once, then press Play again.</p>
@@ -155,8 +178,10 @@
                     </div>
 
                     <ul class="share-rate-favorite-2016">
-                        <li class="favorite-2016" title="Favorites">
-                            <svg class="game-rating-icon favorite-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 1.5 3.3 6.7 7.4 1.1-5.4 5.2 1.3 7.3-6.6-3.5-6.6 3.5 1.3-7.3-5.4-5.2 7.4-1.1z"/></svg>
+                        <li class="favorite-2016" class:favorited={game.favorited} title={game.favorited ? "Remove from favorites" : "Add to favorites"}>
+                            <button type="button" class="favorite-button" onclick={favorite} disabled={favoriting} aria-pressed={!!game.favorited} aria-label="Favorite">
+                                <svg class="game-rating-icon favorite-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 1.5 3.3 6.7 7.4 1.1-5.4 5.2 1.3 7.3-6.6-3.5-6.6 3.5 1.3-7.3-5.4-5.2 7.4-1.1z"/></svg>
+                            </button>
                             <span>{compact(game.favorites)}</span>
                         </li>
                         <li class="voting-panel-2016">

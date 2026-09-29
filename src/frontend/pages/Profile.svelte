@@ -1,4 +1,22 @@
 <script lang="ts">
+    let moreBadges = $state(false);
+
+    // ids on /Badges
+    const badgeAnchor: Record<string, number> = {
+        administrator: 1,
+        friendship: 2,
+        homestead: 6,
+        bricksmith: 7,
+        inviter: 8,
+        veteran: 12,
+        "official-model-maker": 17,
+        "welcome-to-the-club": 18,
+        "builders-club": 11,
+        "turbo-builders-club": 15,
+        "outrageous-builders-club": 16
+    };
+
+    import GameCard from "../GameCard.svelte";
     import { api } from "../api";
     import { session } from "../session.svelte";
     import { router } from "../router.svelte";
@@ -78,6 +96,7 @@
                         </div>
                         <div class="header-title">
                             <h2>{profile.username}</h2>
+                            {#if profile.membership && profile.membership !== "None"}<span class="icon-{profile.membership.toLowerCase()}" title="{profile.membership === "BC" ? "Builders Club" : profile.membership === "TBC" ? "Turbo Builders Club" : "Outrageous Builders Club"}"></span>{/if}
                         </div>
                         <div class="header-userstatus">
                             <div class="header-userstatus-text">
@@ -176,6 +195,14 @@
                                     </p>
                                 </div>
                                 <div class="profile-about-footer">
+                                    {#if profile.previousUsernames?.length}
+                                        <span class="profile-name-history">
+                                            <span class="tooltip-pastnames" tabindex="0" data-names={profile.previousUsernames.join(", ")} aria-label="Past usernames: {profile.previousUsernames.join(", ")}">
+                                                <span class="icon-pastname"></span>
+                                            </span>
+                                            <span class="text-pastname">Past usernames</span>
+                                        </span>
+                                    {/if}
                                     <a href="/discord" class="abuse-report-link">
                                         <span class="text-error">Report Abuse</span>
                                     </a>
@@ -218,7 +245,7 @@
                         <div class="section profile-friends">
                             <div class="container-header">
                                 <h3>Friends ({profile.friendCount})</h3>
-                                {#if isMe}<a class="btn-more" href="/my/friends">See All</a>{/if}
+                                {#if isMe}<a class="rbx-btn-secondary-xs btn-fixed-width btn-more" href="/my/friends">See All</a>{/if}
                             </div>
                             <div class="section-content">
                                 {#if profile.friends.length === 0}
@@ -238,18 +265,64 @@
                             </div>
                         </div>
 
+                        <div class="favorite-games-container">
+                            <div class="container-header">
+                                <h3>Favorite Games</h3>
+                                <a class="rbx-btn-secondary-xs btn-fixed-width btn-more" href="/favorites?id={id}">Favorites</a>
+                            </div>
+                            {#if !profile.favorites?.length}
+                                <div class="section-content-off">{profile.username} has no favorite games yet.</div>
+                            {:else}
+                                <ul class="favorite-games-list">
+                                    {#each profile.favorites as g (g.id)}
+                                        <GameCard game={g} />
+                                    {/each}
+                                </ul>
+                            {/if}
+                        </div>
+
+                        <div class="section profile-site-badges">
+                            <div class="container-header">
+                                <h3>NoneRev Badges <span class="assets-count">({profile.siteBadges?.length ?? 0})</span></h3>
+                                {#if profile.siteBadges?.length}
+                                    <button type="button" class="rbx-btn-secondary-xs btn-fixed-width btn-more" onclick={() => moreBadges = !moreBadges}>{moreBadges ? "See Less" : "See More"}</button>
+                                {/if}
+                            </div>
+                            <div class="section-content">
+                                {#if !profile.siteBadges?.length}
+                                    <div class="section-content-off">{profile.username} has no NoneRev badges yet.</div>
+                                {:else}
+                                    <ul class="hlist badge-list" class:badge-list-more={moreBadges}>
+                                        {#each profile.siteBadges as b}
+                                            <li class="list-item badge-item asset-item">
+                                                <a href="/badges#Badge{badgeAnchor[b.id] ?? ""}" class="badge-link" title={b.name}>
+                                                    <span class="icon-{b.id}" title={b.name}></span>
+                                                    <span class="text-overflow item-name">{b.name}</span>
+                                                </a>
+                                            </li>
+                                        {/each}
+                                    </ul>
+                                {/if}
+                            </div>
+                        </div>
+
                         <div class="section profile-badges">
                             <div class="container-header">
-                                <h3>Badges</h3>
-                                {#if isMe}<a class="btn-more" href="/my/inventory?category=badges">See All</a>{/if}
+                                <h3>Player Badges <span class="assets-count">({profile.badgeCount.toLocaleString()})</span></h3>
+                                {#if isMe}<a class="rbx-btn-secondary-xs btn-fixed-width btn-more" href="/my/inventory?category=badges">See All</a>{/if}
                             </div>
                             <div class="section-content">
                                 {#if profile.badges.length === 0}
-                                    <div class="section-content-off">{profile.username} hasn't earned any badges yet.</div>
+                                    <div class="section-content-off">{profile.username} hasn't earned any player badges yet.</div>
                                 {:else}
-                                    <ul class="profile-badge-list">
+                                    <ul class="hlist badge-list">
                                         {#each profile.badges as b}
-                                            <li><a href="/game?id={b.game_id}" title={b.name}><img src={b.icon || "/img/pending.png"} alt=""><span>{b.name}</span></a></li>
+                                            <li class="list-item badge-item asset-item">
+                                                <a href="/game?id={b.game_id}" class="badge-link" title={b.name}>
+                                                    <img src={b.icon || "/img/pending.png"} alt={b.name}>
+                                                    <span class="text-overflow item-name">{b.name}</span>
+                                                </a>
+                                            </li>
                                         {/each}
                                     </ul>
                                 {/if}
@@ -271,10 +344,6 @@
                                     <li class="profile-stat">
                                         <p class="text-label">Forum Posts</p>
                                         <p class="text-lead">{profile.postCount.toLocaleString()}</p>
-                                    </li>
-                                    <li class="profile-stat">
-                                        <p class="text-label">Badges</p>
-                                        <p class="text-lead">{profile.badgeCount.toLocaleString()}</p>
                                     </li>
                                 </ul>
                             </div>

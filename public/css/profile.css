@@ -757,8 +757,288 @@ body {
     }
 }
 
-.profile-badge-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px; }
-.profile-badge-list li { width: 92px; text-align: center; }
-.profile-badge-list a { color: #333; text-decoration: none; font-size: 12px; }
-.profile-badge-list img { display: block; width: 82px; height: 82px; margin: 0 auto 5px; object-fit: contain; border: 1px solid #ccc; background: #f6f6f6; }
-.profile-badge-list span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-container .container-header .assets-count {
+    font-weight: inherit;
+}
+
+.profile-container .badge-list {
+    overflow: hidden;
+    max-height: 170px;
+}
+
+.profile-container .badge-list-more {
+    overflow: auto;
+    max-height: 100%;
+}
+
+.container-header button.btn-more {
+    border-width: 1px;
+    border-style: solid;
+}
+
+.profile-container .asset-item {
+    padding: 5px 0;
+    width: 16.66667%;
+    text-align: center;
+}
+
+.profile-container .asset-item .badge-link {
+    display: block;
+    color: #343434;
+    text-decoration: none;
+}
+
+.profile-container .asset-item img,
+.profile-container .asset-item [class^="icon-"] {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 140px;
+    height: 140px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    vertical-align: middle;
+    object-fit: contain;
+    background-color: #fff;
+}
+
+.profile-container .asset-item .item-name {
+    display: block;
+    width: 140px;
+    margin: auto;
+    line-height: 22px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-container .asset-item a .item-name:hover {
+    color: #7b2cbf;
+}
+
+/* roblox_badges.svg, 140px tiles */
+.icon-inviter,
+.icon-friendship,
+.icon-welcome-to-the-club,
+.icon-ambassador,
+.icon-combat-initiation,
+.icon-warrior,
+.icon-bloxxer,
+.icon-homestead,
+.icon-bricksmith,
+.icon-official-model-maker,
+.icon-administrator,
+.icon-veteran,
+.icon-builders-club,
+.icon-turbo-builders-club,
+.icon-outrageous-builders-club {
+    background: url("/img/badges/roblox_badges.svg") no-repeat;
+    background-size: 280px auto;
+}
+
+.icon-inviter {
+    background-position: 0 0;
+}
+
+.icon-friendship {
+    background-position: -140px 0;
+}
+
+.icon-welcome-to-the-club {
+    background-position: 0 -140px;
+}
+
+.icon-ambassador {
+    background-position: -140px -140px;
+}
+
+.icon-combat-initiation {
+    background-position: 0 -280px;
+}
+
+.icon-warrior {
+    background-position: -140px -280px;
+}
+
+.icon-bloxxer {
+    background-position: 0 -420px;
+}
+
+.icon-homestead {
+    background-position: -140px -420px;
+}
+
+.icon-bricksmith {
+    background-position: 0 -560px;
+}
+
+.icon-official-model-maker {
+    background-position: -140px -560px;
+}
+
+.icon-builders-club {
+    background-position: 0 -700px;
+}
+
+.icon-turbo-builders-club {
+    background-position: -140px -700px;
+}
+
+.icon-outrageous-builders-club {
+    background-position: 0 -840px;
+}
+
+.icon-administrator {
+    background-position: -140px -840px;
+}
+
+.icon-veteran {
+    background-position: 0 -980px;
+}
+
+@media (max-width: 991px) {
+    .profile-container .asset-item {
+        width: 33.33333%;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-container .asset-item {
+        width: 50%;
+    }
+}
+
+/* bc.svg sprite, 28px rows */
+.icon-bc,
+.icon-tbc,
+.icon-obc {
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    vertical-align: middle;
+    background: url("/img/bc/bc.svg") 0 0 no-repeat;
+    background-size: auto auto;
+}
+
+.icon-tbc {
+    background-position: 0 -28px;
+}
+
+.icon-obc {
+    background-position: 0 -56px;
+}
+
+.profile-about-footer .profile-name-history {
+    float: left;
+}
+
+.profile-about-footer .profile-name-history .icon-pastname {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    background: url("/img/generic-icons-2016.svg") 0 -780px no-repeat;
+    background-size: 40px 800px;
+    opacity: .5;
+}
+
+.profile-about-footer .profile-name-history .tooltip-pastnames {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    outline: none;
+}
+
+.profile-about-footer .profile-name-history .tooltip-pastnames:hover .icon-pastname,
+.profile-about-footer .profile-name-history .tooltip-pastnames:focus .icon-pastname {
+    background-position: -20px -780px;
+}
+
+.profile-about-footer .profile-name-history .tooltip-pastnames::after {
+    content: attr(data-names);
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    z-index: 1070;
+    box-sizing: border-box;
+    width: max-content;
+    min-width: 150px;
+    max-width: 200px;
+    padding: 9px;
+    background: #757575;
+    color: #f2f2f2;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.3em;
+    text-align: left;
+    white-space: normal;
+    transform: translateX(-50%);
+}
+
+.profile-about-footer .profile-name-history .tooltip-pastnames::before {
+    content: "";
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: 23px;
+    z-index: 1070;
+    width: 0;
+    height: 0;
+    margin-left: -5px;
+    border-style: solid;
+    border-width: 5px 5px 0;
+    border-color: #757575 transparent transparent;
+}
+
+.profile-about-footer .profile-name-history .tooltip-pastnames:hover::after,
+.profile-about-footer .profile-name-history .tooltip-pastnames:hover::before,
+.profile-about-footer .profile-name-history .tooltip-pastnames:focus::after,
+.profile-about-footer .profile-name-history .tooltip-pastnames:focus::before {
+    display: block;
+}
+
+.profile-about-footer .text-pastname {
+    font-size: 14px;
+    font-weight: 400;
+    color: #b8b8b8;
+    vertical-align: middle;
+}
+
+.container-header .btn-more {
+    float: right;
+    width: 90px;
+    margin: 6px 0 0;
+    padding: 4px;
+    font-size: 14px;
+    line-height: 100%;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.container-header .btn-more:hover,
+.container-header .btn-more:focus {
+    color: #fff;
+    text-decoration: none;
+}
+
+.profile-container .favorite-games-container {
+    margin-bottom: 20px;
+}
+
+/* 6 x 150 + 5 x 14 = 970 */
+.favorite-games-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 14px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.favorite-games-list .game-card {
+    width: 150px;
+    margin: 0;
+    padding: 0;
+}
