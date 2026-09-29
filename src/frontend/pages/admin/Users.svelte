@@ -2,7 +2,7 @@
     import { api } from "../../api";
     import { router } from "../../router.svelte";
     import { session } from "../../session.svelte";
-    import { rows, total, pages, num, type Flash } from "./util";
+    import { rows, total, pages, num, adminDate, type Flash } from "./util";
     import Layout from "./Layout.svelte";
     import Pagination from "./Pagination.svelte";
 
@@ -14,6 +14,12 @@
     let users = $state<any[]>([]);
     let flash = $state<Flash>(null);
 
+    // one open row
+    let open = $state(0);
+    let edit = $state<any>(null);
+    let history = $state<any>(null);
+    let saving = $state(false);
+
     const note = (type: string, message: string) => flash = {
         type,
         message
@@ -23,107 +29,199 @@
         search = q;
     });
 
+    const load = () => api(`/admin/users?q=${encodeURIComponent(q)}&page=${page}`).then(d => {
+        data = d;
+        users = rows(d);
+    }).catch(err => note("danger", err.message));
+
     $effect(() => {
-        api(`/admin/users?q=${encodeURIComponent(q)}&page=${page}`).then(d => {
-            data = d;
-            users = rows(d);
-        }).catch(err => note("danger", err.message));
+        q;
+        page;
+        load();
     });
+
+    const toggle = async (u: any) => {
+        if (open === u.id) {
+            open = 0;
+            return;
+        }
+        open = u.id;
+        edit = {
+            admin: Number(u.admin),
+            currency: Number(u.currency),
+            membership: u.membership ?? "None",
+            membership_days: ""
+        };
+        history = null;
+        try {
+            history = await api(`/admin/users/${u.id}/history`);
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+    };
+
+    const save = async (u: any) => {
+        if (u.id === session.me?.id && Number(edit.admin) < 1) {
+            note("danger", "You cannot remove your own admin access here.");
+            return;
+        }
+        saving = true;
+        try {
+            await api(`/admin/users/${u.id}`, {
+                admin_level: Number(edit.admin),
+                currency: Number(edit.currency),
+                membership: edit.membership,
+                membership_days: edit.membership_days === "" ? undefined : Number(edit.membership_days)
+            }, "PATCH");
+            note("success", `${u.username} updated.`);
+            if (u.id === session.me?.id) session.refresh();
+            await load();
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+        saving = false;
+    };
 
     const submit = (e: Event) => {
         e.preventDefault();
         router.go("/admi/users" + (search ? "?q=" + encodeURIComponent(search) : ""));
     };
 
-    const save = async (u: any) => {
-        if (u.id === session.me?.id && Number(u.admin) < 1) {
-            note("danger", "You cannot remove your own admin access here.");
-            return;
-        }
-        try {
-            await api(`/admin/users/${u.id}`, {
-                admin_level: Number(u.admin),
-                currency: Number(u.currency)
-            }, "PATCH");
-            note("success", "User updated.");
-            if (u.id === session.me?.id) session.refresh();
-        } catch (err: any) {
-            note("danger", err.message);
-        }
-    };
-
     const url = (p: number) => `/admi/users?q=${encodeURIComponent(q)}&page=${p}`;
+    const pic = (id: number) => `/api/user/getProfilePicture?userId=${id}&type=headshot`;
+    const club = (u: any) => u.membership && u.membership !== "None" ? u.membership : "";
+    const when = (t: any) => adminDate(t);
 </script>
 
-<Layout title="Manage Users">
+<Layout title="Users">
     <div class="admin-heading">
         <h1>Users</h1>
-        <p>Search accounts, change admin level, or adjust currency.</p>
+        <p>{num(total(data))} account{total(data) === 1 ? "" : "s"}. Open a row to edit, see who invited them and who shares their IP.</p>
     </div>
 
     {#if flash}
         <div class="alert alert-{flash.type}">{flash.message}</div>
     {/if}
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <form onsubmit={submit} class="row g-2">
-                <div class="col-md-8 col-lg-6">
-                    <input type="search" class="form-control" bind:value={search} placeholder="Username or email">
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-primary" type="submit">Search</button>
-                </div>
-                {#if q}
-                    <div class="col-auto"><a href="/admi/users" class="btn btn-outline-secondary">Clear</a></div>
-                {/if}
-            </form>
-        </div>
+    <div class="admin-toolbar">
+        <form onsubmit={submit}>
+            <input type="search" class="form-control" bind:value={search} placeholder="Username or email">
+            <button class="btn btn-primary" type="submit">Search</button>
+            {#if q}<a href="/admi/users" class="btn btn-outline-secondary">Clear</a>{/if}
+        </form>
+        <span class="spacer"></span>
+        <a href="/admi/moderation" class="btn btn-outline-danger">Moderate someone</a>
     </div>
 
     <div class="card">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <span class="admin-card-title">Accounts</span>
-            <span class="admin-muted">{num(total(data))} result{total(data) === 1 ? "" : "s"}</span>
-        </div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0 admin-table align-middle">
-                <thead class="table-light">
+            <table class="table table-hover admin-table align-middle">
+                <thead>
                     <tr>
-                        <th>ID</th>
                         <th>User</th>
                         <th>Status</th>
-                        <th style="min-width:110px">Admin</th>
-                        <th style="min-width:150px">Nonebux</th>
-                        <th>Actions</th>
+                        <th>Nonebux</th>
+                        <th>Invited by</th>
+                        <th>Joined</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {#each users as u (u.id)}
-                        <tr>
-                            <td>{u.id}</td>
+                        <tr class:table-active={open === u.id}>
                             <td>
-                                <a class="fw-semibold text-decoration-none" href="/user?id={u.id}">{u.username}</a>
-                                <div class="admin-muted">{u.email || "No email"}</div>
+                                <div class="admin-user">
+                                    <img class="admin-avatar" src={pic(u.id)} alt="">
+                                    <div>
+                                        <a href="/user?id={u.id}">{u.username}</a> <span class="admin-muted">#{u.id}</span>
+                                        <div class="admin-muted">{u.email || "no email"}</div>
+                                    </div>
+                                </div>
                             </td>
                             <td>
-                                {#if u.ongoing_action_id != null}
-                                    <span class="badge text-bg-danger">Moderated</span>
-                                {:else if Number(u.admin) > 0}
-                                    <span class="badge text-bg-primary">Admin</span>
-                                {:else}
-                                    <span class="badge text-bg-secondary">User</span>
-                                {/if}
+                                {#if u.ongoing_action_id != null}<span class="admin-pill danger">Moderated</span>{/if}
+                                {#if Number(u.admin) > 0}<span class="admin-pill admin">Admin {u.admin}</span>{/if}
+                                {#if club(u)}<span class="admin-pill {club(u).toLowerCase()}" title={Number(u.membership_expires) > 0 ? `until ${adminDate(u.membership_expires)}` : "never expires"}>{club(u)}</span>{/if}
+                                {#if u.ongoing_action_id == null && Number(u.admin) === 0 && !club(u)}<span class="admin-muted">—</span>{/if}
                             </td>
-                            <td><input type="number" class="form-control form-control-sm" min="0" max="255" bind:value={u.admin}></td>
-                            <td><input type="number" class="form-control form-control-sm" min="0" bind:value={u.currency}></td>
+                            <td>{num(u.currency)}</td>
+                            <td>
+                                {#if u.invited_by}<a href="/user?id={u.invited_by_id}">{u.invited_by}</a>{:else}<span class="admin-muted">—</span>{/if}
+                                {#if Number(u.invited) > 0}<div class="admin-muted">brought {u.invited}</div>{/if}
+                            </td>
+                            <td class="admin-muted">{Number(u.created_at) > 0 ? adminDate(u.created_at) : "—"}</td>
                             <td class="admin-actions">
-                                <button type="button" class="btn btn-sm btn-primary" onclick={() => save(u)}>Save</button>
+                                <button type="button" class="btn btn-sm" class:btn-primary={open === u.id} class:btn-outline-primary={open !== u.id} onclick={() => toggle(u)}>{open === u.id ? "Close" : "Edit"}</button>
                                 <a class="btn btn-sm btn-outline-danger" href="/admi/moderation?username={encodeURIComponent(u.username)}">Moderate</a>
                             </td>
                         </tr>
+                        {#if open === u.id && edit}
+                            <tr class="admin-editor">
+                                <td colspan="6">
+                                    <div class="row g-3 align-items-end mb-3">
+                                        <div class="col-sm-3 col-lg-2">
+                                            <label for="admin-{u.id}">Admin level</label>
+                                            <input id="admin-{u.id}" type="number" class="form-control" min="0" max="255" bind:value={edit.admin}>
+                                        </div>
+                                        <div class="col-sm-4 col-lg-2">
+                                            <label for="bux-{u.id}">Nonebux</label>
+                                            <input id="bux-{u.id}" type="number" class="form-control" min="0" bind:value={edit.currency}>
+                                        </div>
+                                        <div class="col-sm-3 col-lg-2">
+                                            <label for="club-{u.id}">Builders Club</label>
+                                            <select id="club-{u.id}" class="form-select" bind:value={edit.membership}>
+                                                <option value="None">None</option>
+                                                <option value="BC">BC</option>
+                                                <option value="TBC">TBC</option>
+                                                <option value="OBC">OBC</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-3 col-lg-2">
+                                            <label for="days-{u.id}">Club days</label>
+                                            <input id="days-{u.id}" type="number" class="form-control" min="0" placeholder={Number(u.membership_expires) > 0 ? `until ${new Date(Number(u.membership_expires) * 1000).toLocaleDateString("en-US")}` : "keep"} title="days until it expires, 0 = never, blank = keep" bind:value={edit.membership_days}>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button type="button" class="btn btn-primary" disabled={saving} onclick={() => save(u)}>Save</button>
+                                        </div>
+                                    </div>
+
+                                    {#if !history}
+                                        <span class="admin-muted">Loading history…</span>
+                                    {:else}
+                                        <div class="row g-3 admin-history">
+                                            <div class="col-md-4">
+                                                <strong>Invited by</strong>
+                                                <div>{#if history.invitedBy}<a href="/user?id={history.invitedBy.created_by}">{history.invitedBy.creator_name || history.invitedBy.created_by}</a> on {when(history.invitedBy.used_at)} from <code>{history.invitedBy.ip}</code>{:else}<span class="admin-muted">no record, older account</span>{/if}</div>
+                                                <strong class="mt-3">Invited ({history.invited.length})</strong>
+                                                {#each history.invited as i (i.id)}
+                                                    <div><a href="/user?id={i.id}">{i.username || i.id}</a>{#if i.ongoing_action_id != null} <span class="admin-pill danger">Moderated</span>{/if} <span class="admin-muted">{when(i.used_at)} · {i.ip}</span></div>
+                                                {:else}
+                                                    <div class="admin-muted">nobody</div>
+                                                {/each}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <strong>Same IP ({history.sameIp.length})</strong>
+                                                {#each history.sameIp as s (s.id + s.ip)}
+                                                    <div><a href="/user?id={s.id}">{s.username}</a>{#if s.ongoing_action_id != null} <span class="admin-pill danger">Moderated</span>{/if} <span class="admin-muted">{s.ip}</span></div>
+                                                {:else}
+                                                    <div class="admin-muted">{history.ips.length ? "nobody" : "no ip on record"}</div>
+                                                {/each}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <strong>Old usernames ({history.usernames.length})</strong>
+                                                {#each history.usernames as n}
+                                                    <div>{n.old_username} → {n.new_username} <span class="admin-muted">{when(n.changed_at)}</span></div>
+                                                {:else}
+                                                    <div class="admin-muted">never changed</div>
+                                                {/each}
+                                            </div>
+                                        </div>
+                                    {/if}
+                                </td>
+                            </tr>
+                        {/if}
                     {:else}
-                        <tr><td colspan="6" class="text-center text-muted py-5">No users found.</td></tr>
+                        <tr><td colspan="6" class="admin-empty">No users found.</td></tr>
                     {/each}
                 </tbody>
             </table>

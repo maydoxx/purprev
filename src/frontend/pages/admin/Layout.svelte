@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-    <title>{title} - NoneRev</title>
+    <title>{title} - NoneRev Admin</title>
     <link rel="stylesheet" href="/css/admin.css">
 </svelte:head>
 
@@ -16,8 +16,10 @@
         <div class="alert alert-danger">You are not allowed here.</div>
     </main>
 {:else}
-    <Nav />
-    <main class="admin-wrap">
-        {@render children()}
-    </main>
+    <div class="admin-shell">
+        <Nav />
+        <main class="admin-main">
+            {@render children()}
+        </main>
+    </div>
 {/if}

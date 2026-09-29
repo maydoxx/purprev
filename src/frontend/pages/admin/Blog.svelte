@@ -130,7 +130,7 @@
     <div class="row g-4">
         <div class="col-lg-5">
             <div class="card admin-form-card">
-                <div class="card-header bg-white"><span class="admin-card-title">{form.id > 0 ? "Edit post" : "New post"}</span></div>
+                <div class="card-header"><span class="admin-card-title">{form.id > 0 ? "Edit post" : "New post"}</span></div>
                 <div class="card-body">
                     <form onsubmit={save}>
                         <div class="mb-3">
@@ -184,7 +184,7 @@
 
         <div class="col-lg-7">
             <div class="card">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <span class="admin-card-title">Posts</span>
                     <span class="admin-muted">{num(rows(data).length)} total</span>
                 </div>

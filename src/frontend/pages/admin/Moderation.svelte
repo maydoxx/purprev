@@ -56,7 +56,7 @@
     <div class="row g-4">
         <div class="col-lg-7">
             <div class="card">
-                <div class="card-header bg-white"><span class="admin-card-title">New moderation action</span></div>
+                <div class="card-header"><span class="admin-card-title">New moderation action</span></div>
                 <div class="card-body">
                     <form onsubmit={submit}>
                         <div class="mb-3">
@@ -87,7 +87,7 @@
 
         <div class="col-lg-5">
             <div class="card">
-                <div class="card-header bg-white"><span class="admin-card-title">Notes</span></div>
+                <div class="card-header"><span class="admin-card-title">Notes</span></div>
                 <div class="card-body small text-secondary">
                     <p class="mb-2">Temporary bans store a real expiration timestamp, so 1/3/7/14 day bans expire at the correct time.</p>
                     <p class="mb-0">Account deletion does not expire automatically.</p>
