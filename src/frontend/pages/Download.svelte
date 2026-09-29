@@ -2,6 +2,7 @@
     import { api } from "../api";
 
     let downloads = $state<any[]>([]);
+    const isAndroid = /Android/i.test(navigator.userAgent);
 
     api("/site/downloads").then(d => {
         if (Array.isArray(d)) downloads = d;
@@ -28,7 +29,7 @@
             from first-person shooters, survival games, and role-playing adventures.
         </p>
 
-        <a class="download-main-button" href="/api/setup/download">Download Now!</a>
+        <a class="download-main-button" href={isAndroid ? "/api/setup/download?os=android" : "/api/setup/download"}>Download Now!</a>
 
         <div class="download-platforms" aria-label="Available platforms">
             <a class="platform-button" href="/api/setup/download" title="Download for Windows">
@@ -36,10 +37,10 @@
                 <span>Windows</span>
             </a>
 
-            <button class="platform-button platform-button-disabled" type="button" disabled title="Android client coming soon">
+            <a class="platform-button" href="/api/setup/download?os=android" title="Download for Android">
                 <img class="platform-image platform-image-android" src="/img/download/android-white.png" alt="">
                 <span>Android</span>
-            </button>
+            </a>
 
             <a class="platform-button" href="/api/setup/download?os=linux" title="Download for Linux">
                 <img class="platform-image platform-image-linux" src="/img/download/linux-white.png" alt="">
