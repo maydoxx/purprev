@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql } from "../../db";
-import { withThumbnail } from "../../paths";
+import { withThumbnail, mediaUrl } from "../../paths";
 
 const PER_PAGE = 30;
 
@@ -15,7 +15,8 @@ const CATEGORIES: Record<string, string | null> = {
     pants: "Pants",
     "t-shirts": "T-Shirt",
     badges: null,
-    "game-passes": null
+    "game-passes": null,
+    places: null
 };
 
 export const inventory = new Elysia({ prefix: "/inventory" })
@@ -59,6 +60,14 @@ export const inventory = new Elysia({ prefix: "/inventory" })
                 `,
                 sql`SELECT COUNT(*) AS n FROM user_badges WHERE user_id = ${user.id}`
             ])
+            : category === "places"
+            ? await Promise.all([
+                sql`
+                    SELECT id, id AS game_id, title AS name, creator_id, ${user.username} AS creator_name FROM games
+                    WHERE creator_id = ${user.id} ORDER BY id DESC LIMIT ${PER_PAGE} OFFSET ${offset}
+                `,
+                sql`SELECT COUNT(*) AS n FROM games WHERE creator_id = ${user.id}`
+            ])
             : await Promise.all([
                 sql`
                     SELECT p.id, p.name, p.icon, p.game_id, p.creator_id, users.username AS creator_name, games.title AS game_title
@@ -71,7 +80,14 @@ export const inventory = new Elysia({ prefix: "/inventory" })
 
         return {
             category,
-            items: type ? await Promise.all(items.map(withThumbnail)) : items,
+            items: type
+                ? await Promise.all(items.map(withThumbnail))
+                : category === "places"
+                ? await Promise.all(items.map(async (g: any) => ({
+                    ...g,
+                    icon: await mediaUrl("icons", Number(g.id))
+                })))
+                : items,
             page,
             totalPages: Math.max(1, Math.ceil(Number(count.n) / PER_PAGE))
         };

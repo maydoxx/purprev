@@ -2,7 +2,10 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql } from "../../db";
 import { isOnline, friendStatus, friendCount, friendsOf } from "../../friends";
-import { withThumbnail } from "../../paths";
+import { withThumbnail, mediaUrl } from "../../paths";
+import { rcc } from "../../rcc";
+import { membershipOf } from "../../membership";
+import { siteBadges } from "../../badges";
 
 
 const TERMINATED = 6;
@@ -11,7 +14,7 @@ export const profile = new Elysia({ prefix: "/profile" })
     .use(session)
     .get("/:id", async ({ params, user, status }) => {
         const [row] = await sql`
-            SELECT id, username, about, admin, created_at, lastOnlineSite, ongoing_action_id
+            SELECT id, username, about, admin, created_at, lastOnlineSite, ongoing_action_id, membership, membership_expires
             FROM users WHERE id = ${params.id}
         `;
 
@@ -30,7 +33,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             }
         }
 
-        const [games, badges, counts, wearing, friends] = await Promise.all([
+        const [games, badges, counts, wearing, friends, earned, favorites, history] = await Promise.all([
             sql`SELECT id, title FROM games WHERE creator_id = ${row.id}`,
             sql`
                 SELECT b.id, b.name, b.game_id, b.icon FROM user_badges ub
@@ -49,14 +52,35 @@ export const profile = new Elysia({ prefix: "/profile" })
                 WHERE user_items.user_id = ${row.id} AND user_items.wearing = 1
                 ORDER BY catalog_items.category, catalog_items.id
             `,
-            friendsOf(row.id, 9)
+            friendsOf(row.id, 9),
+            siteBadges(row),
+            sql`
+                SELECT games.id, games.title, games.creator_id, users.username AS creator_name FROM game_favorites f
+                JOIN games ON games.id = f.game_id
+                LEFT JOIN users ON users.id = games.creator_id
+                WHERE f.user_id = ${row.id}
+                ORDER BY f.created_at DESC LIMIT 6
+            `,
+            sql`SELECT DISTINCT old_username FROM username_history WHERE user_id = ${row.id} AND old_username != ${row.username} ORDER BY old_username`
         ]);
+
+        const playing = await rcc.players(favorites.map((g: any) => Number(g.id)));
 
         return {
             id: row.id,
             username: row.username,
+            favorites: await Promise.all(favorites.map(async (g: any) => ({
+                id: Number(g.id),
+                title: g.title,
+                creator_id: Number(g.creator_id),
+                creator_name: g.creator_name ?? "Unknown",
+                icon: await mediaUrl("icons", Number(g.id)),
+                playing: playing[Number(g.id)] ?? 0
+            }))),
+            previousUsernames: history.map((h: any) => h.old_username),
             about: row.about ?? "",
             admin: row.admin > 0,
+            membership: membershipOf(row),
             joined: row.created_at,
             online: isOnline(row.lastOnlineSite),
             friendStatus: user ? await friendStatus(user.id, row.id) : "guest",
@@ -65,6 +89,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             wearing: await Promise.all(wearing.map(withThumbnail)),
             games,
             badges,
+            siteBadges: earned,
             badgeCount: Number(counts[0].badges),
             postCount: Number(counts[0].posts)
         };

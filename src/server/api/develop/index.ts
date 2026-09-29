@@ -109,7 +109,10 @@ const checkPlaceName = (name: string) => {
     }
 };
 
-const savePlace = (placeId: number, file: Blob) => mediaPut("places", placeId, "rbxl", file);
+const savePlace = async (placeId: number, file: Blob) => {
+    await mediaPut("places", placeId, "rbxl", file);
+    await sql`UPDATE games SET updated_at = ${now()} WHERE id = ${placeId}`;
+};
 
 const chunkPath = (dir: string, index: number) => join(dir, `${String(index).padStart(4, "0")}.part`);
 
@@ -391,7 +394,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
                 }
             }
 
-            const created = await sql`INSERT INTO games (creator_id, title) VALUES (${user.id}, ${title})`;
+            const created = await sql`INSERT INTO games (creator_id, title, created_at, updated_at) VALUES (${user.id}, ${title}, ${now()}, ${now()})`;
             const id = Number(created.lastInsertRowid);
             if (file) {
                 await savePlace(id, file);
@@ -416,7 +419,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         try {
             await ownedGame(params.id, user.id);
             const title = cleanTitle(body.title);
-            await sql`UPDATE games SET title = ${title} WHERE id = ${params.id} AND creator_id = ${user.id}`;
+            await sql`UPDATE games SET title = ${title}, updated_at = ${now()} WHERE id = ${params.id} AND creator_id = ${user.id}`;
             return {
                 ok: true
             };

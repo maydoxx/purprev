@@ -58,7 +58,7 @@ export const games = new Elysia({ prefix: "/api/games" })
         })
     })
 
-    .get("/:id", async ({ params, status }) => {
+    .get("/:id", async ({ params, user, status }) => {
         const [game] = await sql`
             SELECT games.*, users.username AS creator_name FROM games
             LEFT JOIN users ON users.id = games.creator_id
@@ -70,8 +70,36 @@ export const games = new Elysia({ prefix: "/api/games" })
             });
         }
         const playing = await rcc.players([params.id]);
-        return await withMedia(game, playing[params.id]);
+        const [count] = await sql`SELECT COUNT(*) AS n FROM game_favorites WHERE game_id = ${params.id}`;
+        const [mine] = user ? await sql`SELECT 1 FROM game_favorites WHERE game_id = ${params.id} AND user_id = ${user.id}` : [null];
+        return {
+            ...await withMedia(game, playing[params.id]),
+            favorites: Number(count.n),
+            favorited: !!mine
+        };
     }, {
+        params: id
+    })
+
+    // the star on the game page, on again off again
+    .post("/:id/favorite", async ({ params, user, status }) => {
+        const [game] = await sql`SELECT id FROM games WHERE id = ${params.id}`;
+        if (!game) {
+            return status(404, {
+                error: "This game does not exist"
+            });
+        }
+        const gone = await sql`DELETE FROM game_favorites WHERE user_id = ${user.id} AND game_id = ${params.id}`;
+        if (!gone.affectedRows) {
+            await sql`INSERT INTO game_favorites (user_id, game_id, created_at) VALUES (${user.id}, ${params.id}, ${now()})`;
+        }
+        const [count] = await sql`SELECT COUNT(*) AS n FROM game_favorites WHERE game_id = ${params.id}`;
+        return {
+            favorited: !gone.affectedRows,
+            favorites: Number(count.n)
+        };
+    }, {
+        auth: true,
         params: id
     })
 
