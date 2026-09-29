@@ -3,15 +3,26 @@ import { Elysia, t } from "elysia";
 
 const CDN = (process.env.SETUP_URL || process.env.CDN_URL || "").replace(/\/+$/, "");
 
+// the android build lives in its own folder with its own version.txt
+const FILES: Record<string, string> = {
+    windows: "NoneRevLauncher.exe",
+    linux: "nonerev",
+    android: "android/NoneRevPlayer.apk"
+};
+const VERSIONS: Record<string, string> = {
+    windows: "version.txt",
+    android: "android/version.txt"
+};
+
 const routes = (prefix: string) => new Elysia({ prefix })
 
-    .get("/version", async ({ status }) => {
+    .get("/version", async ({ query, status }) => {
         if (!CDN) {
             return status(503, "CDN_URL is not set");
         }
         let res: Response;
         try {
-            res = await fetch(`${CDN}/version.txt`, {
+            res = await fetch(`${CDN}/${VERSIONS[query.os ?? ""] ?? VERSIONS.windows}`, {
                 signal: AbortSignal.timeout(10000)
             });
         } catch {
@@ -26,6 +37,10 @@ const routes = (prefix: string) => new Elysia({ prefix })
                 "Cache-Control": "no-cache"
             }
         });
+    }, {
+        query: t.Object({
+            os: t.Optional(t.String())
+        })
     })
 
 
@@ -33,7 +48,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         if (!CDN) {
             return status(503, "CDN_URL is not set");
         }
-        return redirect(`${CDN}/${query.os === "linux" ? "nonerev" : "NoneRevLauncher.exe"}`, 302);
+        return redirect(`${CDN}/${FILES[query.os ?? ""] ?? FILES.windows}`, 302);
     }, {
         query: t.Object({
             os: t.Optional(t.String())
