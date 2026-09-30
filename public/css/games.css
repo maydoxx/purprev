@@ -156,6 +156,42 @@ body {
     margin: 12px 0 18px;
 }
 
+.game-grid {
+    margin-top: 12px;
+}
+
+.game-grid ul {
+    white-space: normal;
+}
+
+.btn-load-more {
+    display: block;
+    width: 100%;
+    margin: 6px 0 24px;
+    padding: 8px;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 100%;
+    text-align: center;
+    color: #191919;
+    background-color: #fff;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.btn-load-more:hover,
+.btn-load-more:focus {
+    background-color: #f2f2f2;
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+}
+
+.btn-load-more:disabled {
+    color: #b8b8b8;
+    cursor: default;
+    box-shadow: none;
+}
+
 @media (max-width: 767px) {
     .games-container {
         padding: 0 6px;

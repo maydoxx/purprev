@@ -305,6 +305,14 @@ CREATE TABLE IF NOT EXISTS `game_favorites` (
     KEY `game_id` (`game_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `game_plays` (
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `played_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`user_id`, `game_id`),
+    KEY `played_at` (`played_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `user_badges` (
     `user_id` int(10) UNSIGNED NOT NULL,
     `badge_id` bigint(20) UNSIGNED NOT NULL,

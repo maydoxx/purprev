@@ -13,6 +13,98 @@ const id = t.Object({
 
 class PurchaseError extends Error {}
 
+const ROW = 10;
+
+type Sort = {
+    id: string;
+    title: string;
+    order: any;
+    mine?: boolean;
+};
+
+const SORTS: Sort[] = [
+    {
+        id: "popular",
+        title: "Popular",
+        order: sql`games.visits DESC, games.id DESC`
+    },
+    {
+        id: "top-favorited",
+        title: "Top Favorited",
+        order: sql`favorites DESC, games.visits DESC, games.id DESC`
+    },
+    {
+        id: "recently-updated",
+        title: "Recently Updated",
+        order: sql`games.updated_at DESC, games.id DESC`
+    },
+    {
+        id: "newest",
+        title: "Recently Created",
+        order: sql`games.created_at DESC, games.id DESC`
+    },
+    {
+        id: "most-visited",
+        title: "Most Visited",
+        order: sql`games.visits DESC, games.id DESC`
+    },
+    {
+        id: "recently-played",
+        title: "Recently Played",
+        order: sql`plays.played_at DESC`,
+        mine: true
+    },
+    {
+        id: "my-favorites",
+        title: "My Favorites",
+        order: sql`fav.created_at DESC`,
+        mine: true
+    }
+];
+
+const sortById = (id: string) => SORTS.find(s => s.id === id);
+
+const publicSorts = (loggedIn: boolean) => SORTS.filter(s => loggedIn || !s.mine).map(s => ({
+    id: s.id,
+    title: s.title
+}));
+
+// popular is whoever has players right now, visits break the tie
+const byPlaying = (rows: any[], playing: Record<number, number>) =>
+    [...rows].sort((a, b) => (playing[Number(b.id)] ?? 0) - (playing[Number(a.id)] ?? 0) || Number(b.visits) - Number(a.visits));
+
+const listGames = async (sort: Sort, userId: number, page: number, limit: number, q = "") => {
+    const like = `%${q.trim()}%`;
+    const where = sort.id === "recently-played" ? sql`plays.user_id IS NOT NULL`
+        : sort.id === "my-favorites" ? sql`fav.user_id IS NOT NULL`
+        : sql`games.title LIKE ${like}`;
+    const [count] = await sql`
+        SELECT COUNT(*) AS n FROM games
+        LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
+        LEFT JOIN game_favorites fav ON fav.game_id = games.id AND fav.user_id = ${userId}
+        WHERE ${where}
+    `;
+    const totalPages = Math.max(1, Math.ceil(Number(count.n) / limit));
+    const current = Math.min(Math.max(1, page), totalPages);
+    const rows = await sql`
+        SELECT games.*, users.username AS creator_name,
+            (SELECT COUNT(*) FROM game_favorites f WHERE f.game_id = games.id) AS favorites
+        FROM games
+        LEFT JOIN users ON users.id = games.creator_id
+        LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
+        LEFT JOIN game_favorites fav ON fav.game_id = games.id AND fav.user_id = ${userId}
+        WHERE ${where}
+        ORDER BY ${sort.order} LIMIT ${limit} OFFSET ${(current - 1) * limit}
+    `;
+    const playing = await rcc.players(rows.map((g: any) => Number(g.id)));
+    const ordered = sort.id === "popular" ? byPlaying(rows, playing) : rows;
+    return {
+        page: current,
+        totalPages,
+        games: await Promise.all(ordered.map((g: any) => withMedia(g, playing[Number(g.id)])))
+    };
+};
+
 
 const withMedia = async (game: any, playing = 0) => ({
     ...game,
@@ -21,7 +113,7 @@ const withMedia = async (game: any, playing = 0) => ({
     icon: await mediaUrl("icons", game.id),
     playing,
     visits: Number(game.visits ?? 0),
-    favorites: 0,
+    favorites: Number(game.favorites ?? 0),
     up_votes: 0,
     down_votes: 0,
     like_ratio: 0,
@@ -32,30 +124,54 @@ const withMedia = async (game: any, playing = 0) => ({
 export const games = new Elysia({ prefix: "/api/games" })
     .use(session)
 
-    .get("/", async ({ query }) => {
-        const like = "%" + (query.q ?? "").trim() + "%";
-        const [count] = await sql`SELECT COUNT(*) AS n FROM games WHERE title LIKE ${like}`;
-        const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
-        const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
-
-        const rows = await sql`
-            SELECT games.*, users.username AS creator_name FROM games
-            LEFT JOIN users ON users.id = games.creator_id
-            WHERE title LIKE ${like}
-            ORDER BY games.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
-        `;
-
-        const playing = await rcc.players(rows.map((g: any) => Number(g.id)));
+    .get("/", async ({ query, user, status }) => {
+        const sort = sortById(query.sort ?? "newest");
+        if (!sort) {
+            return status(404, {
+                error: "No such sort"
+            });
+        }
+        if (sort.mine && !user) {
+            return status(401, {
+                error: "Log in to see this sort"
+            });
+        }
         return {
-            page,
-            totalPages,
-            games: await Promise.all(rows.map((g: any) => withMedia(g, playing[Number(g.id)])))
+            sort: {
+                id: sort.id,
+                title: sort.title
+            },
+            sorts: publicSorts(!!user),
+            ...await listGames(sort, user?.id ?? 0, query.page ?? 1, PER_PAGE, query.q ?? "")
         };
     }, {
         query: t.Object({
             q: t.Optional(t.String()),
+            sort: t.Optional(t.String()),
             page: t.Optional(t.Numeric())
         })
+    })
+
+    // the games page, one row per sort, yours only when you have some
+    .get("/sorts", async ({ user }) => {
+        const rows = [];
+        for (const sort of SORTS.filter(s => s.id !== "most-visited")) {
+            if (sort.mine && !user) {
+                continue;
+            }
+            const list = await listGames(sort, user?.id ?? 0, 1, ROW);
+            if (list.games.length > 0) {
+                rows.push({
+                    id: sort.id,
+                    title: sort.title,
+                    games: list.games
+                });
+            }
+        }
+        return {
+            rows,
+            sorts: publicSorts(!!user)
+        };
     })
 
     .get("/:id", async ({ params, user, status }) => {

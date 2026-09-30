@@ -81,6 +81,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         const placeId = server.placeId;
         const appearance = appearanceUrl(who.id);
         await sql`UPDATE games SET visits = visits + 1 WHERE id = ${placeId}`;
+        await sql`INSERT INTO game_plays (user_id, game_id, played_at) VALUES (${who.id}, ${placeId}, ${now()}) ON DUPLICATE KEY UPDATE played_at = ${now()}`;
         const time = String(now());
 
 
