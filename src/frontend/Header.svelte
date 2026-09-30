@@ -19,11 +19,18 @@
 
     $effect(() => {
         const term = q.trim();
-        if (!term) { suggestions = []; return; }
+        if (!term) {
+            suggestions = [];
+            return;
+        }
         const timer = setTimeout(() => {
             api(`/site/search/suggestions?q=${encodeURIComponent(term)}`).then(d => {
-                if (q.trim() === term) suggestions = Array.isArray(d) ? d : [];
-            }).catch(() => { suggestions = []; });
+                if (q.trim() === term) {
+                    suggestions = Array.isArray(d) ? d : [];
+                }
+            }).catch(() => {
+                suggestions = [];
+            });
         }, 180);
         return () => clearTimeout(timer);
     });
@@ -70,7 +77,13 @@
                     <span class="icon-nav-search"></span>
                 </button>
             </form>
-            {#if searchFocused && suggestions.length}<ul class="dropdown-menu rbx-dropdown-menu show" role="menu">{#each suggestions as suggestion}<li><a class="dropdown-item" href={suggestion.url} onclick={() => searchFocused = false}>{suggestion.label}</a></li>{/each}</ul>{/if}
+            {#if searchFocused && suggestions.length}
+                <ul class="dropdown-menu rbx-dropdown-menu show" role="menu">
+                    {#each suggestions as suggestion}
+                        <li><a class="dropdown-item" href={suggestion.url} onclick={() => searchFocused = false}>{suggestion.label}</a></li>
+                    {/each}
+                </ul>
+            {/if}
         </div>
 
         <div class="rbx-navbar-right">

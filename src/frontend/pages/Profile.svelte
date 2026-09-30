@@ -83,12 +83,20 @@
     };
 
     const follow = async () => {
-        if (!session.me) { router.go("/login"); return; }
+        if (!session.me) {
+            router.go("/login");
+            return;
+        }
         busy = true;
         try {
-            await api("/user/friends/follow", { userId: id, follow: !profile.isFollowing });
+            await api("/user/friends/follow", {
+                userId: id,
+                follow: !profile.isFollowing
+            });
             await load();
-        } catch (err: any) { alert(err.message); }
+        } catch (err: any) {
+            alert(err.message);
+        }
         busy = false;
     };
 

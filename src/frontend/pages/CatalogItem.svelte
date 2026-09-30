@@ -70,13 +70,19 @@
     }, "Updating your avatar...");
 
     const favorite = async () => {
-        if (!session.me) { router.go("/login"); return; }
+        if (!session.me) {
+            router.go("/login");
+            return;
+        }
         favoriting = true;
         try {
             const d = await api(`/catalog/${id}/favorite`, {});
             item.favorited = d.favorited;
             item.favorites = d.favorites;
-        } catch (err: any) { statusError = true; status = err.message; }
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
         favoriting = false;
     };
 

@@ -42,21 +42,29 @@
         data = await api("/user/avatar");
     };
     load();
-    const loadOutfits = async () => { outfits = await api("/user/avatar/outfits"); };
+    const loadOutfits = async () => {
+        outfits = await api("/user/avatar/outfits");
+    };
     loadOutfits();
 
     const saveOutfit = async (e: Event) => {
         e.preventDefault();
         outfitBusy = true;
         try {
-            await api("/user/avatar/outfits", { name: outfitName.trim() });
+            await api("/user/avatar/outfits", {
+                name: outfitName.trim()
+            });
             outfitName = "";
             await loadOutfits();
             statusError = false;
             status = "Outfit saved.";
-        } catch (err: any) { statusError = true; status = err.message; }
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
         outfitBusy = false;
     };
+
     const useOutfit = async (outfitId: number) => {
         outfitBusy = true;
         try {
@@ -64,15 +72,22 @@
             await load();
             statusError = false;
             status = "Outfit applied. Your avatar is being re-drawn.";
-        } catch (err: any) { statusError = true; status = err.message; }
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
         outfitBusy = false;
     };
+
     const removeOutfit = async (outfitId: number) => {
         outfitBusy = true;
         try {
             await api(`/user/avatar/outfits/${outfitId}`, undefined, "DELETE");
             await loadOutfits();
-        } catch (err: any) { statusError = true; status = err.message; }
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
         outfitBusy = false;
     };
 
@@ -259,10 +274,16 @@
                         <input type="text" bind:value={outfitName} maxlength="60" placeholder="Outfit name" aria-label="Outfit name" required>
                         <button type="submit" disabled={outfitBusy}>Save Current Outfit</button>
                     </form>
-                    {#if outfits.length === 0}<p>You haven't saved any outfits yet.</p>{/if}
+                    {#if outfits.length === 0}
+                        <p>You haven't saved any outfits yet.</p>
+                    {/if}
                     <ul class="avatar-outfit-list">
                         {#each outfits as outfit (outfit.id)}
-                            <li><strong>{outfit.name}</strong><button type="button" disabled={outfitBusy} onclick={() => useOutfit(outfit.id)}>Wear</button><button type="button" disabled={outfitBusy} onclick={() => removeOutfit(outfit.id)}>Delete</button></li>
+                            <li>
+                                <strong>{outfit.name}</strong>
+                                <button type="button" disabled={outfitBusy} onclick={() => useOutfit(outfit.id)}>Wear</button>
+                                <button type="button" disabled={outfitBusy} onclick={() => removeOutfit(outfit.id)}>Delete</button>
+                            </li>
                         {/each}
                     </ul>
                 </section>

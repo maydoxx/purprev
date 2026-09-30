@@ -65,7 +65,10 @@ export const profile = new Elysia({ prefix: "/profile" })
         ]);
 
         const playing = await rcc.players(favorites.map((g: any) => Number(g.id)));
-        const [followCounts] = await sql`SELECT (SELECT COUNT(*) FROM user_follows WHERE followed_id = ${row.id}) AS followers, (SELECT COUNT(*) FROM user_follows WHERE follower_id = ${row.id}) AS following`;
+        const [followCounts] = await sql`
+            SELECT (SELECT COUNT(*) FROM user_follows WHERE followed_id = ${row.id}) AS followers,
+                (SELECT COUNT(*) FROM user_follows WHERE follower_id = ${row.id}) AS following
+        `;
         const [followed] = user ? await sql`SELECT 1 FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${row.id}` : [null];
 
         return {

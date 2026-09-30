@@ -42,15 +42,24 @@
             loading = false;
         }
     };
-    $effect(() => { tab; ownerId; load(); });
+    $effect(() => {
+        tab;
+        ownerId;
+        load();
+    });
 
     const setFollow = async (userId: number, follow: boolean) => {
         busy = userId;
         error = "";
         try {
-            await api("/user/friends/follow", { userId, follow });
+            await api("/user/friends/follow", {
+                userId,
+                follow
+            });
             await load();
-        } catch (err: any) { error = err.message; }
+        } catch (err: any) {
+            error = err.message;
+        }
         busy = null;
     };
 
@@ -106,9 +115,13 @@
             {:else if kind === "sent"}
                 <div class="friends-list-actions"><button disabled={busy !== null} onclick={() => act("decline", u.id)}>Cancel</button></div>
             {:else if kind === "following" && !publicView}
-                <div class="friends-list-actions"><button disabled={busy !== null} onclick={() => setFollow(u.id, false)}>Unfollow</button></div>
+                <div class="friends-list-actions">
+                    <button disabled={busy !== null} onclick={() => setFollow(u.id, false)}>Unfollow</button>
+                </div>
             {:else if kind === "followers" && !publicView}
-                <div class="friends-list-actions"><button disabled={busy !== null} onclick={() => setFollow(u.id, true)}>Follow</button></div>
+                <div class="friends-list-actions">
+                    <button disabled={busy !== null} onclick={() => setFollow(u.id, true)}>Follow</button>
+                </div>
             {:else if kind === "friends"}
                 <details class="friends-card-menu">
                     <summary aria-label={`Actions for ${u.username}`}>⋯</summary>
@@ -126,7 +139,9 @@
         <h1>{publicView ? `${ownerName}'s Connections` : "My Friends"}</h1>
         <nav class="friends-tabs" class:public-view={publicView} aria-label="Friends sections">
             {#each tabs as [key, title]}
-                {#if !publicView || key === "following" || key === "followers"}<a href={`/my/friends?tab=${key}${publicView ? `&user=${ownerId}` : ""}`} class:active={tab === key} aria-current={tab === key ? "page" : undefined}>{title}</a>{/if}
+                {#if !publicView || key === "following" || key === "followers"}
+                    <a href={`/my/friends?tab=${key}${publicView ? `&user=${ownerId}` : ""}`} class:active={tab === key} aria-current={tab === key ? "page" : undefined}>{title}</a>
+                {/if}
             {/each}
         </nav>
         <section class="friends-content" aria-label={label}>

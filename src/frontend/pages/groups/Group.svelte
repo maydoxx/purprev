@@ -145,18 +145,39 @@
     });
 
     const loadTab = async () => {
-        if (!group || tab === "about") return;
+        if (!group || tab === "about") {
+            return;
+        }
         const currentId = id;
         const currentTab = tab;
-        const result = await api(`/groups/${currentId}/${currentTab}`).catch(() => currentTab === "affiliates" ? { accepted: [], incoming: [], outgoing: [] } : []);
-        if (id === currentId && tab === currentTab) tabData = result;
+        const result = await api(`/groups/${currentId}/${currentTab}`).catch(() => currentTab === "affiliates" ? {
+            accepted: [],
+            incoming: [],
+            outgoing: []
+        } : []);
+        if (id === currentId && tab === currentTab) {
+            tabData = result;
+        }
     };
-    $effect(() => { id; tab; group; loadTab(); });
+
+    $effect(() => {
+        id;
+        tab;
+        group;
+        loadTab();
+    });
 
     const addLink = (e: Event) => {
         e.preventDefault();
-        if (!targetId) return;
-        act(() => send(`/${tab}`, { targetId }), tab === "affiliates" ? "Affiliate request sent." : "Added to group.", async () => { targetId = 0; await loadTab(); });
+        if (!targetId) {
+            return;
+        }
+        act(() => send(`/${tab}`, {
+            targetId
+        }), tab === "affiliates" ? "Affiliate request sent." : "Added to group.", async () => {
+            targetId = 0;
+            await loadTab();
+        });
     };
     const removeLink = (value: number) => act(() => del(`/${tab}/${value}`), "Removed from group.", loadTab);
     const acceptAffiliate = (value: number) => act(() => send(`/affiliates/${value}/accept`), "Affiliate request accepted.", loadTab);
@@ -570,22 +591,56 @@
                     {#if tabData?.accepted?.length}
                         <div class="group-linked-grid">
                             {#each tabData.accepted as linked (linked.id)}
-                                <div class="group-linked-card"><a href="/groups?id={linked.id}"><img src={linked.icon || "/img/pending.png"} alt=""><strong>{linked.name}</strong></a>{#if isOwner}<button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Remove</button>{/if}</div>
+                                <div class="group-linked-card">
+                                    <a href="/groups?id={linked.id}">
+                                        <img src={linked.icon || "/img/pending.png"} alt="">
+                                        <strong>{linked.name}</strong>
+                                    </a>
+                                    {#if isOwner}
+                                        <button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Remove</button>
+                                    {/if}
+                                </div>
                             {/each}
                         </div>
-                    {:else}<div class="groups-empty compact">This group has no affiliates yet.</div>{/if}
-                    {#if isOwner && tabData?.incoming?.length}<h3>Affiliate Requests</h3>{#each tabData.incoming as linked (linked.id)}<div class="group-link-request"><a href="/groups?id={linked.id}">{linked.name}</a><button type="button" disabled={busy} onclick={() => acceptAffiliate(linked.id)}>Accept</button><button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Decline</button></div>{/each}{/if}
-                    {#if isOwner && tabData?.outgoing?.length}<h3>Requests Sent</h3>{#each tabData.outgoing as linked (linked.id)}<div class="group-link-request"><a href="/groups?id={linked.id}">{linked.name}</a><button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Cancel</button></div>{/each}{/if}
+                    {:else}
+                        <div class="groups-empty compact">This group has no affiliates yet.</div>
+                    {/if}
+                    {#if isOwner && tabData?.incoming?.length}
+                        <h3>Affiliate Requests</h3>
+                        {#each tabData.incoming as linked (linked.id)}
+                            <div class="group-link-request">
+                                <a href="/groups?id={linked.id}">{linked.name}</a>
+                                <button type="button" disabled={busy} onclick={() => acceptAffiliate(linked.id)}>Accept</button>
+                                <button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Decline</button>
+                            </div>
+                        {/each}
+                    {/if}
+                    {#if isOwner && tabData?.outgoing?.length}
+                        <h3>Requests Sent</h3>
+                        {#each tabData.outgoing as linked (linked.id)}
+                            <div class="group-link-request">
+                                <a href="/groups?id={linked.id}">{linked.name}</a>
+                                <button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Cancel</button>
+                            </div>
+                        {/each}
+                    {/if}
                 {:else if tabData?.length}
                     <div class="group-linked-grid">
                         {#each tabData as linked (linked.id)}
                             <div class="group-linked-card">
-                                <a href={tab === "store" ? `/catalog/item?id=${linked.id}` : `/game?id=${linked.id}`}><img src={tab === "store" ? linked.thumbnail || "/img/pending.png" : linked.icon || "/img/DefaultThumb.png"} alt=""><strong>{tab === "store" ? linked.name : linked.title}</strong></a>
-                                {#if isOwner}<button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Remove</button>{/if}
+                                <a href={tab === "store" ? `/catalog/item?id=${linked.id}` : `/game?id=${linked.id}`}>
+                                    <img src={tab === "store" ? linked.thumbnail || "/img/pending.png" : linked.icon || "/img/DefaultThumb.png"} alt="">
+                                    <strong>{tab === "store" ? linked.name : linked.title}</strong>
+                                </a>
+                                {#if isOwner}
+                                    <button type="button" disabled={busy} onclick={() => removeLink(linked.id)}>Remove</button>
+                                {/if}
                             </div>
                         {/each}
                     </div>
-                {:else}<div class="groups-empty compact">This group has no {tab === "store" ? "store items" : "games"} yet.</div>{/if}
+                {:else}
+                    <div class="groups-empty compact">This group has no {tab === "store" ? "store items" : "games"} yet.</div>
+                {/if}
             </div>
         </section>
     {/if}

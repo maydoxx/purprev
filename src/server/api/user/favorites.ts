@@ -21,8 +21,22 @@ export const favorites = new Elysia({ prefix: "/favorites" })
         const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
 
         if (type === "items") {
-            const items = await sql`SELECT c.*, u.username AS creator_name FROM catalog_favorites f JOIN catalog_items c ON c.id = f.item_id LEFT JOIN users u ON u.id = c.creator_id WHERE f.user_id = ${params.id} ORDER BY f.created_at DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}`;
-            return { username: who.username, page, totalPages, total: Number(count.n), type, items: await Promise.all(items.map(withThumbnail)), games: [] };
+            const items = await sql`
+                SELECT c.*, u.username AS creator_name FROM catalog_favorites f
+                JOIN catalog_items c ON c.id = f.item_id
+                LEFT JOIN users u ON u.id = c.creator_id
+                WHERE f.user_id = ${params.id}
+                ORDER BY f.created_at DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
+            `;
+            return {
+                username: who.username,
+                page,
+                totalPages,
+                total: Number(count.n),
+                type,
+                items: await Promise.all(items.map(withThumbnail)),
+                games: []
+            };
         }
 
         const rows = await sql`
@@ -54,6 +68,9 @@ export const favorites = new Elysia({ prefix: "/favorites" })
         }),
         query: t.Object({
             page: t.Optional(t.Numeric()),
-            type: t.Optional(t.Union([t.Literal("games"), t.Literal("items")]))
+            type: t.Optional(t.Union([
+                t.Literal("games"),
+                t.Literal("items")
+            ]))
         })
     })

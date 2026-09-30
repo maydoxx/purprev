@@ -165,7 +165,11 @@ const routes = (prefix: string) => new Elysia({ prefix })
         }
 
         if (!server || Number(server.placeId) !== Number(placeId)) {
-            return { jobId: "", status: 5, message: "server not found" };
+            return {
+                jobId: "",
+                status: 5,
+                message: "server not found"
+            };
         }
 
         if (!server.ready) {
@@ -176,7 +180,10 @@ const routes = (prefix: string) => new Elysia({ prefix })
             };
         }
 
-        await sql`INSERT IGNORE INTO game_visit_sessions (game_id, user_id, job_id, started_at) VALUES (${placeId}, ${user.id}, ${server.jobId}, ${now()})`;
+        await sql`
+            INSERT IGNORE INTO game_visit_sessions (game_id, user_id, job_id, started_at)
+            VALUES (${placeId}, ${user.id}, ${server.jobId}, ${now()})
+        `;
 
         console.log(`PlaceLauncher: ${user.username} -> ${server.jobId} on ${server.address}:${server.port}`);
         return {

@@ -91,7 +91,12 @@ export const search = new Elysia({ prefix: "/search" })
                 WHERE c.name LIKE ${like}
                 ORDER BY c.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
             `;
-            return { type, page, totalPages, results: await Promise.all(rows.map(withThumbnail)) };
+            return {
+                type,
+                page,
+                totalPages,
+                results: await Promise.all(rows.map(withThumbnail))
+            };
         }
 
         if (type === "library") {
@@ -102,7 +107,12 @@ export const search = new Elysia({ prefix: "/search" })
                 WHERE a.name LIKE ${like} AND a.type IN ('Model', 'Decal')
                 ORDER BY a.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
             `;
-            return { type, page, totalPages, results: rows };
+            return {
+                type,
+                page,
+                totalPages,
+                results: rows
+            };
         }
 
         const { page, totalPages } = await paginate(sql`users WHERE username LIKE ${like}`, query.page ?? 1);

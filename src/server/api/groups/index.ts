@@ -652,83 +652,219 @@ export const groups = new Elysia({ prefix: "/api/groups" })
     })
 
     .get("/:id/store", async ({ params }) => {
-        const rows = await sql`SELECT c.*, u.username AS creator_name FROM group_store_items g JOIN catalog_items c ON c.id = g.item_id LEFT JOIN users u ON u.id = c.creator_id WHERE g.group_id = ${params.id} ORDER BY g.added_at DESC`;
+        const rows = await sql`
+            SELECT c.*, u.username AS creator_name FROM group_store_items g
+            JOIN catalog_items c ON c.id = g.item_id
+            LEFT JOIN users u ON u.id = c.creator_id
+            WHERE g.group_id = ${params.id}
+            ORDER BY g.added_at DESC
+        `;
         return await Promise.all(rows.map(withThumbnail));
-    }, { params: id })
+    }, {
+        params: id
+    })
 
     .post("/:id/store", async ({ params, body, user, status }) => {
         try {
             const group = await requireOwner(params.id, user.id);
             const [item] = await sql`SELECT id FROM catalog_items WHERE id = ${body.targetId} AND creator_id = ${group.owner_id}`;
-            if (!item) throw new GroupError("Choose a catalog item you created.");
+            if (!item) {
+                throw new GroupError("Choose a catalog item you created.");
+            }
             await sql`INSERT IGNORE INTO group_store_items (group_id, item_id, added_at) VALUES (${params.id}, ${body.targetId}, ${now()})`;
-            return { ok: true };
-        } catch (err) { return handle(err, status); }
-    }, { auth: true, params: id, body: t.Object({ targetId: t.Numeric() }) })
+            return {
+                ok: true
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: id,
+        body: t.Object({
+            targetId: t.Numeric()
+        })
+    })
 
     .delete("/:id/store/:targetId", async ({ params, user, status }) => {
-        try { await requireOwner(params.id, user.id); await sql`DELETE FROM group_store_items WHERE group_id = ${params.id} AND item_id = ${params.targetId}`; return { ok: true }; }
-        catch (err) { return handle(err, status); }
-    }, { auth: true, params: t.Object({ id: t.Numeric(), targetId: t.Numeric() }) })
+        try {
+            await requireOwner(params.id, user.id);
+            await sql`DELETE FROM group_store_items WHERE group_id = ${params.id} AND item_id = ${params.targetId}`;
+            return {
+                ok: true
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric(),
+            targetId: t.Numeric()
+        })
+    })
 
     .get("/:id/games", async ({ params }) => {
-        const rows = await sql`SELECT g.id, g.title, g.creator_id, u.username AS creator_name FROM group_games x JOIN games g ON g.id = x.game_id LEFT JOIN users u ON u.id = g.creator_id WHERE x.group_id = ${params.id} ORDER BY x.added_at DESC`;
-        return await Promise.all(rows.map(async (g: any) => ({ ...g, icon: await mediaUrl("icons", g.id), thumbnail: await mediaUrl("thumbnails", g.id) })));
-    }, { params: id })
+        const rows = await sql`
+            SELECT g.id, g.title, g.creator_id, u.username AS creator_name FROM group_games x
+            JOIN games g ON g.id = x.game_id
+            LEFT JOIN users u ON u.id = g.creator_id
+            WHERE x.group_id = ${params.id}
+            ORDER BY x.added_at DESC
+        `;
+        return await Promise.all(rows.map(async (g: any) => ({
+            ...g,
+            icon: await mediaUrl("icons", g.id),
+            thumbnail: await mediaUrl("thumbnails", g.id)
+        })));
+    }, {
+        params: id
+    })
 
     .post("/:id/games", async ({ params, body, user, status }) => {
         try {
             const group = await requireOwner(params.id, user.id);
             const [game] = await sql`SELECT id FROM games WHERE id = ${body.targetId} AND creator_id = ${group.owner_id}`;
-            if (!game) throw new GroupError("Choose a game you created.");
+            if (!game) {
+                throw new GroupError("Choose a game you created.");
+            }
             await sql`INSERT IGNORE INTO group_games (group_id, game_id, added_at) VALUES (${params.id}, ${body.targetId}, ${now()})`;
-            return { ok: true };
-        } catch (err) { return handle(err, status); }
-    }, { auth: true, params: id, body: t.Object({ targetId: t.Numeric() }) })
+            return {
+                ok: true
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: id,
+        body: t.Object({
+            targetId: t.Numeric()
+        })
+    })
 
     .delete("/:id/games/:targetId", async ({ params, user, status }) => {
-        try { await requireOwner(params.id, user.id); await sql`DELETE FROM group_games WHERE group_id = ${params.id} AND game_id = ${params.targetId}`; return { ok: true }; }
-        catch (err) { return handle(err, status); }
-    }, { auth: true, params: t.Object({ id: t.Numeric(), targetId: t.Numeric() }) })
+        try {
+            await requireOwner(params.id, user.id);
+            await sql`DELETE FROM group_games WHERE group_id = ${params.id} AND game_id = ${params.targetId}`;
+            return {
+                ok: true
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric(),
+            targetId: t.Numeric()
+        })
+    })
 
     .get("/:id/affiliates", async ({ params, user }) => {
         const groupId = params.id;
         const [group] = await sql`SELECT owner_id FROM site_groups WHERE id = ${groupId}`;
-        if (!group) return { accepted: [], incoming: [], outgoing: [] };
-        const rows = await sql`SELECT a.group_id, a.other_group_id, a.status, g.id, g.name, g.icon FROM group_affiliates a JOIN site_groups g ON g.id = IF(a.group_id = ${groupId}, a.other_group_id, a.group_id) WHERE a.group_id = ${groupId} OR a.other_group_id = ${groupId} ORDER BY a.requested_at DESC`;
-        const item = (r: any) => ({ id: Number(r.id), name: r.name, icon: r.icon });
+        if (!group) {
+            return {
+                accepted: [],
+                incoming: [],
+                outgoing: []
+            };
+        }
+        const rows = await sql`
+            SELECT a.group_id, a.other_group_id, a.status, g.id, g.name, g.icon FROM group_affiliates a
+            JOIN site_groups g ON g.id = IF(a.group_id = ${groupId}, a.other_group_id, a.group_id)
+            WHERE a.group_id = ${groupId} OR a.other_group_id = ${groupId}
+            ORDER BY a.requested_at DESC
+        `;
+        const item = (r: any) => ({
+            id: Number(r.id),
+            name: r.name,
+            icon: r.icon
+        });
         return {
             accepted: rows.filter((r: any) => r.status === "accepted").map(item),
-            incoming: Number(group.owner_id) === user?.id ? rows.filter((r: any) => r.status === "pending" && Number(r.other_group_id) === groupId).map(item) : [],
-            outgoing: Number(group.owner_id) === user?.id ? rows.filter((r: any) => r.status === "pending" && Number(r.group_id) === groupId).map(item) : []
+            incoming: Number(group.owner_id) === user?.id
+                ? rows.filter((r: any) => r.status === "pending" && Number(r.other_group_id) === groupId).map(item)
+                : [],
+            outgoing: Number(group.owner_id) === user?.id
+                ? rows.filter((r: any) => r.status === "pending" && Number(r.group_id) === groupId).map(item)
+                : []
         };
-    }, { params: id })
+    }, {
+        params: id
+    })
 
     .post("/:id/affiliates", async ({ params, body, user, status }) => {
         try {
             await requireOwner(params.id, user.id);
-            if (params.id === body.targetId) throw new GroupError("A group cannot affiliate with itself.");
+            if (params.id === body.targetId) {
+                throw new GroupError("A group cannot affiliate with itself.");
+            }
             await getGroup(body.targetId);
-            const [existing] = await sql`SELECT status FROM group_affiliates WHERE (group_id = ${params.id} AND other_group_id = ${body.targetId}) OR (group_id = ${body.targetId} AND other_group_id = ${params.id})`;
-            if (existing) throw new GroupError("There is already an affiliate request between these groups.");
+            const [existing] = await sql`
+                SELECT status FROM group_affiliates
+                WHERE (group_id = ${params.id} AND other_group_id = ${body.targetId}) OR (group_id = ${body.targetId} AND other_group_id = ${params.id})
+            `;
+            if (existing) {
+                throw new GroupError("There is already an affiliate request between these groups.");
+            }
             await sql`INSERT INTO group_affiliates (group_id, other_group_id, status, requested_at) VALUES (${params.id}, ${body.targetId}, 'pending', ${now()})`;
-            return { ok: true };
-        } catch (err) { return handle(err, status); }
-    }, { auth: true, params: id, body: t.Object({ targetId: t.Numeric() }) })
+            return {
+                ok: true
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: id,
+        body: t.Object({
+            targetId: t.Numeric()
+        })
+    })
 
     .post("/:id/affiliates/:targetId/accept", async ({ params, user, status }) => {
         try {
             await requireOwner(params.id, user.id);
-            const changed = await sql`UPDATE group_affiliates SET status = 'accepted' WHERE group_id = ${params.targetId} AND other_group_id = ${params.id} AND status = 'pending'`;
-            if (!changed.affectedRows) throw new GroupError("Affiliate request not found.");
-            return { ok: true };
-        } catch (err) { return handle(err, status); }
-    }, { auth: true, params: t.Object({ id: t.Numeric(), targetId: t.Numeric() }) })
+            const changed = await sql`
+                UPDATE group_affiliates SET status = 'accepted'
+                WHERE group_id = ${params.targetId} AND other_group_id = ${params.id} AND status = 'pending'
+            `;
+            if (!changed.affectedRows) {
+                throw new GroupError("Affiliate request not found.");
+            }
+            return {
+                ok: true
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric(),
+            targetId: t.Numeric()
+        })
+    })
 
     .delete("/:id/affiliates/:targetId", async ({ params, user, status }) => {
         try {
             await requireOwner(params.id, user.id);
-            await sql`DELETE FROM group_affiliates WHERE (group_id = ${params.id} AND other_group_id = ${params.targetId}) OR (group_id = ${params.targetId} AND other_group_id = ${params.id})`;
-            return { ok: true };
-        } catch (err) { return handle(err, status); }
-    }, { auth: true, params: t.Object({ id: t.Numeric(), targetId: t.Numeric() }) })
+            await sql`
+                DELETE FROM group_affiliates
+                WHERE (group_id = ${params.id} AND other_group_id = ${params.targetId}) OR (group_id = ${params.targetId} AND other_group_id = ${params.id})
+            `;
+            return {
+                ok: true
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric(),
+            targetId: t.Numeric()
+        })
+    })
