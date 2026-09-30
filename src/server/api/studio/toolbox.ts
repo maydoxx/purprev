@@ -145,6 +145,16 @@ const png = (file: Bun.BunFile | Uint8Array<ArrayBuffer>) =>
 // roblox ones are cached on disk
 export const thumbnail = async (id: number, placeholder: string, wanted = 150) => {
     const size = wanted >= 420 ? 420 : 150;
+    if (id < 1000000) {
+        const [game] = await sql`SELECT id FROM games WHERE id = ${id}`;
+        if (game) {
+            return (await mediaStream("thumbnails", id, "public, max-age=3600")) ?? png(Bun.file(placeholder));
+        }
+        const [item] = await sql`SELECT id FROM catalog_items WHERE id = ${id}`;
+        if (item) {
+            return (await mediaStream("catalog", id, "public, max-age=3600")) ?? png(Bun.file(placeholder));
+        }
+    }
     if (id >= OWN_IDS) {
         const [asset] = await sql`SELECT type FROM assets WHERE id = ${id}`;
         if (asset?.type === "Decal" || asset?.type === "Image") {
