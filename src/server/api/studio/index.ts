@@ -6,7 +6,7 @@ import { SITE_URL } from "../../site";
 import { mediaPut, mediaHas, mediaUrl } from "../../media";
 import { PENDING } from "../../paths";
 import { text, studiosig } from "../engine/sign";
-import { studioSetup } from "../engine/game";
+import { studioSetup, placeR15 } from "../engine/game";
 import { html, welcomePage, toolboxPage, publishPage, saveModelPage } from "./pages";
 import { searchFree, searchOwn } from "./toolbox";
 
@@ -213,6 +213,14 @@ export const studio = new Elysia()
         enabled: false
     }))
 
+    .get("/universes/:id/game-start-info", async ({ params }) => json({
+        r15Morphing: await placeR15(params.id)
+    }), {
+        params: t.Object({
+            id: t.Numeric()
+        })
+    })
+
     .get("/universes/get-info", async ({ query, user }) => {
         const game = await placeInfo(query.universeId);
         if (!game) {
@@ -222,6 +230,7 @@ export const studio = new Elysia()
             UniverseId: query.universeId,
             Name: game.title,
             RootPlace: query.universeId,
+            r15Morphing: game.avatar_type === "R15",
             CurrentUserHasEditPermissions: !!user && (Number(game.creator_id) === user.id || user.admin > 0),
             IsActive: true,
             Creator: {

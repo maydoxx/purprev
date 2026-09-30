@@ -21,6 +21,8 @@ const columns: [string, string, string][] = [
     ["games", "created_at", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
     ["games", "updated_at", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
     ["games", "visits", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
+    ["games", "avatar_type", "enum('R6','R15') NOT NULL DEFAULT 'R6'"],
+    ["user_avatar", "avatar_type", "enum('R6','R15') NOT NULL DEFAULT 'R6'"],
     ["applications", "why", "text NOT NULL"],
     ["applications", "revivals", "varchar(500) NOT NULL DEFAULT ''"],
     ["applications", "socials", "varchar(500) NOT NULL DEFAULT ''"],

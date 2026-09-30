@@ -9,6 +9,7 @@
 
     let place = $state<any>({});
     let title = $state("");
+    let avatarType = $state("R6");
     let error = $state("");
     let success = $state("");
     let uploadLabel = $state("");
@@ -28,6 +29,7 @@
         if (hit) {
             place = hit;
             title = hit.title;
+            avatarType = hit.avatar_type ?? "R6";
         } else if (list.length > 0) {
             router.replace("/develop/places");
         }
@@ -50,10 +52,12 @@
         e.preventDefault();
         try {
             await api(`/develop/places/${id}`, {
-                title
+                title,
+                avatar_type: avatarType
             }, "PATCH");
             place.title = title;
-            flash("Your place name has been updated.");
+            place.avatar_type = avatarType;
+            flash("Your place settings have been updated.");
         } catch (err: any) {
             flash(err.message, false);
         }
@@ -133,8 +137,16 @@
                         <label for="title">Name</label>
                         <input id="title" name="title" type="text" maxlength="100" bind:value={title} required>
                     </div>
+                    <div class="develop-field">
+                        <label for="avatar_type">Avatar type</label>
+                        <select id="avatar_type" bind:value={avatarType}>
+                            <option value="R6">R6, the classic blocky character</option>
+                            <option value="R15">R15, the 15 part character</option>
+                        </select>
+                        <small>Everyone in this place gets this body. Old scripts that expect Torso or Left Arm need R6.</small>
+                    </div>
                     <div class="develop-form-actions">
-                        <button class="develop-primary-btn" type="submit">Save Name</button>
+                        <button class="develop-primary-btn" type="submit">Save</button>
                         <a class="develop-secondary-btn" href="/game?id={id}">View Place</a>
                     </div>
                 </form>

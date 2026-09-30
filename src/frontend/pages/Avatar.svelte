@@ -64,6 +64,21 @@
         }
     };
 
+    const setType = async (type: string) => {
+        if (data.avatar_type === type) return;
+        try {
+            const res = await api("/user/avatar/type", {
+                type
+            });
+            data.avatar_type = res.avatar_type;
+            statusError = !res.ok;
+            status = res.ok ? `Switched to ${type}. Your avatar is being re-drawn.` : "Saved, but the renderer could not be reached.";
+        } catch (err: any) {
+            statusError = true;
+            status = err.message;
+        }
+    };
+
     const redraw = async (e: Event) => {
         e.preventDefault();
         try {
@@ -122,6 +137,13 @@
             <div class="avatar-thumb">
                 <img src="/api/user/getProfilePicture?userId={me.id}&type=full" alt={me.username}>
                 <span class="avatar-3d-toggle">2D</span>
+            </div>
+            <div class="avatar-rig">
+                <span>Body type</span>
+                <div class="avatar-rig-switch">
+                    <button type="button" class:active={data.avatar_type !== "R15"} onclick={() => setType("R6")}>R6</button>
+                    <button type="button" class:active={data.avatar_type === "R15"} onclick={() => setType("R15")}>R15</button>
+                </div>
             </div>
             <div class="avatar-redraw">
                 Something wrong with your avatar?<br>

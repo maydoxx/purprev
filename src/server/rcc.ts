@@ -1,4 +1,5 @@
 import { SITE_INTERNAL_URL } from "./site";
+import { sql } from "./db";
 
 
 const env = process.env;
@@ -89,8 +90,10 @@ export const rcc = {
 
     render: {
         avatar: (userId: number) => quiet(false, async () => {
+            const [pref] = await sql`SELECT avatar_type FROM user_avatar WHERE user_id = ${userId}`;
             await call("POST", `/render/avatar/${userId}`, {
-                appearanceUrl: `${SITE_INTERNAL_URL}/Asset/CharacterFetch.ashx?userId=${userId}`
+                appearanceUrl: `${SITE_INTERNAL_URL}/Asset/CharacterFetch.ashx?userId=${userId}`,
+                r15: pref?.avatar_type === "R15" ? "1" : "0"
             });
             return true;
         }),

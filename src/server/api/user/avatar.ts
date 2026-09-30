@@ -45,6 +45,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
     .use(session)
     .get("/", async ({ user }) => ({
         colors: await bodyColors(user.id),
+        avatar_type: (await sql`SELECT avatar_type FROM user_avatar WHERE user_id = ${user.id}`)[0]?.avatar_type ?? "R6",
         wearing: await Promise.all((await wornItems(user.id)).map(withThumbnail)),
 
         owned: await Promise.all((await sql`
@@ -152,6 +153,27 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         })
     })
 
+
+    .post("/type", async ({ body, user }) => {
+        const colors = await bodyColors(user.id);
+        await sql`
+            INSERT INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, avatar_type, updated_at)
+            VALUES (${user.id}, ${colors.head_color}, ${colors.torso_color}, ${colors.left_arm_color}, ${colors.right_arm_color}, ${colors.left_leg_color}, ${colors.right_leg_color}, ${body.type}, ${now()})
+            ON DUPLICATE KEY UPDATE avatar_type = ${body.type}, updated_at = ${now()}
+        `;
+        return {
+            ok: await rcc.render.avatar(user.id),
+            avatar_type: body.type
+        };
+    }, {
+        auth: true,
+        body: t.Object({
+            type: t.Union([
+                t.Literal("R6"),
+                t.Literal("R15")
+            ])
+        })
+    })
 
     .post("/render", async ({ user }) => ({
         ok: await rcc.render.avatar(user.id),

@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `games` (
     `created_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `updated_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `visits` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `avatar_type` enum('R6','R15') NOT NULL DEFAULT 'R6',
     PRIMARY KEY (`id`),
     KEY `idx_games_creator` (`creator_id`),
     KEY `idx_games_title` (`title`)
@@ -327,6 +328,7 @@ CREATE TABLE IF NOT EXISTS `user_avatar` (
     `right_arm_color` int(11) NOT NULL DEFAULT 24,
     `left_leg_color` int(11) NOT NULL DEFAULT 119,
     `right_leg_color` int(11) NOT NULL DEFAULT 119,
+    `avatar_type` enum('R6','R15') NOT NULL DEFAULT 'R6',
     `updated_at` int(11) NOT NULL DEFAULT 0,
     PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

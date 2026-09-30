@@ -372,3 +372,37 @@
         width: 50%;
     }
 }
+
+.avatar-rig {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 12px 0 6px;
+    font-size: 14px;
+    color: #757575;
+}
+
+.avatar-rig-switch {
+    display: inline-flex;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.avatar-rig-switch button {
+    padding: 4px 14px;
+    border: 0;
+    background: #fff;
+    color: #757575;
+    font: inherit;
+    cursor: pointer;
+}
+
+.avatar-rig-switch button + button {
+    border-left: 1px solid #b8b8b8;
+}
+
+.avatar-rig-switch button.active {
+    background: #7b2cbf;
+    color: #fff;
+}

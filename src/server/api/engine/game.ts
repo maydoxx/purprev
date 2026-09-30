@@ -11,6 +11,11 @@ import { TIERS, membershipOf } from "../../membership";
 
 const ADMIN_GROUP = 1200769;
 
+export const placeR15 = async (placeId: number) => {
+    const [game] = await sql`SELECT avatar_type FROM games WHERE id = ${placeId}`;
+    return game?.avatar_type === "R15";
+};
+
 const creatorOf = async (placeId: number) => {
     const [game] = await sql`SELECT creator_id FROM games WHERE id = ${placeId}`;
     return game ? Number(game.creator_id) || 1 : 1;
@@ -115,7 +120,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
             IsUnknownOrUnder13: false,
             SessionId: "39412c34-2f9b-436f-b19d-b8db90c2e186|00000000-0000-0000-0000-000000000000|0|190.23.103.228|8|2021-03-03T17:04:47+01:00|0|null|null",
             DataCenterId: 0,
-            UniverseId: 3,
+            UniverseId: placeId,
             BrowserTrackerId: 0,
             UsePortraitMode: false,
             FollowUserId: 0,
@@ -208,6 +213,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
             `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
             `pcall(function() game:GetService("MarketplaceService"):SetDevProductInfoUrl("${site}/marketplace/productDetails?productId=%d") end)`,
             `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasAsset?userId=%d&assetId=%d") end)`,
+            `pcall(function() game:SetUniverseId(${query.PlaceId}) end)`,
+            `pcall(function() game.ForceR15 = ${await placeR15(query.PlaceId)} end)`,
             `pcall(function() game:SetPlaceVersion(1) end)`,
             `pcall(function() game:SetVIPServerOwnerId(0) end)`,
             ""

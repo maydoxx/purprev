@@ -419,7 +419,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         try {
             await ownedGame(params.id, user.id);
             const title = cleanTitle(body.title);
-            await sql`UPDATE games SET title = ${title}, updated_at = ${now()} WHERE id = ${params.id} AND creator_id = ${user.id}`;
+            await sql`UPDATE games SET title = ${title}, avatar_type = COALESCE(${body.avatar_type ?? null}, avatar_type), updated_at = ${now()} WHERE id = ${params.id} AND creator_id = ${user.id}`;
             return {
                 ok: true
             };
@@ -430,7 +430,11 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         auth: true,
         params: id,
         body: t.Object({
-            title: t.String()
+            title: t.String(),
+            avatar_type: t.Optional(t.Union([
+                t.Literal("R6"),
+                t.Literal("R15")
+            ]))
         })
     })
 
