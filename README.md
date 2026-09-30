@@ -59,6 +59,10 @@ cp .env.example .env
 | `RCCMANAGER_PASSWORD` | RCCManager password |
 | `SETUP_URL` | Where the launcher and client zips are hosted |
 | `TOOLBOX_ROBLOX` | `0` keeps studio's free models site only |
+| `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATIONS_CHANNEL` | Where applications get posted, see [Applications](#applications) |
+| `DISCORD_ADMIN_ROLE` | Who may press approve and deny, empty is anyone in the channel |
+| `DISCORD_WEBHOOK_URL` | No bot? Post through a webhook instead, no buttons then |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile on signup and apply, empty is off |
 | `CDN_URL` | The uploads bucket's custom domain, only for `STORAGE=cloudflare` |
 | `ROBLOX_COOKIE` | A `.ROBLOSECURITY` cookie, needed for pulling assets from Roblox |
 | `SITE_URL` | Public url, ends up in the join scripts the client gets |
@@ -117,6 +121,15 @@ Moving to R2 or bringing an old `uploads/` folder over: set `STORAGE=cloudflare`
 | Publish Selection | `/UI/Save.aspx`, ends up in `assets` and under My Models |
 
 Free Models also searches Roblox's toolbox, `TOOLBOX_ROBLOX=0` turns that off.
+
+### Applications
+
+No key? `/apply` takes a username, password and a few questions. Applications show up under Applications in the admin panel and in Discord:
+
+1. Make a bot in the Discord developer portal, invite it with send messages in the channel
+2. Put `DISCORD_BOT_TOKEN` and `DISCORD_APPLICATIONS_CHANNEL` in `.env`, leave the Interactions Endpoint URL empty
+
+Approve makes the account on the spot, Deny asks for a reason. Both work from the buttons in Discord or from the admin panel. The applicant sees the answer on `/apply`.
 
 ### Docker
 
