@@ -406,3 +406,15 @@
     background: #7b2cbf;
     color: #fff;
 }
+
+.wardrobe-tabs button { border: 0; background: transparent; color: #444; padding: 10px 20px; cursor: pointer; }
+.wardrobe-tabs button.active { border-bottom: 3px solid #7d27c5; color: #191919; }
+.avatar-outfits { min-height: 370px; padding: 14px; background: #fff; }
+.avatar-outfits h2 { margin: 0 0 14px; font-size: 22px; font-weight: 400; }
+.avatar-outfit-create { display: flex; gap: 8px; margin-bottom: 16px; }
+.avatar-outfit-create input { flex: 1; min-width: 0; border: 1px solid #bbb; padding: 7px; }
+.avatar-outfits button { border: 1px solid #a7a7a7; background: #fff; padding: 6px 12px; }
+.avatar-outfit-create button { border-color: #7d27c5; background: #7d27c5; color: #fff; }
+.avatar-outfit-list { list-style: none; margin: 0; padding: 0; }
+.avatar-outfit-list li { display: flex; align-items: center; gap: 8px; padding: 12px 4px; border-top: 1px solid #e5e5e5; }
+.avatar-outfit-list li strong { flex: 1; }

@@ -14,6 +14,8 @@ import { develop } from "./api/develop";
 import { forum } from "./api/forum";
 import { groups } from "./api/groups";
 import { messages } from "./api/messages";
+import { notifications } from "./api/notifications";
+import { money } from "./api/money";
 import { trade } from "./api/trade";
 import { admin } from "./api/admin";
 import { servers } from "./api/admin/servers";
@@ -55,6 +57,8 @@ const app = new Elysia()
     .use(forum)
     .use(groups)
     .use(messages)
+    .use(notifications)
+    .use(money)
     .use(trade)
     .use(admin)
     .use(servers)

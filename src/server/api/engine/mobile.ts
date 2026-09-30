@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { giveStarterItems } from "../../starter";
-import { session, getUser } from "../../session";
+import { session, getUser, claimDailyLoginRewards } from "../../session";
 import { sql, now } from "../../db";
 import { mediaUrl } from "../../paths";
 import { SITE_URL } from "../../site";
@@ -55,6 +55,7 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
             };
         }
         await login(row.id);
+        await claimDailyLoginRewards(row.id);
         return {
             Status: "OK",
             UserInfo: await userInfo(row.id)
@@ -117,6 +118,7 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
         await logInvite(invite, id, request, server);
         rcc.render.avatar(id);
         await login(id);
+        await claimDailyLoginRewards(id);
         return {
             Status: "OK",
             UserInfo: await userInfo(id)

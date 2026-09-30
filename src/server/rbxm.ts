@@ -1,6 +1,5 @@
 const MAGIC = "<roblox!";
 
-// lz4 block, no frame
 const lz4 = (src: Uint8Array, size: number) => {
     const out = new Uint8Array(size);
     let i = 0;

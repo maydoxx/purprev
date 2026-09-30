@@ -35,7 +35,6 @@
 
     const show = (text: string, ok = true) => notice = { text, ok };
 
-    // 1000 like roblox
     const USERNAME_PRICE = 1000;
     const canBuy = $derived(newUsername.trim().length >= 3 && usernamePassword.length > 0 && !busy);
 
@@ -91,7 +90,7 @@
                 <button type="button" class="settings-modal-close" aria-label="Close" onclick={() => editingUsername = false}>&times;</button>
             </div>
             <form class="settings-modal-body" onsubmit={e => { e.preventDefault(); if (canBuy) save("/user/settings/changeusername", { newUsername: newUsername.trim(), password: usernamePassword }, "Username changed."); }}>
-                <p class="settings-modal-price">Change username for <img src="/img/nonebux-icon-but-with-the-purple.png" alt="Nonebux"> <span>{USERNAME_PRICE.toLocaleString("en-US")}</span>?</p>
+                <p class="settings-modal-price">Change username for <img src="/img/nonebux-green.png" alt="Nonebux"> <span>{USERNAME_PRICE.toLocaleString("en-US")}</span>?</p>
                 <input type="text" bind:value={newUsername} placeholder="Username" maxlength="20" autocomplete="off" aria-label="New username">
                 <input type="password" bind:value={usernamePassword} placeholder="Account Password" autocomplete="current-password" aria-label="Account password">
                 <p class="settings-modal-note"><strong>Important:</strong> Original account creation date and forum post count will carry over to your new username.<br>Previous forum posts will appear under your old username and will NOT carry over to your new username.</p>

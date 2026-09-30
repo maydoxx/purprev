@@ -383,6 +383,16 @@ body {
 .rbx-header .rbx-navbar-icon-group li span[class^="icon"] {
     vertical-align: middle;
     margin-top: -2px;
+    filter: brightness(0) invert(1);
+}
+
+.rbx-header .rbx-navbar-icon-group li span.icon-nav-robux,
+.rbx-header .rbx-navbar-icon-group li span.icon-nav-tix {
+    filter: none;
+}
+
+.rbx-header .rbx-nav-collapse .icon-nav-menu {
+    filter: brightness(0) invert(1);
 }
 
 .rbx-header .rbx-text-navbar-right {
@@ -465,13 +475,23 @@ body {
 }
 
 .icon-nav-robux {
-    background-image: url("/img/nonebux-icon.png");
+    background-image: url("/img/nonebux-green.png");
     background-position: center;
     background-size: 26px 26px;
 }
 
 .icon-nav-tix {
-    background-position: 0 -56px;
+    background-image: url("/img/tix-gold.png");
+    background-position: center;
+    background-size: 26px 26px;
+}
+
+.rbx-header .icon-nav-robux {
+    background-image: url("/img/nonebux-nav.png");
+}
+
+.rbx-header .icon-nav-tix {
+    background-image: url("/img/tix-nav.png");
 }
 
 .icon-nav-settings {
@@ -543,7 +563,7 @@ button:hover .icon-nav-robux {
 
 a:hover .icon-nav-tix,
 button:hover .icon-nav-tix {
-    background-position: -28px -56px;
+    background-position: center;
 }
 
 a:hover .icon-nav-settings,

@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
+import { notify } from "../../notifications";
 
 const PER_PAGE = 20;
 
@@ -53,6 +54,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
             tab,
             page,
             totalPages,
+            total: Number(count.n),
             newsUnread: Number(news.n),
             messages: rows.map((m: any) => ({
                 ...m,
@@ -143,6 +145,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
             INSERT INTO messages (sender_id, recipient_id, subject, body, message_type, is_read, recipient_archived, created_at)
             VALUES (${user.id}, ${recipient.id}, ${subject}, ${text}, 'message', 0, 0, ${now()})
         `;
+        await notify(recipient.id, user.id, "message", Number(created.lastInsertRowid));
 
         return {
             ok: true,

@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { session, getUser } from "../../session";
+import { session, getUser, claimDailyLoginRewards } from "../../session";
 import { sql } from "../../db";
 
 export const login = new Elysia()
@@ -16,6 +16,7 @@ export const login = new Elysia()
 
         const id = row.id;
         await login(id);
+        await claimDailyLoginRewards(id);
         return {
             ok: true,
             user: await getUser(id)

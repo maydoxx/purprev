@@ -1,6 +1,5 @@
 import { sql, now } from "./db";
 
-// enum names are what the client expects
 export const TIERS = {
     None: {
         label: "None",
@@ -43,7 +42,6 @@ export const PRICES = {
 
 export const isTier = (s: unknown): s is Tier => typeof s === "string" && s in TIERS;
 
-// expired = None, 0 = never expires
 export const membershipOf = (row: { membership?: string | null, membership_expires?: number | string | null }): Tier => {
     const tier = row.membership ?? "None";
     if (!isTier(tier)) {
@@ -53,7 +51,6 @@ export const membershipOf = (row: { membership?: string | null, membership_expir
     return expires > 0 && expires < now() ? "None" : tier;
 };
 
-// once a day, utc
 export const claimStipend = async (userId: number) => {
     const [row] = await sql`SELECT membership, membership_expires, last_stipend FROM users WHERE id = ${userId}`;
     if (!row) {

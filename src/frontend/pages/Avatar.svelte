@@ -28,6 +28,10 @@
     const PER_PAGE = 8;
 
     let data = $state<any>(null);
+    let outfits = $state<any[]>([]);
+    let view = $state("wardrobe");
+    let outfitName = $state("");
+    let outfitBusy = $state(false);
     let part = $state<string | null>(null);
     let category = $state("all");
     let page = $state(1);
@@ -38,6 +42,39 @@
         data = await api("/user/avatar");
     };
     load();
+    const loadOutfits = async () => { outfits = await api("/user/avatar/outfits"); };
+    loadOutfits();
+
+    const saveOutfit = async (e: Event) => {
+        e.preventDefault();
+        outfitBusy = true;
+        try {
+            await api("/user/avatar/outfits", { name: outfitName.trim() });
+            outfitName = "";
+            await loadOutfits();
+            statusError = false;
+            status = "Outfit saved.";
+        } catch (err: any) { statusError = true; status = err.message; }
+        outfitBusy = false;
+    };
+    const useOutfit = async (outfitId: number) => {
+        outfitBusy = true;
+        try {
+            await api(`/user/avatar/outfits/${outfitId}/wear`, {});
+            await load();
+            statusError = false;
+            status = "Outfit applied. Your avatar is being re-drawn.";
+        } catch (err: any) { statusError = true; status = err.message; }
+        outfitBusy = false;
+    };
+    const removeOutfit = async (outfitId: number) => {
+        outfitBusy = true;
+        try {
+            await api(`/user/avatar/outfits/${outfitId}`, undefined, "DELETE");
+            await loadOutfits();
+        } catch (err: any) { statusError = true; status = err.message; }
+        outfitBusy = false;
+    };
 
     const shown = $derived(data ? data.owned.filter((i: any) => category === "all" || i.category === category) : []);
     const pages = $derived(Math.max(1, Math.ceil(shown.length / PER_PAGE)));
@@ -174,10 +211,11 @@
 
         <div class="avatar-right">
             <ul class="wardrobe-tabs">
-                <li><a href="#" class="active" onclick={e => e.preventDefault()}>Wardrobe</a></li>
-                <li><a href="#" class="disabled" title="Outfits are not available yet" onclick={e => e.preventDefault()}>Outfits</a></li>
+                <li><button type="button" class:active={view === "wardrobe"} onclick={() => view = "wardrobe"}>Wardrobe</button></li>
+                <li><button type="button" class:active={view === "outfits"} onclick={() => view = "outfits"}>Outfits</button></li>
             </ul>
 
+            {#if view === "wardrobe"}
             <div class="wardrobe-categories">
                 {#each categories as [key, label]}
                     <a href="#" class:active={category === key} onclick={e => { e.preventDefault(); category = key; page = 1; }}>{label}</a>
@@ -214,6 +252,21 @@
                 </ul>
                 <div class="wardrobe-empty" hidden={data.wearing.length > 0}>You aren't wearing anything yet.</div>
             </div>
+            {:else}
+                <section class="avatar-outfits">
+                    <h2>My Outfits ({outfits.length})</h2>
+                    <form class="avatar-outfit-create" onsubmit={saveOutfit}>
+                        <input type="text" bind:value={outfitName} maxlength="60" placeholder="Outfit name" aria-label="Outfit name" required>
+                        <button type="submit" disabled={outfitBusy}>Save Current Outfit</button>
+                    </form>
+                    {#if outfits.length === 0}<p>You haven't saved any outfits yet.</p>{/if}
+                    <ul class="avatar-outfit-list">
+                        {#each outfits as outfit (outfit.id)}
+                            <li><strong>{outfit.name}</strong><button type="button" disabled={outfitBusy} onclick={() => useOutfit(outfit.id)}>Wear</button><button type="button" disabled={outfitBusy} onclick={() => removeOutfit(outfit.id)}>Delete</button></li>
+                        {/each}
+                    </ul>
+                </section>
+            {/if}
         </div>
     </div>
 {/if}

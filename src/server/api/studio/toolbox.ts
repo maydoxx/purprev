@@ -5,7 +5,6 @@ import { UPLOADS } from "../../storage";
 import { mediaStream } from "../../media";
 import { SITE_URL } from "../../site";
 
-// roblox's toolbox too, the asset proxy fetches them
 const ROBLOX = process.env.TOOLBOX_ROBLOX !== "0";
 const OWN_IDS = 3000000000;
 const THUMB_DIR = join(UPLOADS, "assetcache");
@@ -113,7 +112,6 @@ export const searchRoblox = async (kind: "Model" | "Decal", q: string, page: num
     }
 };
 
-// own stuff first
 export const searchFree = async (kind: "Model" | "Decal", q: string, page: number, per: number) => {
     const own = await searchOwn(kind, q, page, per, null);
     if (own.items.length >= per) {
@@ -126,7 +124,6 @@ export const searchFree = async (kind: "Model" | "Decal", q: string, page: numbe
     };
 };
 
-// roblox said no, remembered for a while so we dont ask again every frame
 const misses = new Map<string, number>();
 const MISS_TTL = 10 * 60 * 1000;
 
@@ -138,7 +135,6 @@ const png = (file: Bun.BunFile | Uint8Array<ArrayBuffer>) =>
         }
     });
 
-// roblox ones are cached on disk
 export const thumbnail = async (id: number, placeholder: string, wanted = 150) => {
     const size = wanted >= 420 ? 420 : 150;
     if (id < 1000000) {
@@ -156,7 +152,6 @@ export const thumbnail = async (id: number, placeholder: string, wanted = 150) =
         if (asset?.type === "Decal" || asset?.type === "Image") {
             return (await mediaStream("assets", id, "public, max-age=86400")) ?? png(Bun.file(placeholder));
         }
-        // catalog items made here have their own rendered picture
         const [item] = await sql`SELECT id FROM catalog_items WHERE asset_id = ${id}`;
         if (item) {
             return (await mediaStream("catalog", Number(item.id), "public, max-age=86400")) ?? png(Bun.file(placeholder));

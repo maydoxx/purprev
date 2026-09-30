@@ -7,6 +7,7 @@ export type Me = {
     about: string | null;
     admin: number;
     currency: number;
+    tix: number;
     ongoing_action_id: number | null;
     membership: "None" | "BC" | "TBC" | "OBC";
     membership_expires: number;

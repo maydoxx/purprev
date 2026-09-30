@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS `catalog_items` (
     ) NOT NULL,
     `asset_id` bigint(20) UNSIGNED DEFAULT NULL,
     `price` int(10) UNSIGNED DEFAULT NULL,
+    `tix_price` int(10) UNSIGNED DEFAULT NULL,
     `thumbnail` varchar(255) NOT NULL DEFAULT '',
     `is_featured` tinyint(1) NOT NULL DEFAULT 0,
     `is_limited` tinyint(1) NOT NULL DEFAULT 0,
@@ -57,6 +58,14 @@ CREATE TABLE IF NOT EXISTS `catalog_items` (
     KEY `is_featured` (`is_featured`),
     KEY `price` (`price`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `catalog_favorites` (
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `item_id` int(11) NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`user_id`,`item_id`),
+    KEY `item_id` (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `games` (
     `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -97,6 +106,19 @@ CREATE TABLE IF NOT EXISTS `messages` (
     KEY `idx_messages_unread` (`recipient_id`, `is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `notifications` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `actor_id` int(10) UNSIGNED NOT NULL,
+    `kind` varchar(32) NOT NULL,
+    `target_id` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+    `is_read` tinyint(1) NOT NULL DEFAULT 0,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `user_unread` (`user_id`,`is_read`,`created_at`),
+    KEY `user_created` (`user_id`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `moderation_actions` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` int(10) UNSIGNED NOT NULL,
@@ -126,6 +148,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     `about` text DEFAULT NULL,
     `admin` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
     `currency` int(11) NOT NULL DEFAULT 0,
+    `tix` int(11) NOT NULL DEFAULT 0,
+    `last_tix_day` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `last_nonebux_day` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `ongoing_action_id` int(10) UNSIGNED DEFAULT NULL,
     `lastInviteKeyCreated` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `lastOnlineSite` int(10) UNSIGNED DEFAULT NULL,
@@ -198,6 +223,29 @@ CREATE TABLE IF NOT EXISTS `group_wall_posts` (
     PRIMARY KEY (`id`),
     KEY `group_id` (`group_id`,`created_at`),
     KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `group_store_items` (
+    `group_id` int(10) UNSIGNED NOT NULL,
+    `item_id` int(11) NOT NULL,
+    `added_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`group_id`,`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `group_games` (
+    `group_id` int(10) UNSIGNED NOT NULL,
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `added_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`group_id`,`game_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `group_affiliates` (
+    `group_id` int(10) UNSIGNED NOT NULL,
+    `other_group_id` int(10) UNSIGNED NOT NULL,
+    `status` enum('pending','accepted') NOT NULL DEFAULT 'pending',
+    `requested_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`group_id`,`other_group_id`),
+    KEY `other_group_id` (`other_group_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `trades` (
@@ -335,6 +383,17 @@ CREATE TABLE IF NOT EXISTS `user_avatar` (
     PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `avatar_outfits` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `name` varchar(60) NOT NULL,
+    `colors` text NOT NULL,
+    `items` text NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `user_items` (
     `user_id` int(10) UNSIGNED NOT NULL,
     `item_id` int(11) NOT NULL,
@@ -356,6 +415,14 @@ CREATE TABLE IF NOT EXISTS `friendships` (
     UNIQUE KEY `pair` (`requester_id`, `target_id`),
     KEY `target` (`target_id`, `status`),
     KEY `requester` (`requester_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_follows` (
+    `follower_id` int(10) UNSIGNED NOT NULL,
+    `followed_id` int(10) UNSIGNED NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`follower_id`,`followed_id`),
+    KEY `followed_id` (`followed_id`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `status_updates` (
@@ -417,6 +484,34 @@ CREATE TABLE IF NOT EXISTS `game_servers` (
     KEY `idx_port_open` (`port`, `closed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `game_visit_sessions` (
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `job_id` varchar(64) NOT NULL,
+    `started_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`job_id`,`user_id`),
+    KEY `game_id` (`game_id`,`user_id`),
+    KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `vip_servers` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `owner_id` int(10) UNSIGNED NOT NULL,
+    `name` varchar(60) NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `game_id` (`game_id`),
+    KEY `owner_id` (`owner_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `vip_server_members` (
+    `vip_id` int(10) UNSIGNED NOT NULL,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`vip_id`,`user_id`),
+    KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 CREATE TABLE IF NOT EXISTS `media` (
     `kind` varchar(32) NOT NULL,
@@ -427,7 +522,6 @@ CREATE TABLE IF NOT EXISTS `media` (
     PRIMARY KEY (`kind`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- admin toggles, registration_enabled and invites_enabled
 CREATE TABLE IF NOT EXISTS `applications` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` varchar(20) NOT NULL,
@@ -464,7 +558,6 @@ CREATE TABLE IF NOT EXISTS `site_settings` (
     PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- every used invite key, who made it and who signed up with it from where
 CREATE TABLE IF NOT EXISTS `invite_log` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `inviteKey` char(32) NOT NULL,

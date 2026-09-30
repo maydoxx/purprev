@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { session } from "../../session";
+import { session, getUser, claimDailyLoginRewards } from "../../session";
 
 import { login } from "./login";
 import { logout } from "./logout";
@@ -12,7 +12,10 @@ export const auth = new Elysia({ prefix: "/api/auth" })
     .use(register)
 
 
-    .get("/me", ({ user }) => user, {
+    .get("/me", async ({ user }) => {
+        await claimDailyLoginRewards(user.id);
+        return getUser(user.id);
+    }, {
         auth: true
     })
 

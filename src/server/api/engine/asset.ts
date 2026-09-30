@@ -49,7 +49,6 @@ const blob = (body: Uint8Array<ArrayBuffer> | string | Bun.BunFile) =>
         }
     });
 
-// body parts arrive as folders around one CharacterMesh
 const forEngine = (bytes: Uint8Array<ArrayBuffer>) => {
     const cm = characterMesh(bytes);
     return cm ? characterMeshXml(cm) : bytes;
@@ -142,7 +141,6 @@ const bodyColorsXml = async (userId: number) => {
 `;
 };
 
-// a package is its body parts, everything else is one asset
 const itemUrls = (item: any) => {
     if (item.category === "Package") {
         return String(item.package_parts ?? "").split(";").map(Number).filter(n => n > 0).map(assetUrl);
@@ -153,7 +151,6 @@ const itemUrls = (item: any) => {
 const routes = (prefix: string) => new Elysia({ prefix })
 
     .get("/", async ({ query, status }) => {
-        // studio writes texture ids as /Asset?ID=
         const id = query.id ?? query.ID;
         if (id === undefined) {
             return status(400, "id missing");

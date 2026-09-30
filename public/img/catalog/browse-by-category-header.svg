@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 136 40" width="136" height="40">
+  <defs>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#807f7f"/>
+      <stop offset="1" stop-color="#565655"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#shade)" d="M0 0h136v40H0z"/>
+  <text x="5" y="14" fill="#fff" font-family="Arial,sans-serif" font-size="11" font-weight="600">Browse by</text>
+  <text x="5" y="34" fill="#fff" font-family="Arial,sans-serif" font-size="20" font-weight="700">Category</text>
+</svg>

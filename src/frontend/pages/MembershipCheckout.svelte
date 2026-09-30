@@ -23,7 +23,6 @@
     const price = $derived(data ? Number(data.tiers.find((t: any) => t.id === tier)?.[period] ?? 0) : 0);
     const n = (v: number) => Number(v).toLocaleString("en-US");
 
-    // same tier keeps going from when it would have ended
     const renews = $derived.by(() => {
         const days = period === "annual" ? 365 : 30;
         const base = session.me && session.me.membership === tier && session.me.membership_expires > Date.now() / 1000 ? session.me.membership_expires * 1000 : Date.now();

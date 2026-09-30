@@ -107,13 +107,14 @@
             <div class="catalog-card-price">
                 {#if soldOut(item)}
                     <span class="catalog-offsale">Sold Out</span>
-                {:else if item.price === null}
+                {:else if item.price === null && item.tix_price === null}
                     <span class="catalog-offsale">Off Sale</span>
-                {:else if Number(item.price) === 0}
+                {:else if item.price !== null && Number(item.price) === 0}
                     <span class="catalog-free">Free</span>
                 {:else}
-                    <span class="robux">{Number(item.price).toLocaleString()}</span>
+                    {#if item.price !== null}<span class="robux">{Number(item.price).toLocaleString()}</span>{/if}
                 {/if}
+                {#if item.tix_price !== null}<span class="catalog-tix-label">{Number(item.tix_price).toLocaleString()} Tix</span>{/if}
             </div>
         </div>
     </article>
@@ -227,7 +228,7 @@
                 {:else if data.items.length === 0}
                     <div class="no-results">No items found. Try another category or search.</div>
                 {:else}
-                    <div class="catalog-grid">
+                    <div class="catalog-grid" class:featured>
                         {#each data.items as item}
                             {@render card(item)}
                         {/each}

@@ -16,6 +16,7 @@ body {
 
 .none-blog {
     margin: 0;
+    padding-top: 0;
     background: var(--blog-bg);
     color: var(--blog-text);
     font-family: "Source Sans Pro", Arial, sans-serif;

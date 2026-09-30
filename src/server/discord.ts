@@ -185,7 +185,6 @@ export const updateApplication = async (app: Application, messageId: string) => 
     }
 };
 
-// works without channel permissions
 export const editInteractionMessage = async (interaction: any, app: Application) => {
     try {
         await fetch(`${API}/webhooks/${interaction.application_id}/${interaction.token}/messages/@original`, {

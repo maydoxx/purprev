@@ -182,3 +182,40 @@ export const avatar = new Elysia({ prefix: "/avatar" })
     }), {
         auth: true
     })
+
+    .get("/outfits", async ({ user }) => {
+        const rows = await sql`SELECT id, name, created_at FROM avatar_outfits WHERE user_id = ${user.id} ORDER BY created_at DESC, id DESC`;
+        return rows;
+    }, { auth: true })
+
+    .post("/outfits", async ({ body, user, status }) => {
+        const name = body.name.trim();
+        if (!name) return status(400, { error: "Give the outfit a name" });
+        const [count] = await sql`SELECT COUNT(*) AS n FROM avatar_outfits WHERE user_id = ${user.id}`;
+        if (Number(count.n) >= 50) return status(400, { error: "You can save up to 50 outfits" });
+        const colors = await bodyColors(user.id);
+        const worn = await sql`SELECT item_id FROM user_items WHERE user_id = ${user.id} AND wearing = 1`;
+        await sql`INSERT INTO avatar_outfits (user_id, name, colors, items, created_at) VALUES (${user.id}, ${name}, ${JSON.stringify(colors)}, ${JSON.stringify(worn.map((r: any) => Number(r.item_id)))}, ${now()})`;
+        return { ok: true };
+    }, { auth: true, body: t.Object({ name: t.String({ maxLength: 60 }) }) })
+
+    .post("/outfits/:id/wear", async ({ params, user, status }) => {
+        const [outfit] = await sql`SELECT colors, items FROM avatar_outfits WHERE id = ${params.id} AND user_id = ${user.id}`;
+        if (!outfit) return status(404, { error: "Outfit not found" });
+        const colors = JSON.parse(outfit.colors);
+        const items: number[] = JSON.parse(outfit.items);
+        await sql.begin(async tx => {
+            await tx`UPDATE user_items SET wearing = 0 WHERE user_id = ${user.id}`;
+            for (const itemId of items) {
+                await tx`UPDATE user_items SET wearing = 1 WHERE user_id = ${user.id} AND item_id = ${itemId}`;
+            }
+            await tx`INSERT INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, updated_at) VALUES (${user.id}, ${colors.head_color}, ${colors.torso_color}, ${colors.left_arm_color}, ${colors.right_arm_color}, ${colors.left_leg_color}, ${colors.right_leg_color}, ${now()}) ON DUPLICATE KEY UPDATE head_color = VALUES(head_color), torso_color = VALUES(torso_color), left_arm_color = VALUES(left_arm_color), right_arm_color = VALUES(right_arm_color), left_leg_color = VALUES(left_leg_color), right_leg_color = VALUES(right_leg_color), updated_at = VALUES(updated_at)`;
+        });
+        rcc.render.avatar(user.id);
+        return { ok: true };
+    }, { auth: true, params: t.Object({ id: t.Numeric() }) })
+
+    .delete("/outfits/:id", async ({ params, user }) => {
+        await sql`DELETE FROM avatar_outfits WHERE id = ${params.id} AND user_id = ${user.id}`;
+        return { ok: true };
+    }, { auth: true, params: t.Object({ id: t.Numeric() }) })

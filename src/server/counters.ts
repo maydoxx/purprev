@@ -9,7 +9,6 @@ type Counter = {
 const KEEP = 200;
 const counters = new Map<string, Counter>();
 
-// engine telemetry, name and value only so it lives in memory
 export const report = (name: string, value: number) => {
     const c = counters.get(name);
     if (!c) {

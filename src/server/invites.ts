@@ -1,6 +1,5 @@
 import { sql, now } from "./db";
 
-// who made the key, who used it, from where. the invites row goes away on use, this stays
 export type Invite = {
     id: number;
     createdBy: number;
@@ -8,7 +7,6 @@ export type Invite = {
     inviteKey: string;
 };
 
-// cloudflare and caddy put the real client first, direct lan callers have no header at all
 export const clientIp = (request: Request, server: any) => {
     const forwarded = request.headers.get("x-forwarded-for");
     if (forwarded) {
@@ -17,7 +15,6 @@ export const clientIp = (request: Request, server: any) => {
     return String(server?.requestIP?.(request)?.address ?? "").slice(0, 45);
 };
 
-// takes the key off the table, null when it was never there or someone else got it first
 export const claimInvite = async (key: string): Promise<Invite | null> => {
     const [row] = await sql`SELECT id, createdBy, createdAt, inviteKey FROM invites WHERE inviteKey = ${key}`;
     if (!row) {

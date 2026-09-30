@@ -516,3 +516,14 @@
 .group-danger-zone h3 { margin: 0 0 4px; color: #9f2424; font-size: 17px; font-weight: 400; }
 .group-danger-zone p { margin: 0 0 10px; color: #777; }
 .group-delete-button { padding: 6px 12px; color: #fff; background: #bd2d2d; border: 1px solid #9f2424; border-radius: 2px; cursor: pointer; }
+.group-linked-content { padding: 14px; }
+.group-link-form { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.group-link-form input { width: 125px; padding: 7px; border: 1px solid #bbb; }
+.group-linked-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.group-linked-card { border: 1px solid #ddd; padding: 8px; background: #fff; }
+.group-linked-card a { display: flex; flex-direction: column; gap: 7px; color: #333; text-decoration: none; }
+.group-linked-card img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+.group-linked-card strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+.group-linked-card button, .group-link-request button { border: 1px solid #aaa; background: #fff; margin-top: 8px; padding: 4px 8px; }
+.group-link-request { display: flex; align-items: center; gap: 10px; border-top: 1px solid #ddd; padding: 8px; }
+.group-link-request a { flex: 1; }

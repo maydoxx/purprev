@@ -3,7 +3,6 @@ import { Elysia, t } from "elysia";
 
 const CDN = (process.env.SETUP_URL || process.env.CDN_URL || "").replace(/\/+$/, "");
 
-// the android build lives in its own folder with its own version.txt
 const FILES: Record<string, string> = {
     windows: "NoneRevLauncher.exe",
     linux: "nonerev",

@@ -1,6 +1,5 @@
 import { sql, now } from "./db";
 
-// admin toggles, cached so every signup doesnt hit the table
 const DEFAULTS: Record<string, string> = {
     registration_enabled: "1",
     invites_enabled: "1",

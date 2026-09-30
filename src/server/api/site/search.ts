@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql } from "../../db";
-import { mediaUrl } from "../../paths";
+import { mediaUrl, withThumbnail } from "../../paths";
 import { isOnline } from "../../friends";
 
 const PER_PAGE = 10;
@@ -81,6 +81,28 @@ export const search = new Elysia({ prefix: "/search" })
                     icon: g.icon || await mediaUrl("groups", g.id)
                 })))
             };
+        }
+
+        if (type === "catalog") {
+            const { page, totalPages } = await paginate(sql`catalog_items WHERE name LIKE ${like}`, query.page ?? 1);
+            const rows = await sql`
+                SELECT c.*, u.username AS creator_name FROM catalog_items c
+                LEFT JOIN users u ON u.id = c.creator_id
+                WHERE c.name LIKE ${like}
+                ORDER BY c.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
+            `;
+            return { type, page, totalPages, results: await Promise.all(rows.map(withThumbnail)) };
+        }
+
+        if (type === "library") {
+            const { page, totalPages } = await paginate(sql`assets WHERE name LIKE ${like} AND type IN ('Model', 'Decal')`, query.page ?? 1);
+            const rows = await sql`
+                SELECT a.id, a.name, a.type, a.creator_id, u.username AS creator_name
+                FROM assets a LEFT JOIN users u ON u.id = a.creator_id
+                WHERE a.name LIKE ${like} AND a.type IN ('Model', 'Decal')
+                ORDER BY a.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
+            `;
+            return { type, page, totalPages, results: rows };
         }
 
         const { page, totalPages } = await paginate(sql`users WHERE username LIKE ${like}`, query.page ?? 1);

@@ -549,3 +549,27 @@
     justify-content: center;
     min-height: 34px;
 }
+
+.messages-2016 { padding: 18px 18px 85px; }
+.messages-title-row { margin-bottom: 13px; }
+.messages-title-row h1 { font-size: 44px; line-height: 1.2; }
+.messages-tabs { height: auto; margin-bottom: 18px; border: 0; box-shadow: 0 1px 3px #969696bd; }
+.messages-tabs a { min-height: 48px; font-size: 19px; line-height: 1.2; }
+.messages-tabs a.active::after { height: 4px; }
+.messages-folder-heading { margin: 0 6px 4px; }
+.messages-folder-heading h2 { margin: 0; font-size: 24px; line-height: 1.4; font-weight: 400; text-transform: uppercase; }
+.messages-folder-heading h2 span { color: #666; }
+.messages-toolbar { background: #fff; border: 1px solid #ddd; border-bottom: 0; }
+.messages-toolbar.bottom-toolbar { border-top: 0; border-bottom: 1px solid #ddd; }
+.messages-list, .messages-compose-panel, .messages-detail-panel { border: 0; box-shadow: 0 1px 3px #969696bd; }
+.message-row { min-height: 76px; padding: 10px 16px; }
+.message-row:not(.unread) { background: #fff; }
+.message-row.unread { background: #faf6ff; }
+.message-row:hover { background: #f4eff8; }
+.message-user { color: #444; font-size: 14px; }
+.message-subject { font-size: 14px; }
+.message-preview { font-size: 13px; }
+.message-line-one time { color: #777; font-size: 12px; }
+.message-detail-head { background: #fafafa; }
+.message-detail-body { font-size: 15px; font-weight: 400; }
+@media (max-width: 760px) { .messages-2016 { padding: 18px 10px 60px; } .messages-title-row h1 { font-size: 34px; } .messages-tabs a { font-size: 15px; } }

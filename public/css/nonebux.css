@@ -3,7 +3,7 @@
 .nonebux-shell h1 { margin: 0 0 16px; font-size: 36px; line-height: 1.25; font-weight: 400; }
 .nonebux-mark { margin-left: 3px; font-size: 16px; vertical-align: super; }
 .nonebux-intro { display: flex; min-height: 170px; align-items: center; gap: 26px; margin-bottom: 10px; padding: 22px 40px; background: #fff; box-shadow: 0 1px 8px #19191922; }
-.nonebux-intro-icon { width: 64px; height: 64px; flex: 0 0 64px; background: #7b2cbf; -webkit-mask: url("/img/nonebux-icon.png") center / contain no-repeat; mask: url("/img/nonebux-icon.png") center / contain no-repeat; }
+.nonebux-intro-icon { width: 64px; height: 64px; flex: 0 0 64px; background: url("/img/nonebux-green.png") center / contain no-repeat; }
 .nonebux-intro-copy p { margin: 0; font-size: 16px; line-height: 1.5; }
 .nonebux-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .nonebux-card { min-height: 170px; padding: 13px 24px 16px; background: #fff; box-shadow: 0 1px 8px #19191922; }

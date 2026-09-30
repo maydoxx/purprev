@@ -13,6 +13,7 @@
     let status = $state("");
     let statusError = $state(false);
     let busy = $state(false);
+    let favoriting = $state(false);
     let recommended = $state<any[]>([]);
     let range = $state(180);
 
@@ -59,14 +60,26 @@
         busy = false;
     };
 
-    const buy = () => post("/catalog/purchase", {
-        itemId: id
+    const buy = (currency: "nonebux" | "tix") => post("/catalog/purchase", {
+        itemId: id,
+        currency
     }, "Working...");
 
     const wear = () => post("/user/avatar/wear", {
         itemId: id,
         wear: !item.wearing
     }, "Updating your avatar...");
+
+    const favorite = async () => {
+        if (!session.me) { router.go("/login"); return; }
+        favoriting = true;
+        try {
+            const d = await api(`/catalog/${id}/favorite`, {});
+            item.favorited = d.favorited;
+            item.favorites = d.favorites;
+        } catch (err: any) { statusError = true; status = err.message; }
+        favoriting = false;
+    };
 
     $effect(() => {
         const currentId = id;
@@ -104,10 +117,10 @@
                         <span class="catalog-item-limited-label" class:unique={limitedUnique}>{limitedUnique ? "LIMITED U" : "LIMITED"}</span>
                     {/if}
                 </div>
-                <div class="catalog-item-favorites" title="Favorites are not available yet">
+                <button type="button" class="catalog-item-favorites" class:active={item.favorited} disabled={favoriting} aria-label={item.favorited ? "Remove from favorites" : "Add to favorites"} aria-pressed={!!item.favorited} onclick={favorite}>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 1.5 3.3 6.7 7.4 1.1-5.4 5.2 1.3 7.3-6.6-3.5-6.6 3.5 1.3-7.3-5.4-5.2 7.4-1.1z"/></svg>
                     <span>{n(item.favorites)}</span>
-                </div>
+                </button>
             </div>
             <div class="catalog-item-information">
                 <header class="catalog-item-heading">
@@ -117,9 +130,9 @@
                 <div class="catalog-item-purchase-row">
                     <span class="catalog-field-label">{limited ? "Best Price" : "Price"}</span>
                     <div class="catalog-item-price-details">
-                        {#if item.price === null}<span class="catalog-offsale">Off Sale</span>
-                        {:else if Number(item.price) === 0}<span class="catalog-price">Free</span>
-                        {:else}<span class="catalog-price"><span class="catalog-currency" aria-label="Nonebux"></span>{n(item.price)}</span>{/if}
+                        {#if item.price === null && item.tix_price === null}<span class="catalog-offsale">Off Sale</span>{/if}
+                        {#if item.price !== null}<span class="catalog-price">{#if Number(item.price) === 0}Free{:else}<span class="catalog-currency" aria-label="Nonebux"></span>{n(item.price)}{/if}</span>{/if}
+                        {#if item.tix_price !== null}<span class="catalog-price catalog-tix-price">{n(item.tix_price)} Tix</span>{/if}
                         {#if limited}<span class="catalog-reseller-link">See more <a href="#resellers">Resellers</a></span>{/if}
                     </div>
                     <div class="catalog-item-buy">
@@ -128,10 +141,10 @@
                             {#if canWear}<button class="catalog-buy-button" type="button" disabled={busy} onclick={wear}>{item.wearing ? "Remove" : "Wear Item"}</button>
                             {:else}<span class="catalog-owned-label">Item Owned</span>{/if}
                         {:else if soldOut}<button class="catalog-buy-button" disabled>Sold Out</button>
-                        {:else if item.price === null}<button class="catalog-buy-button" disabled>Off Sale</button>
+                        {:else if item.price === null && item.tix_price === null}<button class="catalog-buy-button" disabled>Off Sale</button>
                         {:else if !session.me}<a class="catalog-buy-button" href="/login">Buy</a>
                         {:else if item.bc_only && session.me.membership === "None"}<button class="catalog-buy-button" disabled title="Builders Club members only">Buy</button>
-                        {:else}<button type="button" class="catalog-buy-button" disabled={busy} onclick={buy}>{Number(item.price) === 0 ? "Get" : "Buy"}</button>{/if}
+                        {:else}<div class="catalog-buy-options">{#if item.price !== null}<button type="button" class="catalog-buy-button" disabled={busy} onclick={() => buy("nonebux")}>Buy</button>{/if}{#if item.tix_price !== null}<button type="button" class="catalog-buy-button catalog-buy-tix" disabled={busy} onclick={() => buy("tix")}>Buy</button>{/if}</div>{/if}
                     </div>
                 </div>
                 <dl class="catalog-item-fields">
@@ -172,7 +185,7 @@
                         <li class="catalog-recommended-card">
                             <a href="/catalog/item?id={rec.id}"><img src={rec.thumbnail || "/img/pending.png"} alt={rec.name}><div class="catalog-recommended-name" title={rec.name}>{rec.name}</div></a>
                             <div class="catalog-recommended-creator">By <a href="/user?id={rec.creator_id}">{rec.creator_name || "NoneRev"}</a></div>
-                            <div class="catalog-recommended-price">{#if rec.price !== null}<span class="catalog-currency" aria-label="Nonebux"></span>{Number(rec.price) === 0 ? "Free" : n(rec.price)}{:else}<span class="catalog-offsale">Off Sale</span>{/if}</div>
+                            <div class="catalog-recommended-price">{#if rec.price !== null}<span class="catalog-currency" aria-label="Nonebux"></span>{Number(rec.price) === 0 ? "Free" : n(rec.price)}{/if}{#if rec.tix_price !== null}<span class="catalog-tix-label">{n(rec.tix_price)} Tix</span>{/if}{#if rec.price === null && rec.tix_price === null}<span class="catalog-offsale">Off Sale</span>{/if}</div>
                         </li>
                     {/each}
                 </ul>

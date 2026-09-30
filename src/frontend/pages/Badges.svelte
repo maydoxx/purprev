@@ -1,5 +1,4 @@
 <script lang="ts">
-    // same ids as roblox so the profile links work
     type Badge = [number, string, string, string];
     const categories: [string, Badge[]][] = [
         ["Membership Badges", [
@@ -27,7 +26,6 @@
         ]]
     ];
 
-    // router scrolls to top, jump after mount
     $effect(() => {
         const id = location.hash.slice(1);
         if (id) {
