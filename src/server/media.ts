@@ -5,7 +5,7 @@ import { storage, STORAGE, UPLOADS } from "./storage";
 
 
 
-export type MediaKind = "avatars" | "headshots" | "thumbnails" | "icons" | "catalog" | "badges" | "gamepasses" | "blog" | "groups" | "places" | "assets";
+export type MediaKind = "avatars" | "headshots" | "avatars3d" | "thumbnails" | "icons" | "catalog" | "badges" | "gamepasses" | "blog" | "groups" | "places" | "assets";
 
 export const TYPES: Record<string, string> = {
     png: "image/png",
@@ -20,22 +20,29 @@ export const TYPES: Record<string, string> = {
     wav: "audio/wav",
     rbxl: "application/octet-stream",
     rbxm: "application/octet-stream",
-    rbxmx: "application/xml"
+    rbxmx: "application/xml",
+    json: "application/json"
 };
 
 export const contentType = (ext: string) => TYPES[ext.toLowerCase()] ?? "application/octet-stream";
 
+// headshots and the 3d scene live next to the body under avatars/
+const SUFFIX: Record<string, string> = {
+    headshots: "-headshot",
+    avatars3d: "-3d"
+};
+
 export const mediaKey = (kind: string, id: number, ext: string) =>
-    kind === "headshots" ? `avatars/${id}-headshot.${ext}` : `${kind}/${id}.${ext}`;
+    SUFFIX[kind] ? `avatars/${id}${SUFFIX[kind]}.${ext}` : `${kind}/${id}.${ext}`;
 
 
 export const parseKey = (key: string) => {
-    const m = /^([a-z]+)\/(\d+)(-headshot)?\.([a-z0-9]+)$/i.exec(key);
+    const m = /^([a-z]+)\/(\d+)(-headshot|-3d)?\.([a-z0-9]+)$/i.exec(key);
     if (!m) {
         return null;
     }
     return {
-        kind: m[3] ? "headshots" : m[1]!,
+        kind: m[3] === "-headshot" ? "headshots" : m[3] === "-3d" ? "avatars3d" : m[1]!,
         id: Number(m[2]),
         ext: m[4]!.toLowerCase()
     };

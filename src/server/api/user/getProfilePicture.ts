@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { PENDING } from "../../paths";
-import { mediaUrl } from "../../media";
+import { mediaUrl, mediaStream } from "../../media";
 
 
 export const getProfilePicture = new Elysia()
@@ -22,5 +22,19 @@ export const getProfilePicture = new Elysia()
                 t.Literal("headshot"),
                 t.Literal("full")
             ]))
+        })
+    })
+
+    .get("/avatar3d", async ({ query, status }) => {
+        const scene = await mediaStream("avatars3d", query.userId, "private, max-age=60");
+        if (!scene) {
+            return status(404, {
+                error: "No 3D avatar yet"
+            });
+        }
+        return scene;
+    }, {
+        query: t.Object({
+            userId: t.Numeric()
         })
     })

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { api } from "../api";
     import { session } from "../session.svelte";
+    import Avatar3D from "../Avatar3D.svelte";
 
     const me = session.me!;
 
@@ -28,6 +29,7 @@
     const PER_PAGE = 8;
 
     let data = $state<any>(null);
+    let threeD = $state(false);
     let outfits = $state<any[]>([]);
     let view = $state("wardrobe");
     let outfitName = $state("");
@@ -187,8 +189,12 @@
     <div class="avatar-container">
         <div class="avatar-left">
             <div class="avatar-thumb">
-                <img src="/api/user/getProfilePicture?userId={me.id}&type=full" alt={me.username}>
-                <span class="avatar-3d-toggle">2D</span>
+                {#if threeD}
+                    <Avatar3D userId={me.id} />
+                {:else}
+                    <img src="/api/user/getProfilePicture?userId={me.id}&type=full" alt={me.username}>
+                {/if}
+                <button type="button" class="avatar-3d-toggle" onclick={() => threeD = !threeD}>{threeD ? "2D" : "3D"}</button>
             </div>
             <div class="avatar-rig">
                 <span>Body type</span>

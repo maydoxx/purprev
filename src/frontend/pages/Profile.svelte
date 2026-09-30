@@ -29,10 +29,12 @@
     import { api } from "../api";
     import { session } from "../session.svelte";
     import { router } from "../router.svelte";
+    import Avatar3D from "../Avatar3D.svelte";
 
     const id = $derived(Number(router.query.id) || 0);
 
     let profile = $state<any>(null);
+    let threeD = $state(false);
     let error = $state("");
     let busy = $state(false);
     let tab = $state("about");
@@ -255,9 +257,14 @@
                             <div class="profile-avatar-left">
                                 <div class="thumbnail-holder">
                                     <span class="thumbnail-span">
-                                        <img alt={profile.username} src={pic(id, "full")}>
+                                        {#if threeD}
+                                            <Avatar3D userId={id} />
+                                        {:else}
+                                            <img alt={profile.username} src={pic(id, "full")}>
+                                        {/if}
                                     </span>
                                 </div>
+                                <button type="button" class="avatar-3d-toggle" onclick={() => threeD = !threeD}>{threeD ? "2D" : "3D"}</button>
                             </div>
                             <div class="profile-avatar-right">
                                 <div class="profile-avatar-mask">
