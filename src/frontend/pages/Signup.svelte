@@ -1,5 +1,6 @@
 <script lang="ts">
     import AuthBackground from "../AuthBackground.svelte";
+    import Turnstile from "../Turnstile.svelte";
     import { api } from "../api";
     import { session } from "../session.svelte";
     import { router } from "../router.svelte";
@@ -11,8 +12,14 @@
     let error = $state("");
     let busy = $state(false);
     let closed = $state(false);
+    let siteKey = $state("");
+    let turnstile = $state("");
+    let captcha = $state<Turnstile>();
 
-    api("/site/settings").then(d => closed = !d.registration_enabled).catch(() => {});
+    api("/site/settings").then(d => {
+        closed = !d.registration_enabled;
+        siteKey = d.turnstile_site_key ?? "";
+    }).catch(() => {});
 
     const submit = async (e: Event) => {
         e.preventDefault();
@@ -23,12 +30,14 @@
                 username,
                 password,
                 confirmpassword,
-                invitekey
+                invitekey,
+                turnstile
             });
             session.set(res.user);
             router.go("/home");
         } catch (err: any) {
             error = err.message;
+            captcha?.reset();
         } finally {
             busy = false;
         }
@@ -48,7 +57,7 @@
             <h1>Sign Up</h1>
             {#if error}<div class="none-auth-error" role="alert">{error}</div>{/if}
             {#if closed}
-                <div class="none-auth-error" role="alert">Registration is closed right now, check back later.</div>
+                <div class="none-auth-error" role="alert">Registration is closed right now. <a href="/apply">Apply for an invite</a> instead.</div>
             {:else}
             <form onsubmit={submit}>
                     <div class="none-auth-field">
@@ -67,10 +76,12 @@
                         <label for="invite-key">Invite Key</label>
                         <input id="invite-key" name="invitekey" required autocomplete="off" bind:value={invitekey} placeholder="Invite Key">
                     </div>
-                <button type="submit" class="none-auth-button" disabled={busy}>{busy ? "Please wait…" : "Sign Up"}</button>
+                <Turnstile bind:this={captcha} {siteKey} bind:token={turnstile} />
+                <button type="submit" class="none-auth-button" disabled={busy || (!!siteKey && !turnstile)}>{busy ? "Please wait…" : "Sign Up"}</button>
             </form>
             {/if}
             <p class="none-auth-note">Already have an account? <a href="/login">Log In</a></p>
+            <p class="none-auth-note">No invite key? <a href="/apply">Apply for one</a></p>
         </div>
     </div>
 </main>

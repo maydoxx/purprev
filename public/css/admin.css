@@ -729,3 +729,87 @@
         display: none;
     }
 }
+.admin-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 0 12px;
+    color: #757575;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.admin-switch input {
+    width: 2.4em;
+    height: 1.3em;
+    margin: 0;
+    appearance: none;
+    border: 1px solid #b8b8b8;
+    border-radius: 1em;
+    background: #fff;
+    position: relative;
+    cursor: pointer;
+}
+
+.admin-switch input::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: calc(1.3em - 6px);
+    height: calc(1.3em - 6px);
+    border-radius: 50%;
+    background: #b8b8b8;
+    transition: left .15s;
+}
+
+.admin-switch input:checked {
+    background: #7b2cbf;
+    border-color: #7b2cbf;
+}
+
+.admin-switch input:checked::after {
+    left: calc(100% - 1.3em + 4px);
+    background: #fff;
+}
+
+.admin-app-who {
+    width: 220px;
+    max-width: 220px;
+}
+
+.admin-app-why {
+    min-width: 320px;
+    max-width: 520px;
+}
+
+.admin-app-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.admin-app-why .admin-app-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+.admin-app-why.open .admin-app-text {
+    display: block;
+    -webkit-line-clamp: none;
+}
+
+.admin-app-more {
+    margin-top: 8px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #7b2cbf;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.admin-app-more:hover {
+    text-decoration: underline;
+}

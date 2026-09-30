@@ -3,6 +3,7 @@ const routes: [string, string][] = [
     ["/login", "login"],
     ["/signup", "signup"],
     ["/register", "signup"],
+    ["/apply", "apply"],
     ["/home", "home"],
     ["/user", "user"],
     ["/my/settings", "settings"],
@@ -53,7 +54,8 @@ const routes: [string, string][] = [
     ["/admi/banners", "admin-banners"],
     ["/admi/blog", "admin-blog"],
     ["/admi/games", "admin-games"],
-    ["/admi/settings", "admin-settings"]
+    ["/admi/settings", "admin-settings"],
+    ["/admi/applications", "admin-applications"]
 ];
 
 const parse = () => {

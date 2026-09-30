@@ -22,13 +22,35 @@ body.none-landing { margin: 0; padding: 0; background: #000 !important; overflow
 .none-auth-panel { padding: 28px; border-radius: 4px; background: rgba(23,23,23,.8); box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); backdrop-filter: blur(4px); }
 .none-auth-panel h1 { margin: 0 0 24px; color: #fff; font-size: 24px; line-height: 32px; font-weight: 600; text-align: center; }
 .none-auth-field { margin-bottom: 16px; }
+.none-auth-subtitle { margin: 22px 0 12px; color: #fff; font-size: 20px; line-height: 24px; font-weight: 600; }
 .none-auth-field:last-of-type { margin-bottom: 20px; }
 .none-auth-field label { display: block; margin-bottom: 4px; color: rgba(255,255,255,.8); font-size: 14px; line-height: 20px; font-weight: 600; }
-.none-auth-field input { display: block; width: 100%; padding: 10px 12px; border: 1px solid rgba(255,255,255,.15); border-radius: 4px; background: rgba(0,0,0,.4); color: #fff; font-size: 16px; line-height: 24px; outline: none; transition: border-color .15s; }
-.none-auth-field input::placeholder { color: rgba(255,255,255,.25); }
-.none-auth-field input:focus { border-color: #a855f7; }
+.none-auth-field input, .none-auth-field textarea { display: block; width: 100%; padding: 10px 12px; border: 1px solid rgba(255,255,255,.15); border-radius: 4px; background: rgba(0,0,0,.4); color: #fff; font-size: 16px; line-height: 24px; outline: none; transition: border-color .15s; }
+.none-auth-field input::placeholder, .none-auth-field textarea::placeholder { color: rgba(255,255,255,.25); }
+.none-auth-field input:focus, .none-auth-field textarea:focus { border-color: #a855f7; }
 .none-auth-panel form > .none-auth-button { width: 100%; }
 .none-auth-note { margin: 20px 0 0; color: rgba(255,255,255,.5); font-size: 14px; line-height: 20px; text-align: center; }
 .none-auth-note a { color: #c084fc; font-weight: 600; text-decoration: none; }
 .none-auth-note a:hover { color: #d8b4fe; }
 .none-auth-error { margin-bottom: 16px; padding: 8px 10px; border: 1px solid rgba(248,113,113,.4); border-radius: 4px; color: #fecaca; background: rgba(127,29,29,.3); font-size: 14px; }
+
+.none-apply-wide .none-auth-container { max-width: 640px; }
+.none-apply .none-auth-panel { padding: 32px 36px; }
+.none-apply-intro { margin: -12px 0 20px; color: rgba(255,255,255,.6); font-size: 15px; line-height: 22px; text-align: center; }
+.none-apply .none-auth-subtitle { margin: 4px 0 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 17px; }
+.none-apply .none-auth-subtitle + .none-auth-field, .none-apply-grid + .none-auth-subtitle { margin-top: 26px; }
+.none-apply-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.none-apply .none-auth-field label span { color: rgba(255,255,255,.4); font-weight: 400; }
+.none-apply .none-auth-field textarea { min-height: 92px; resize: vertical; }
+.none-apply .none-auth-field:last-of-type { margin-bottom: 24px; }
+.none-apply-status { margin-bottom: 20px; text-align: center; }
+.none-apply-status-icon { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 50%; background: rgba(255,255,255,.1); color: #fff; font-size: 26px; line-height: 56px; }
+.none-apply-status.approved .none-apply-status-icon { background: #02b757; }
+.none-apply-status.denied .none-apply-status-icon { background: #e04848; }
+.none-apply-status.pending .none-apply-status-icon { background: #7b2cbf; }
+.none-apply-status h1 { margin-bottom: 8px; }
+.none-apply-status p { margin: 0; color: rgba(255,255,255,.7); font-size: 15px; line-height: 22px; }
+.none-apply-reason { margin: 14px 0 0; padding: 10px 14px; border-left: 3px solid #e04848; border-radius: 0 4px 4px 0; background: rgba(0,0,0,.35); color: #fff; font-size: 15px; line-height: 22px; text-align: left; white-space: pre-wrap; }
+.none-apply .none-auth-panel > .none-auth-button { display: flex; width: 100%; }
+@media (max-width: 560px) { .none-apply-grid { grid-template-columns: 1fr; } .none-apply .none-auth-panel { padding: 24px 20px; } }
+.none-auth-turnstile { display: flex; justify-content: center; margin: 0 0 16px; min-height: 65px; }

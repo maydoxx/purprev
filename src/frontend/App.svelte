@@ -9,6 +9,7 @@
     import Landing from "./pages/Landing.svelte";
     import Login from "./pages/Login.svelte";
     import Signup from "./pages/Signup.svelte";
+    import Apply from "./pages/Apply.svelte";
     import Home from "./pages/Home.svelte";
     import Profile from "./pages/Profile.svelte";
     import Settings from "./pages/Settings.svelte";
@@ -59,6 +60,7 @@
     import AdminBlog from "./pages/admin/Blog.svelte";
     import AdminGames from "./pages/admin/Games.svelte";
     import AdminSettings from "./pages/admin/Settings.svelte";
+    import AdminApplications from "./pages/admin/Applications.svelte";
 
     session.refresh();
 
@@ -66,6 +68,7 @@
         landing: Landing,
         login: Login,
         signup: Signup,
+        apply: Apply,
         home: Home,
         user: Profile,
         settings: Settings,
@@ -115,9 +118,10 @@
         "admin-blog": AdminBlog,
         "admin-games": AdminGames,
         "admin-settings": AdminSettings,
+        "admin-applications": AdminApplications,
     };
 
-    const landing = ["landing", "login", "signup"];
+    const landing = ["landing", "login", "signup", "apply"];
     const bare = ["blog", "download"];
 
     const needsLogin = [
@@ -152,6 +156,7 @@
         "admin-blog",
         "admin-games",
         "admin-settings",
+        "admin-applications",
     ];
 
     const Page = $derived(pages[router.name] ?? NotFound);

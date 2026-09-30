@@ -10,7 +10,8 @@
         ["People", [
             ["/admi/users", "Users", ["/admi/users"]],
             ["/admi/moderation", "Moderation", ["/admi/moderation", "/admi/viewmoderation"]],
-            ["/admi/invitekeys", "Invite Keys", ["/admi/invitekeys"]]
+            ["/admi/invitekeys", "Invite Keys", ["/admi/invitekeys"]],
+            ["/admi/applications", "Applications", ["/admi/applications"]]
         ]],
         ["Content", [
             ["/admi/games", "Games", ["/admi/games"]],
@@ -40,6 +41,8 @@
                     <span>{label}</span>
                     {#if href === "/admi/moderation" && stats?.moderation > 0}
                         <span class="admin-nav-count danger">{stats.moderation}</span>
+                    {:else if href === "/admi/applications" && stats?.applications > 0}
+                        <span class="admin-nav-count">{stats.applications}</span>
                     {:else if href === "/admi" && stats?.servers > 0}
                         <span class="admin-nav-count">{stats.servers}</span>
                     {/if}

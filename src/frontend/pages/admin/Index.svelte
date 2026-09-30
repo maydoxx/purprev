@@ -71,6 +71,7 @@
         {@render stat("Builders Club", n(stats?.club), stats ? `${num(stats.admins)} admins` : "")}
         {@render stat("Moderated", n(stats?.moderation), "active actions")}
         {@render stat("Invite keys", n(stats?.invites), "unused")}
+        {@render stat("Applications", n(stats?.applications), "waiting")}
     </div>
 
     <div class="card mb-4">

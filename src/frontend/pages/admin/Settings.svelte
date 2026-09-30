@@ -73,6 +73,15 @@
                     <input class="form-check-input" type="checkbox" role="switch" aria-label="Users can make invite keys" checked={settings?.invites_enabled ?? true} disabled={!settings} onchange={e => toggle("invites_enabled", "User invite keys", checked(e))}>
                 </div>
             </div>
+            <div class="admin-setting">
+                <div>
+                    <h4>Applications open</h4>
+                    <p>People without a key can apply on /apply. Each one lands in Discord and under Applications.</p>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" aria-label="Applications open" checked={settings?.applications_enabled ?? true} disabled={!settings} onchange={e => toggle("applications_enabled", "Applications", checked(e))}>
+                </div>
+            </div>
         </div>
     </div>
 
