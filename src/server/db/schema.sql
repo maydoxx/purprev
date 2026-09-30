@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS `games` (
     `title` varchar(100) NOT NULL,
     `created_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `updated_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `visits` int(10) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     KEY `idx_games_creator` (`creator_id`),
     KEY `idx_games_title` (`title`)
@@ -129,6 +130,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     `membership` enum('None','BC','TBC','OBC') NOT NULL DEFAULT 'None',
     `membership_expires` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `last_stipend` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `social_discord` varchar(40) NOT NULL DEFAULT '',
+    `social_twitter` varchar(60) NOT NULL DEFAULT '',
+    `social_youtube` varchar(120) NOT NULL DEFAULT '',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_users_username` (`username`),
     UNIQUE KEY `uq_users_email` (`email`)
@@ -420,6 +424,34 @@ CREATE TABLE IF NOT EXISTS `media` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- admin toggles, registration_enabled and invites_enabled
+CREATE TABLE IF NOT EXISTS `applications` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name` varchar(20) NOT NULL,
+    `discord` varchar(40) NOT NULL,
+    `email` varchar(120) NOT NULL DEFAULT '',
+    `found` varchar(200) NOT NULL DEFAULT '',
+    `why` text NOT NULL,
+    `revivals` varchar(500) NOT NULL DEFAULT '',
+    `about` text NOT NULL,
+    `socials` varchar(500) NOT NULL DEFAULT '',
+    `password` varchar(255) NOT NULL DEFAULT '',
+    `ip` varchar(45) NOT NULL DEFAULT '',
+    `token` char(32) NOT NULL,
+    `status` enum('pending','approved','denied') NOT NULL DEFAULT 'pending',
+    `decided_by` varchar(60) NOT NULL DEFAULT '',
+    `decided_by_discord` varchar(32) NOT NULL DEFAULT '',
+    `decided_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `reason` varchar(500) NOT NULL DEFAULT '',
+    `user_id` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `invite_key` char(32) NOT NULL DEFAULT '',
+    `discord_message_id` varchar(32) NOT NULL DEFAULT '',
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `token` (`token`),
+    KEY `status` (`status`),
+    KEY `ip` (`ip`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `site_settings` (
     `name` varchar(32) NOT NULL,
     `value` varchar(255) NOT NULL,
