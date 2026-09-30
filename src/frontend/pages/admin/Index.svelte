@@ -24,6 +24,7 @@
     api("/admin/games").then(d => games = d).catch(() => {});
 
     const loadServers = () => api("/admin/servers").then(d => servers = d).catch(() => {});
+    const round = (v: number) => Number.isInteger(v) ? num(v) : v.toFixed(2);
     loadServers();
 
     const shutDown = async (jobId: string) => {
@@ -103,6 +104,39 @@
                         </tr>
                     {:else}
                         <tr><td colspan="6" class="admin-empty">No game servers are running.</td></tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="admin-card-title">Engine counters</span>
+            <span class="admin-muted">what clients and servers report, since the API started</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover admin-table">
+                <thead>
+                    <tr>
+                        <th>Counter</th>
+                        <th>Last</th>
+                        <th>Average</th>
+                        <th>Samples</th>
+                        <th>Seen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each servers?.counters ?? [] as c}
+                        <tr>
+                            <td class="admin-key">{c.name}</td>
+                            <td>{round(c.last)}</td>
+                            <td>{round(c.avg)}</td>
+                            <td>{num(c.samples)}</td>
+                            <td>{new Date(c.at).toLocaleTimeString("en-US")}</td>
+                        </tr>
+                    {:else}
+                        <tr><td colspan="5" class="admin-empty">Nothing reported yet.</td></tr>
                     {/each}
                 </tbody>
             </table>

@@ -8,6 +8,7 @@ import { sign, rbxsig, studiosig, text } from "./sign";
 import { isInternal } from "./internal";
 import { bool, xmlBool, xml } from "./respond";
 import { TIERS, membershipOf } from "../../membership";
+import { report } from "../../counters";
 
 const ADMIN_GROUP = 1200769;
 
@@ -241,6 +242,19 @@ const routes = (prefix: string) => new Elysia({ prefix })
     .all("/validate-machine", () => ({
         success: true
     }))
+
+    .all("/report-stats", ({ query }) => {
+        const value = Number(query.value);
+        if (query.name && Number.isFinite(value)) {
+            report(query.name.slice(0, 80), value);
+        }
+        return "";
+    }, {
+        query: t.Object({
+            name: t.Optional(t.String()),
+            value: t.Optional(t.String())
+        })
+    })
 
 
     .all("/MachineConfiguration.ashx", () => "")

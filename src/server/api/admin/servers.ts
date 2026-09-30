@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql } from "../../db";
 import { rcc, RccError } from "../../rcc";
+import { reported } from "../../counters";
 
 
 export const servers = new Elysia({ prefix: "/api/admin/servers" })
@@ -14,6 +15,7 @@ export const servers = new Elysia({ prefix: "/api/admin/servers" })
         const titles = new Map(games.map((g: any) => [Number(g.id), g.title]));
         return {
             health: await rcc.health(),
+            counters: reported(),
             servers: list.map(s => ({
                 ...s,
                 title: titles.get(s.placeId) ?? ""

@@ -101,6 +101,8 @@ export const marketplace = new Elysia()
         })
     })
 
+    .get("/gametransactions/getpendingtransactions/", () => [])
+
 
     .get("/ownership/hasAsset", ({ query }) => ownsAsset(query.userId, query.assetId), { query: owns })
     .get("/ownership/hasasset", ({ query }) => ownsAsset(query.userId, query.assetId), { query: owns })
