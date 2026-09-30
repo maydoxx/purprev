@@ -18,3 +18,7 @@ export const engine = new Elysia()
     .use(settings)
     .use(mobile)
     .use(thumbs)
+
+    // fucking annoying
+    .all("/Error/*", () => "")
+    .all("/error/*", () => "")
