@@ -1,12 +1,14 @@
 <script lang="ts">
     import { api } from "../api";
     import { session } from "../session.svelte";
+    import GameCard from "../GameCard.svelte";
 
     const me = session.me!;
 
     let friends = $state<any[]>([]);
     let friendCount = $state(0);
     let feed = $state<any[]>([]);
+    let played = $state<any[]>([]);
     let blog = $state<any[]>([]);
     let status = $state("");
     let flash = $state("");
@@ -15,6 +17,10 @@
     api("/user/friends").then(d => {
         friends = d.list.slice(0, 9);
         friendCount = d.friendCount;
+    }).catch(() => {});
+
+    api("/games?sort=recently-played").then(d => {
+        played = d.games ?? [];
     }).catch(() => {});
 
     const loadFeed = () => api("/site/feed").then(d => {
@@ -83,6 +89,26 @@
                 </ul>
             {/if}
         </section>
+
+        {#if played.length > 0}
+            <section class="home2015-box home2015-games-box">
+                <div class="home2015-box-header">
+                    <h2>Recently Played</h2>
+                    <a class="home2015-btn" href="/games?sort=recently-played">See All</a>
+                </div>
+                <div class="game-sort-row">
+                    <div class="game-sort-scroller">
+                        <div class="game-sort-list">
+                            <ul>
+                                {#each played as game (game.id)}
+                                    <GameCard {game} />
+                                {/each}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        {/if}
 
         <div class="home2015-lower">
             <section class="home2015-box home2015-feed-box">
