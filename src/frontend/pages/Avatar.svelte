@@ -24,7 +24,7 @@
         ["Package", "Packages"]
     ];
 
-    const wearable = ["Hat", "Face", "Shirt", "Pants", "T-Shirt"];
+    const wearable = ["Hat", "Face", "Shirt", "Pants", "T-Shirt", "Package"];
     const PER_PAGE = 8;
 
     let data = $state<any>(null);
@@ -105,7 +105,7 @@
     };
 
     const thumb = (item: any) => item.thumbnail || "/img/pending.png";
-    const canWear = (item: any) => wearable.includes(item.category) && item.asset_id;
+    const canWear = (item: any) => wearable.includes(item.category) && (item.asset_id || item.package_parts);
 </script>
 
 <svelte:head>

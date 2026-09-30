@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { giveStarterItems } from "../../starter";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { clientIp } from "../../invites";
@@ -48,6 +49,7 @@ export const decideApplication = async (id: number, approve: boolean, by: string
         }
         const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${app.name}, ${app.password}, ${now()})`;
         userId = Number(created.lastInsertRowid);
+        await giveStarterItems(userId);
         await sql`
             INSERT INTO invite_log (inviteKey, created_by, created_at, used_by, used_at, ip, user_agent)
             VALUES (${app.token}, ${byUserId}, ${app.created_at}, ${userId}, ${now()}, ${app.ip}, ${"application"})

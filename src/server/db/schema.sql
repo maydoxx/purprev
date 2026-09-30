@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS `catalog_items` (
     `limited_stock` int(10) UNSIGNED DEFAULT NULL,
     `limited_sold` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `bc_only` tinyint(1) NOT NULL DEFAULT 0,
+    `is_starter` tinyint(1) NOT NULL DEFAULT 0,
+    `package_parts` varchar(255) NOT NULL DEFAULT '',
     `created_at` int(10) UNSIGNED NOT NULL,
     `updated_at` int(10) UNSIGNED NOT NULL,
     PRIMARY KEY (`id`),

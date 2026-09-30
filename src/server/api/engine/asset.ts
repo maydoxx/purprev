@@ -113,6 +113,14 @@ const bodyColorsXml = async (userId: number) => {
 `;
 };
 
+// a package is its body parts, everything else is one asset
+const itemUrls = (item: any) => {
+    if (item.category === "Package") {
+        return String(item.package_parts ?? "").split(";").map(Number).filter(n => n > 0).map(assetUrl);
+    }
+    return item.asset_id ? [assetUrl(Number(item.asset_id))] : [];
+};
+
 const routes = (prefix: string) => new Elysia({ prefix })
 
     .get("/", async ({ query, status }) => {
@@ -159,22 +167,27 @@ const routes = (prefix: string) => new Elysia({ prefix })
         if (query.assetId !== undefined) {
             return text(assetUrl(query.assetId));
         }
+        if (query.itemId !== undefined) {
+            const [item] = await sql`SELECT category, asset_id, package_parts FROM catalog_items WHERE id = ${query.itemId}`;
+            return text(item ? itemUrls(item).join(";") : "");
+        }
         if (query.userId === undefined) {
             return status(400, "userId missing");
         }
 
         const worn = await sql`
-            SELECT catalog_items.asset_id FROM user_items
+            SELECT catalog_items.category, catalog_items.asset_id, catalog_items.package_parts FROM user_items
             JOIN catalog_items ON catalog_items.id = user_items.item_id
-            WHERE user_items.user_id = ${query.userId} AND user_items.wearing = 1 AND catalog_items.asset_id IS NOT NULL
+            WHERE user_items.user_id = ${query.userId} AND user_items.wearing = 1
             ORDER BY catalog_items.category, catalog_items.id
         `;
-        const urls = [`${SITE_URL}/Asset/BodyColors.ashx?userId=${query.userId}`, ...worn.map((w: any) => assetUrl(Number(w.asset_id)))];
+        const urls = [`${SITE_URL}/Asset/BodyColors.ashx?userId=${query.userId}`, ...worn.flatMap(itemUrls)];
         return text(urls.join(";"));
     }, {
         query: t.Object({
             userId: t.Optional(t.Numeric()),
-            assetId: t.Optional(t.Numeric())
+            assetId: t.Optional(t.Numeric()),
+            itemId: t.Optional(t.Numeric())
         })
     })
 

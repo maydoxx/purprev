@@ -26,6 +26,8 @@
         thumbnail: "",
         is_featured: false,
         bc_only: false,
+        is_starter: false,
+        package_parts: "",
         is_limited: false,
         is_limited_unique: false,
         limited_stock: "",
@@ -73,6 +75,8 @@
             thumbnail: item.thumbnail ?? "",
             is_featured: Number(item.is_featured) === 1,
             bc_only: Number(item.bc_only) === 1,
+            is_starter: Number(item.is_starter) === 1,
+            package_parts: item.package_parts ?? "",
             is_limited: Number(item.is_limited) === 1,
             is_limited_unique: Number(item.is_limited_unique) === 1,
             limited_stock: item.limited_stock ?? "",
@@ -96,6 +100,8 @@
                 thumbnail: form.thumbnail,
                 is_featured: form.is_featured,
                 bc_only: form.bc_only,
+                is_starter: form.is_starter,
+                package_parts: form.package_parts,
                 is_limited: form.is_limited || form.is_limited_unique,
                 is_limited_unique: form.is_limited_unique,
                 limited_stock: opt(form.limited_stock)
@@ -239,11 +245,24 @@
                             {/if}
                         </div>
 
+                        {#if form.category === "Package"}
+                            <div class="col-12">
+                                <label class="form-label" for="package_parts">Body parts</label>
+                                <input class="form-control" id="package_parts" bind:value={form.package_parts} placeholder="filled from the bundle, or asset ids separated by ;">
+                                <div class="form-text">For a package the asset id above is the Roblox bundle id, 109 is ROBLOX Boy. Name, picture and parts come from Roblox when left empty.</div>
+                            </div>
+                        {/if}
+
                         <div class="col-12">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="is_featured" bind:checked={form.is_featured}>
                                 <label class="form-check-label" for="is_featured">Featured item</label>
                             </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_starter" bind:checked={form.is_starter}>
+                                <label class="form-check-label" for="is_starter">Starter item, every new account gets it and wears it</label>
+                            </div>
+                            <div class="form-text">Mark two packages as starters and new accounts get one of them at random, like the 2014 Man and Woman avatars.</div>
                         </div>
                     </div>
 

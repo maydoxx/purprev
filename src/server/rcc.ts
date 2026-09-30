@@ -107,7 +107,7 @@ export const rcc = {
 
         item: (itemId: number, assetId: number) => quiet(false, async () => {
             await call("POST", `/render/item/${itemId}`, {
-                appearanceUrl: `${SITE_INTERNAL_URL}/Asset/CharacterFetch.ashx?assetId=${assetId}`
+                appearanceUrl: `${SITE_INTERNAL_URL}/Asset/CharacterFetch.ashx?itemId=${itemId}`
             });
             return true;
         }),

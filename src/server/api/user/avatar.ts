@@ -20,7 +20,8 @@ const WEAR_LIMITS: Record<string, number> = {
     Face: 1,
     Shirt: 1,
     Pants: 1,
-    "T-Shirt": 1
+    "T-Shirt": 1,
+    Package: 1
 };
 
 const bodyColors = async (userId: number) => {
@@ -49,7 +50,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         wearing: await Promise.all((await wornItems(user.id)).map(withThumbnail)),
 
         owned: await Promise.all((await sql`
-            SELECT catalog_items.id, catalog_items.name, catalog_items.category, catalog_items.thumbnail, catalog_items.asset_id, user_items.wearing
+            SELECT catalog_items.id, catalog_items.name, catalog_items.category, catalog_items.thumbnail, catalog_items.asset_id, catalog_items.package_parts, user_items.wearing
             FROM user_items JOIN catalog_items ON catalog_items.id = user_items.item_id
             WHERE user_items.user_id = ${user.id}
             ORDER BY user_items.purchased_at DESC, catalog_items.id DESC
@@ -112,7 +113,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         if (!body.wear) {
             await sql`UPDATE user_items SET wearing = 0 WHERE user_id = ${user.id} AND item_id = ${body.itemId}`;
         } else {
-            const [item] = await sql`SELECT category, asset_id FROM catalog_items WHERE id = ${body.itemId}`;
+            const [item] = await sql`SELECT category, asset_id, package_parts FROM catalog_items WHERE id = ${body.itemId}`;
             const limit = item ? WEAR_LIMITS[item.category] : undefined;
 
             if (!limit) {
@@ -120,7 +121,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
                     error: "This kind of item cannot be worn"
                 });
             }
-            if (!item.asset_id) {
+            if (!item.asset_id && !item.package_parts) {
                 return status(400, {
                     error: "This item has no asset attached yet"
                 });

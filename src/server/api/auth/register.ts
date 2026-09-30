@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { giveStarterItems } from "../../starter";
 import { session, getUser } from "../../session";
 import { sql, now } from "../../db";
 import { rcc } from "../../rcc";
@@ -59,6 +60,7 @@ export const register = new Elysia()
 
         const id = Number(created.lastInsertRowid);
         await logInvite(invite, id, request, server);
+        await giveStarterItems(id);
         rcc.render.avatar(id);
         await login(id);
         return {

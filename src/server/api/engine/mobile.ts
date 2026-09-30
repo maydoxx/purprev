@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { giveStarterItems } from "../../starter";
 import { session, getUser } from "../../session";
 import { sql, now } from "../../db";
 import { mediaUrl } from "../../paths";
@@ -112,6 +113,7 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
         const hash = await Bun.password.hash(body.password, "bcrypt");
         const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${username}, ${hash}, ${now()})`;
         const id = Number(created.lastInsertRowid);
+        await giveStarterItems(id);
         await logInvite(invite, id, request, server);
         rcc.render.avatar(id);
         await login(id);

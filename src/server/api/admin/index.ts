@@ -3,7 +3,7 @@ import { join } from "path";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { saveImage, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
-import { mediaPut } from "../../media";
+import { lookupRobloxAsset, lookupRobloxBundle, storeThumbnail } from "../../roblox";
 import { rcc } from "../../rcc";
 import { CATEGORIES as BLOG_CATEGORIES } from "../site/blog";
 import { siteSettings, setSiteSetting } from "../../settings";
@@ -15,7 +15,6 @@ const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
 const BLOG_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const BANNER_STYLES = ["info", "warning", "success"];
 const ITEM_CATEGORIES = ["Hat", "Face", "T-Shirt", "Shirt", "Pants", "Gear", "Package"];
-const ROBLOX_TIMEOUT = 10000;
 
 
 const MODERATION: Record<string, [number, number]> = {
@@ -27,23 +26,6 @@ const MODERATION: Record<string, [number, number]> = {
     account_deletion: [6, 0]
 };
 
-
-const ROBLOX_TYPES: Record<number, string> = {
-    2: "T-Shirt",
-    8: "Hat",
-    11: "Shirt",
-    12: "Pants",
-    18: "Face",
-    19: "Gear",
-    32: "Package",
-    41: "Hat",
-    42: "Hat",
-    43: "Hat",
-    44: "Hat",
-    45: "Hat",
-    46: "Hat",
-    47: "Hat"
-};
 
 const id = t.Object({
     id: t.Numeric()
@@ -86,7 +68,9 @@ const item = t.Object({
     is_limited: t.Optional(t.Boolean()),
     is_limited_unique: t.Optional(t.Boolean()),
     limited_stock: t.Optional(t.Numeric({ minimum: 0 })),
-    bc_only: t.Optional(t.Boolean())
+    bc_only: t.Optional(t.Boolean()),
+    is_starter: t.Optional(t.Boolean()),
+    package_parts: t.Optional(t.String({ maxLength: 255 }))
 });
 
 class AdminError extends Error {}
@@ -181,48 +165,6 @@ const cleanPost = (body: typeof post.static) => {
 
 const dropBlogImage = (postId: number) => clearMedia("blog", postId);
 
-const fetchJson = async (url: string) => {
-    const res = await fetch(url, {
-        headers: {
-            Accept: "application/json"
-        },
-        signal: AbortSignal.timeout(ROBLOX_TIMEOUT)
-    });
-    if (!res.ok) {
-        throw new Error(`roblox answered ${res.status}`);
-    }
-    return res.json() as Promise<any>;
-};
-
-const lookupRobloxAsset = async (assetId: number) => {
-    const details = await fetchJson(`https://economy.roblox.com/v2/assets/${assetId}/details`);
-    if (!details?.Name) {
-        throw new Error(`Roblox does not know asset ${assetId}`);
-    }
-    const thumbs = await fetchJson(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png`).catch(() => null);
-    const thumb = thumbs?.data?.[0];
-    return {
-        name: String(details.Name).slice(0, 80),
-        description: String(details.Description ?? ""),
-        category: ROBLOX_TYPES[Number(details.AssetTypeId)] ?? null,
-        thumbnail: thumb?.state === "Completed" && thumb.imageUrl ? String(thumb.imageUrl) : ""
-    };
-};
-
-
-const storeThumbnail = async (itemId: number, url: string) => {
-    const res = await fetch(url, {
-        signal: AbortSignal.timeout(20000)
-    }).catch(() => null);
-    if (!res?.ok) {
-        return;
-    }
-    const png = new Uint8Array(await res.arrayBuffer());
-    if (png.length < 4 || png[0] !== 0x89 || png[1] !== 0x50) {
-        return;
-    }
-    await mediaPut("catalog", itemId, "png", png);
-};
 
 const cleanItem = async (body: typeof item.static, existing: any) => {
     let name = (body.name ?? "").trim();
@@ -231,10 +173,31 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
     const thumbnail = (body.thumbnail ?? "").trim();
     const assetId = body.asset_id ?? null;
     let remote = "";
+    let parts = (body.package_parts ?? "").split(/[;,\s]+/).map(Number).filter(n => Number.isInteger(n) && n > 0);
 
 
     const wantsThumb = thumbnail === "" && !(existing && await mediaUrl("catalog", existing.id));
-    if (assetId && (name === "" || wantsThumb)) {
+    if (category === "Package" && assetId && (name === "" || wantsThumb || parts.length === 0)) {
+        try {
+            const info = await lookupRobloxBundle(assetId);
+            if (name === "") {
+                name = info.name;
+                if (description === "") {
+                    description = info.description;
+                }
+            }
+            if (wantsThumb) {
+                remote = info.thumbnail;
+            }
+            if (parts.length === 0) {
+                parts = info.parts;
+            }
+        } catch (err) {
+            if (name === "" || parts.length === 0) {
+                throw new AdminError(`Could not import bundle ${assetId} from Roblox: ${err instanceof Error ? err.message : err}`);
+            }
+        }
+    } else if (assetId && (name === "" || wantsThumb)) {
         const importing = name === "";
         try {
             const info = await lookupRobloxAsset(assetId);
@@ -291,6 +254,8 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
         thumbnail,
         is_featured: body.is_featured ? 1 : 0,
         bc_only: body.bc_only ? 1 : 0,
+        is_starter: body.is_starter ? 1 : 0,
+        package_parts: category === "Package" ? parts.slice(0, 12).join(";") : "",
         is_limited: limited,
         is_limited_unique: limitedUnique,
         limited_stock: stock,
@@ -496,8 +461,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         try {
             const c = await cleanItem(body, null);
             const created = await sql`
-                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, bc_only, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
-                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()})
+                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, bc_only, is_starter, package_parts, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
+                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_starter}, ${c.package_parts}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()})
             `;
             const itemId = Number(created.lastInsertRowid);
             if (c.remote !== "") {
@@ -524,7 +489,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             const c = await cleanItem(body, existing);
             await sql`
                 UPDATE catalog_items SET name = ${c.name}, description = ${c.description}, creator_id = ${c.creator_id}, category = ${c.category},
-                    asset_id = ${c.asset_id}, price = ${c.price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured}, bc_only = ${c.bc_only},
+                    asset_id = ${c.asset_id}, price = ${c.price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured}, bc_only = ${c.bc_only}, is_starter = ${c.is_starter}, package_parts = ${c.package_parts},
                     is_limited = ${c.is_limited}, is_limited_unique = ${c.is_limited_unique}, limited_stock = ${c.limited_stock}, updated_at = ${now()}
                 WHERE id = ${params.id}
             `;

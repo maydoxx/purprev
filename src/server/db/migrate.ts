@@ -18,6 +18,8 @@ const columns: [string, string, string][] = [
     ["users", "social_twitter", "varchar(60) NOT NULL DEFAULT ''"],
     ["users", "social_youtube", "varchar(120) NOT NULL DEFAULT ''"],
     ["catalog_items", "bc_only", "tinyint(1) NOT NULL DEFAULT 0"],
+    ["catalog_items", "is_starter", "tinyint(1) NOT NULL DEFAULT 0"],
+    ["catalog_items", "package_parts", "varchar(255) NOT NULL DEFAULT ''"],
     ["games", "created_at", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
     ["games", "updated_at", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
     ["games", "visits", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
