@@ -1,6 +1,7 @@
 <script lang="ts">
     import { api } from "../api";
     import { router } from "../router.svelte";
+    import { session } from "../session.svelte";
 
     const tabs = [["friends", "Friends"], ["following", "Following"], ["followers", "Followers"], ["requests", "Requests"]];
     const ownerId = $derived(Number(router.query.user) || 0);
