@@ -34,6 +34,11 @@ const SORTS: Sort[] = [
         order: sql`favorites DESC, games.visits DESC, games.id DESC`
     },
     {
+        id: "top-rated",
+        title: "Top Rated",
+        order: sql`(up_votes + 1) / (up_votes + down_votes + 2) DESC, games.visits DESC, games.id DESC`
+    },
+    {
         id: "recently-updated",
         title: "Recently Updated",
         order: sql`games.updated_at DESC, games.id DESC`
@@ -88,7 +93,9 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
     const current = Math.min(Math.max(1, page), totalPages);
     const rows = await sql`
         SELECT games.*, users.username AS creator_name,
-            (SELECT COUNT(*) FROM game_favorites f WHERE f.game_id = games.id) AS favorites
+            (SELECT COUNT(*) FROM game_favorites f WHERE f.game_id = games.id) AS favorites,
+            (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
+            (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes
         FROM games
         LEFT JOIN users ON users.id = games.creator_id
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
@@ -106,6 +113,8 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
 };
 
 
+const ratio = (up: number, down: number) => up + down > 0 ? Math.round(up / (up + down) * 100) : 0;
+
 const withMedia = async (game: any, playing = 0) => ({
     ...game,
     description: game.description ?? "",
@@ -114,9 +123,9 @@ const withMedia = async (game: any, playing = 0) => ({
     playing,
     visits: Number(game.visits ?? 0),
     favorites: Number(game.favorites ?? 0),
-    up_votes: 0,
-    down_votes: 0,
-    like_ratio: 0,
+    up_votes: Number(game.up_votes ?? 0),
+    down_votes: Number(game.down_votes ?? 0),
+    like_ratio: ratio(Number(game.up_votes ?? 0), Number(game.down_votes ?? 0)),
     max_players: 50,
     genre: "All"
 });
@@ -176,7 +185,11 @@ export const games = new Elysia({ prefix: "/api/games" })
 
     .get("/:id", async ({ params, user, status }) => {
         const [game] = await sql`
-            SELECT games.*, users.username AS creator_name FROM games
+            SELECT games.*, users.username AS creator_name,
+                (SELECT COUNT(*) FROM game_favorites f WHERE f.game_id = games.id) AS favorites,
+                (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
+                (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes
+            FROM games
             LEFT JOIN users ON users.id = games.creator_id
             WHERE games.id = ${params.id}
         `;
@@ -186,12 +199,12 @@ export const games = new Elysia({ prefix: "/api/games" })
             });
         }
         const playing = await rcc.players([params.id]);
-        const [count] = await sql`SELECT COUNT(*) AS n FROM game_favorites WHERE game_id = ${params.id}`;
         const [mine] = user ? await sql`SELECT 1 FROM game_favorites WHERE game_id = ${params.id} AND user_id = ${user.id}` : [null];
+        const [vote] = user ? await sql`SELECT vote FROM game_votes WHERE game_id = ${params.id} AND user_id = ${user.id}` : [null];
         return {
             ...await withMedia(game, playing[params.id]),
-            favorites: Number(count.n),
-            favorited: !!mine
+            favorited: !!mine,
+            my_vote: vote ? Number(vote.vote) : 0
         };
     }, {
         params: id
@@ -369,6 +382,45 @@ export const games = new Elysia({ prefix: "/api/games" })
         params: id
     })
 
+
+    // thumbs up or down, the same thumb again takes it back
+    .post("/:id/vote", async ({ params, body, user, status }) => {
+        const [game] = await sql`SELECT id FROM games WHERE id = ${params.id}`;
+        if (!game) {
+            return status(404, {
+                error: "This game does not exist"
+            });
+        }
+        const wanted = body.vote === "up" ? 1 : -1;
+        const [current] = await sql`SELECT vote FROM game_votes WHERE user_id = ${user.id} AND game_id = ${params.id}`;
+        let mine = wanted;
+        if (current && Number(current.vote) === wanted) {
+            await sql`DELETE FROM game_votes WHERE user_id = ${user.id} AND game_id = ${params.id}`;
+            mine = 0;
+        } else {
+            await sql`
+                INSERT INTO game_votes (user_id, game_id, vote, created_at) VALUES (${user.id}, ${params.id}, ${wanted}, ${now()})
+                ON DUPLICATE KEY UPDATE vote = ${wanted}, created_at = ${now()}
+            `;
+        }
+        const [counts] = await sql`
+            SELECT SUM(vote = 1) AS up_votes, SUM(vote = -1) AS down_votes FROM game_votes WHERE game_id = ${params.id}
+        `;
+        return {
+            my_vote: mine,
+            up_votes: Number(counts.up_votes ?? 0),
+            down_votes: Number(counts.down_votes ?? 0)
+        };
+    }, {
+        auth: true,
+        params: id,
+        body: t.Object({
+            vote: t.Union([
+                t.Literal("up"),
+                t.Literal("down")
+            ])
+        })
+    })
 
     .get("/:id/launch", ({ params, query, token }) => {
         const launcher = `${SITE_URL}/Game/PlaceLauncher.ashx?request=RequestGame&placeId=${params.id}${query.jobId ? `&jobId=${encodeURIComponent(query.jobId)}` : ""}`;

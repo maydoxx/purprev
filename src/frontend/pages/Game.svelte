@@ -194,8 +194,29 @@
             favoriting = false;
         }
     };
-    const up = $derived(Number(game?.up_votes ?? game?.likes) || 0);
-    const down = $derived(Number(game?.down_votes ?? game?.dislikes) || 0);
+    let voting = $state(false);
+    const vote = async (which: "up" | "down") => {
+        if (!session.me) {
+            router.go("/login");
+            return;
+        }
+        if (voting) return;
+        voting = true;
+        try {
+            const d = await api(`/games/${id}/vote`, {
+                vote: which
+            });
+            game.my_vote = d.my_vote;
+            game.up_votes = d.up_votes;
+            game.down_votes = d.down_votes;
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            voting = false;
+        }
+    };
+    const up = $derived(Number(game?.up_votes) || 0);
+    const down = $derived(Number(game?.down_votes) || 0);
     const ratio = $derived(up + down > 0 ? Math.round(up / (up + down) * 100) : 0);
 </script>
 
@@ -261,8 +282,14 @@
                         <li class="voting-panel-2016">
                             <div class="vote-meter-2016">
                                 <div class="vote-counts-2016">
-                                    <span class="vote-count-up" aria-label={`${compact(up)} likes`}><img class="game-rating-icon" src="/img/game-like.svg" alt="">{compact(up)}</span>
-                                    <span class="vote-count-down" aria-label={`${compact(down)} dislikes`}>{compact(down)}<img class="game-rating-icon" src="/img/game-dislike.svg" alt=""></span>
+                                    <span class="vote-count-up" aria-label={`${compact(up)} likes`}>
+                                        <button type="button" class="vote-button" class:active={game.my_vote === 1} onclick={() => vote("up")} disabled={voting} aria-pressed={game.my_vote === 1} aria-label="Like"><img class="game-rating-icon" src="/img/game-like.svg" alt=""></button>
+                                        {compact(up)}
+                                    </span>
+                                    <span class="vote-count-down" aria-label={`${compact(down)} dislikes`}>
+                                        {compact(down)}
+                                        <button type="button" class="vote-button" class:active={game.my_vote === -1} onclick={() => vote("down")} disabled={voting} aria-pressed={game.my_vote === -1} aria-label="Dislike"><img class="game-rating-icon" src="/img/game-dislike.svg" alt=""></button>
+                                    </span>
                                 </div>
                                 <div class="vote-track-2016" class:neutral={up + down === 0} title={up + down === 0 ? "No votes yet" : `${ratio}% positive`}>
                                     <div class="vote-fill-2016" style="width: {ratio}%;"></div>

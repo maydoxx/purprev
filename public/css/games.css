@@ -401,6 +401,28 @@ body {
     color: #02b757;
 }
 
+.vote-button {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.vote-button img {
+    opacity: .45;
+}
+
+.vote-button:hover img,
+.vote-button.active img {
+    opacity: 1;
+}
+
+.vote-button:disabled {
+    cursor: default;
+}
+
 .vote-count-down {
     color: #f45b60;
 }
