@@ -8,7 +8,7 @@ import { PENDING } from "../../paths";
 import { text, studiosig } from "../engine/sign";
 import { studioSetup } from "../engine/game";
 import { html, welcomePage, toolboxPage, publishPage, saveModelPage } from "./pages";
-import { searchFree, searchOwn, thumbnail } from "./toolbox";
+import { searchFree, searchOwn } from "./toolbox";
 
 
 const PLACE_MAX = 50 * 1024 * 1024;
@@ -118,6 +118,7 @@ const cleanName = (name: string) => name.replace(/[\r\n\t]+/g, " ").trim().slice
 const raw = {
     parse: "none" as const
 };
+
 
 export const studio = new Elysia()
     .use(session)
@@ -338,14 +339,6 @@ export const studio = new Elysia()
         })
     })
 
-    .get("/Game/Tools/ThumbnailAsset.ashx", ({ query }) => thumbnail(query.aid, PENDING), {
-        query: t.Object({
-            aid: t.Numeric(),
-            fmt: t.Optional(t.String()),
-            wd: t.Optional(t.String()),
-            ht: t.Optional(t.String())
-        })
-    })
 
     .get("/IDE/publishas", async ({ user }) => html(publishPage(user, user ? await myPlaces(user.id) : [])))
     .get("/IDE/publishgameas", async ({ user }) => html(publishPage(user, user ? await myPlaces(user.id) : [])))

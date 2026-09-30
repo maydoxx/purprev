@@ -2,8 +2,6 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { friendStatus, friendCount } from "../../friends";
-import { PENDING } from "../../paths";
-import { mediaStream } from "../../media";
 import { isInternal } from "./internal";
 import { white, black } from "./chatfilter";
 import { text } from "./sign";
@@ -119,23 +117,6 @@ const user = new Elysia({ prefix: "/user" })
 export const social = new Elysia()
     .use(friend)
     .use(user)
-
-
-    .get("/thumbs/avatar.ashx", async ({ query }) =>
-        await mediaStream("headshots", query.userId, "private, max-age=300")
-        ?? new Response(Bun.file(PENDING), {
-            headers: {
-                "Content-Type": "image/png",
-                "Cache-Control": "private, max-age=300"
-            }
-        }), {
-        query: t.Object({
-            userId: t.Numeric(),
-            x: t.Optional(t.Numeric()),
-            y: t.Optional(t.Numeric())
-        })
-    })
-
 
 
     .post("/moderation/filtertext", ({ body }) => ({

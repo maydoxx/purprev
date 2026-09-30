@@ -143,16 +143,22 @@ const png = (file: Bun.BunFile | Uint8Array<ArrayBuffer>) =>
     });
 
 // roblox ones are cached on disk
-export const thumbnail = async (id: number, placeholder: string) => {
+export const thumbnail = async (id: number, placeholder: string, wanted = 150) => {
+    const size = wanted >= 420 ? 420 : 150;
     if (id >= OWN_IDS) {
         const [asset] = await sql`SELECT type FROM assets WHERE id = ${id}`;
         if (asset?.type === "Decal" || asset?.type === "Image") {
             return (await mediaStream("assets", id, "public, max-age=86400")) ?? png(Bun.file(placeholder));
         }
+        // catalog items made here have their own rendered picture
+        const [item] = await sql`SELECT id FROM catalog_items WHERE asset_id = ${id}`;
+        if (item) {
+            return (await mediaStream("catalog", Number(item.id), "public, max-age=86400")) ?? png(Bun.file(placeholder));
+        }
         return png(Bun.file(placeholder));
     }
 
-    const cached = Bun.file(join(THUMB_DIR, `thumb-${id}.png`));
+    const cached = Bun.file(join(THUMB_DIR, `thumb-${id}-${size}.png`));
     if (await cached.exists()) {
         return png(cached);
     }
@@ -160,7 +166,7 @@ export const thumbnail = async (id: number, placeholder: string) => {
         return notFound();
     }
     try {
-        const info = await get(`https://thumbnails.roblox.com/v1/assets?assetIds=${id}&size=150x150&format=Png`);
+        const info = await get(`https://thumbnails.roblox.com/v1/assets?assetIds=${id}&size=${size}x${size}&format=Png`);
         const url = info.data?.[0]?.imageUrl;
         if (!url) {
             return notFound();
