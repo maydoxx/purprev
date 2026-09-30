@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { join } from "path";
 import { mkdir, stat, utimes, writeFile } from "fs/promises";
+import { characterMesh, characterMeshXml } from "../../rbxm";
 import { sql } from "../../db";
 import { UPLOADS } from "../../paths";
 import { mediaStream } from "../../media";
@@ -9,13 +10,13 @@ import { text } from "./sign";
 
 
 
-const MISS_DIR = join(UPLOADS, "assetcache");
+const CACHE_DIR = join(UPLOADS, "assetcache");
 const MISS_TTL = 86400;
 const cacheable = (id: number) => id >= 1000000 && id < 3000000000;
 
 const missing = async (id: number) => {
     try {
-        const s = await stat(join(MISS_DIR, `missing-${id}`));
+        const s = await stat(join(CACHE_DIR, `missing-${id}`));
         return Date.now() - s.mtimeMs < MISS_TTL * 1000;
     } catch {
         return false;
@@ -23,12 +24,35 @@ const missing = async (id: number) => {
 };
 
 const rememberMissing = async (id: number) => {
-    await mkdir(MISS_DIR, {
+    await mkdir(CACHE_DIR, {
         recursive: true
     });
-    const file = join(MISS_DIR, `missing-${id}`);
+    const file = join(CACHE_DIR, `missing-${id}`);
     await writeFile(file, "").catch(() => {});
     await utimes(file, new Date(), new Date()).catch(() => {});
+};
+
+const stored = (id: number) => Bun.file(join(CACHE_DIR, `${id}.bin`));
+
+const remember = async (id: number, bytes: Uint8Array<ArrayBuffer> | string) => {
+    await mkdir(CACHE_DIR, {
+        recursive: true
+    });
+    await Bun.write(stored(id), bytes).catch(() => {});
+};
+
+const blob = (body: Uint8Array<ArrayBuffer> | string | Bun.BunFile) =>
+    new Response(body, {
+        headers: {
+            "Content-Type": "application/octet-stream",
+            "Cache-Control": "private, max-age=3600"
+        }
+    });
+
+// body parts arrive as folders around one CharacterMesh
+const forEngine = (bytes: Uint8Array<ArrayBuffer>) => {
+    const cm = characterMesh(bytes);
+    return cm ? characterMeshXml(cm) : bytes;
 };
 
 const unavailable = () =>
@@ -50,6 +74,7 @@ const proxy = async (id: number) => {
     }
 
     let res: Response;
+    let bytes: Uint8Array<ArrayBuffer>;
     try {
         res = await fetch(`https://assetdelivery.roblox.com/v1/asset?id=${id}`, {
             headers: {
@@ -59,7 +84,15 @@ const proxy = async (id: number) => {
             redirect: "follow",
             signal: AbortSignal.timeout(30000)
         });
-    } catch {
+        if ([401, 403, 404, 409].includes(res.status)) {
+            if (cacheable(id)) {
+                await rememberMissing(id);
+            }
+            return unavailable();
+        }
+        bytes = new Uint8Array(await res.arrayBuffer());
+    } catch (err) {
+        console.warn(`asset ${id} upstream: ${err instanceof Error ? err.message : err}`);
         return new Response("Upstream request failed\n", {
             status: 502,
             headers: {
@@ -68,20 +101,16 @@ const proxy = async (id: number) => {
         });
     }
 
-    if ([401, 403, 404, 409].includes(res.status)) {
-        if (cacheable(id)) {
-            await rememberMissing(id);
-        }
-        return unavailable();
+    if (!res.ok) {
+        return new Response(bytes, {
+            status: res.status
+        });
     }
-
-    return new Response(await res.arrayBuffer(), {
-        status: res.status,
-        headers: {
-            "Content-Type": res.headers.get("content-type") ?? "application/octet-stream",
-            "Cache-Control": "private, max-age=3600"
-        }
-    });
+    const body = forEngine(bytes);
+    if (cacheable(id)) {
+        await remember(id, body);
+    }
+    return blob(body);
 };
 
 const bodyColorsXml = async (userId: number) => {
@@ -139,8 +168,13 @@ const routes = (prefix: string) => new Elysia({ prefix })
             return local;
         }
 
-        if (cacheable(id) && await missing(id)) {
-            return unavailable();
+        if (cacheable(id)) {
+            if (await stored(id).exists()) {
+                return blob(stored(id));
+            }
+            if (await missing(id)) {
+                return unavailable();
+            }
         }
         return proxy(id);
     }, {
