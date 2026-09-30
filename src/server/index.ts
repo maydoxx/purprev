@@ -24,7 +24,6 @@ import { membership } from "./api/membership";
 import { studio } from "./api/studio";
 import { applications } from "./api/applications";
 import { publicApi } from "./api/public";
-import { startDiscordGateway } from "./discord-gateway";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
 
@@ -68,8 +67,6 @@ const app = new Elysia()
     .use(process.env.PUBLIC_API === "1" ? publicApi : new Elysia())
     .get("/api", () => "meow :3")
     .listen(Number(process.env.API_PORT ?? 3000));
-
-startDiscordGateway();
 
 
 for (const addr of (process.env.ALSO_LISTEN ?? "").split(",").filter(Boolean)) {

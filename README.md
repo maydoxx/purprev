@@ -59,7 +59,7 @@ cp .env.example .env
 | `RCCMANAGER_PASSWORD` | RCCManager password |
 | `SETUP_URL` | Where the launcher and client zips are hosted |
 | `TOOLBOX_ROBLOX` | `0` keeps studio's free models site only |
-| `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATIONS_CHANNEL` | Where applications get posted, see [Applications](#applications) |
+| `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATIONS_CHANNEL`, `DISCORD_PUBLIC_KEY` | Where applications get posted, see [Applications](#applications) |
 | `DISCORD_ADMIN_ROLE` | Who may press approve and deny, empty is anyone in the channel |
 | `DISCORD_WEBHOOK_URL` | No bot? Post through a webhook instead, no buttons then |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile on signup and apply, empty is off |
@@ -127,7 +127,8 @@ Free Models also searches Roblox's toolbox, `TOOLBOX_ROBLOX=0` turns that off.
 No key? `/apply` takes a username, password and a few questions. Applications show up under Applications in the admin panel and in Discord:
 
 1. Make a bot in the Discord developer portal, invite it with send messages in the channel
-2. Put `DISCORD_BOT_TOKEN` and `DISCORD_APPLICATIONS_CHANNEL` in `.env`, leave the Interactions Endpoint URL empty
+2. Put `DISCORD_BOT_TOKEN`, `DISCORD_APPLICATIONS_CHANNEL` and `DISCORD_PUBLIC_KEY` in `.env`
+3. Set the Interactions Endpoint URL in the portal to `https://your.site/api/discord/interactions`, the site has to be deployed first
 
 Approve makes the account on the spot, Deny asks for a reason. Both work from the buttons in Discord or from the admin panel. The applicant sees the answer on `/apply`.
 
