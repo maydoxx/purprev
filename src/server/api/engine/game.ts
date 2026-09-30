@@ -50,7 +50,7 @@ export const studioSetup = (site: string) => {
         `pcall(function() game:GetService("BadgeService"):SetHasBadgeUrl("${site}/Game/Badges/HasBadge.ashx?UserID=%d&BadgeID=%d") end)`,
         `pcall(function() game:GetService("BadgeService"):SetIsBadgeDisabledUrl("${site}/Game/Badges/IsBadgeDisabled.ashx?BadgeID=%d") end)`,
         `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
-        `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasasset?userId=%d&assetId=%d") end)`,
+        `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasAsset?userId=%d&assetId=%d") end)`,
         `game:GetService("ScriptContext"):AddStarterScript(37801172)`
     ];
 };

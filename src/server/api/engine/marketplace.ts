@@ -5,6 +5,23 @@ import { bool } from "./respond";
 
 const iso = (t: any) => (Number(t) > 0 ? new Date(Number(t) * 1000).toISOString() : "2016-01-01T00:00:00.000Z");
 
+
+const owns = t.Object({
+    userId: t.Numeric(),
+    assetId: t.Numeric()
+});
+
+const ownsAsset = async (userId: number, assetId: number) => {
+    const [row] = await sql`
+        SELECT 1 FROM user_items
+        JOIN catalog_items ON catalog_items.id = user_items.item_id
+        WHERE user_items.user_id = ${userId}
+        AND (catalog_items.id = ${assetId} OR catalog_items.asset_id = ${assetId})
+        LIMIT 1
+    `;
+    return bool(!!row);
+};
+
 export const marketplace = new Elysia()
     .use(session)
 
@@ -85,21 +102,8 @@ export const marketplace = new Elysia()
     })
 
 
-    .get("/ownership/hasAsset", async ({ query }) => {
-        const [row] = await sql`
-            SELECT 1 FROM user_items
-            JOIN catalog_items ON catalog_items.id = user_items.item_id
-            WHERE user_items.user_id = ${query.userId}
-            AND (catalog_items.id = ${query.assetId} OR catalog_items.asset_id = ${query.assetId})
-            LIMIT 1
-        `;
-        return bool(!!row);
-    }, {
-        query: t.Object({
-            userId: t.Numeric(),
-            assetId: t.Numeric()
-        })
-    })
+    .get("/ownership/hasAsset", ({ query }) => ownsAsset(query.userId, query.assetId), { query: owns })
+    .get("/ownership/hasasset", ({ query }) => ownsAsset(query.userId, query.assetId), { query: owns })
 
     .get("/currency/balance", ({ user }) => ({
         robux: user ? user.currency : 0
