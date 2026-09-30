@@ -596,7 +596,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .get("/stats", async () => {
         const today = Math.floor(now() / 86400) * 86400;
-        const [[u], [g], [c], [m], [i], [a], servers, health] = await Promise.all([
+        const [[u], [g], [c], [m], [i], [a], [ap], servers, health] = await Promise.all([
             sql`
                 SELECT COUNT(*) AS users, SUM(lastOnlineSite > ${now() - ONLINE_WINDOW}) AS online, SUM(created_at >= ${today}) AS today,
                     SUM(admin > 0) AS admins, SUM(membership <> 'None' AND (membership_expires = 0 OR membership_expires > ${now()})) AS club
@@ -607,6 +607,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             sql`SELECT COUNT(*) AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
             sql`SELECT COUNT(*) AS n FROM invites`,
             sql`SELECT COUNT(*) AS n FROM assets WHERE type = 'Model' AND parent_id IS NULL`,
+            sql`SELECT COUNT(*) AS n FROM applications WHERE status = 'pending'`,
             rcc.servers(),
             rcc.health()
         ]);
@@ -622,6 +623,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             moderation: Number(m.n),
             invites: Number(i.n),
             models: Number(a.n),
+            applications: Number(ap.n),
             servers: servers.length,
             players: servers.reduce((sum, s: any) => sum + Number(s.players ?? 0), 0),
             rcc: health?.rcc === "up" ? "up" : health ? "down" : "unreachable"
@@ -717,12 +719,16 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         if (body.invites_enabled !== undefined) {
             await setSiteSetting("invites_enabled", body.invites_enabled, user.id);
         }
+        if (body.applications_enabled !== undefined) {
+            await setSiteSetting("applications_enabled", body.applications_enabled, user.id);
+        }
         return siteSettings();
     }, {
         admin: true,
         body: t.Object({
             registration_enabled: t.Optional(t.Boolean()),
-            invites_enabled: t.Optional(t.Boolean())
+            invites_enabled: t.Optional(t.Boolean()),
+            applications_enabled: t.Optional(t.Boolean())
         })
     })
 

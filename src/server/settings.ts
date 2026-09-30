@@ -3,7 +3,8 @@ import { sql, now } from "./db";
 // admin toggles, cached so every signup doesnt hit the table
 const DEFAULTS: Record<string, string> = {
     registration_enabled: "1",
-    invites_enabled: "1"
+    invites_enabled: "1",
+    applications_enabled: "1"
 };
 
 let cache: Record<string, string> | null = null;
@@ -27,7 +28,8 @@ export const siteSettings = async () => {
     const all = await load();
     return {
         registration_enabled: all.registration_enabled === "1",
-        invites_enabled: all.invites_enabled === "1"
+        invites_enabled: all.invites_enabled === "1",
+        applications_enabled: all.applications_enabled === "1"
     };
 };
 
