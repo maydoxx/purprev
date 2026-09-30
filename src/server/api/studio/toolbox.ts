@@ -126,13 +126,9 @@ export const searchFree = async (kind: "Model" | "Decal", q: string, page: numbe
     };
 };
 
-const notFound = () =>
-    new Response("no thumbnail", {
-        status: 404,
-        headers: {
-            "Cache-Control": "private, max-age=600"
-        }
-    });
+// roblox said no, remembered for a while so we dont ask again every frame
+const misses = new Map<string, number>();
+const MISS_TTL = 10 * 60 * 1000;
 
 const png = (file: Bun.BunFile | Uint8Array<ArrayBuffer>) =>
     new Response(file, {
@@ -172,28 +168,29 @@ export const thumbnail = async (id: number, placeholder: string, wanted = 150) =
     if (await cached.exists()) {
         return png(cached);
     }
-    if (!ROBLOX) {
-        return notFound();
+    const missKey = `${id}-${size}`;
+    if ((misses.get(missKey) ?? 0) > Date.now()) {
+        return png(Bun.file(placeholder));
     }
     try {
         const info = await get(`https://thumbnails.roblox.com/v1/assets?assetIds=${id}&size=${size}x${size}&format=Png`);
         const url = info.data?.[0]?.imageUrl;
-        if (!url) {
-            return notFound();
+        if (url) {
+            const res = await fetch(url, {
+                signal: AbortSignal.timeout(8000)
+            });
+            if (res.ok) {
+                const bytes = new Uint8Array(await res.arrayBuffer());
+                await mkdir(THUMB_DIR, {
+                    recursive: true
+                });
+                await Bun.write(cached, bytes);
+                return png(bytes);
+            }
         }
-        const res = await fetch(url, {
-            signal: AbortSignal.timeout(8000)
-        });
-        if (!res.ok) {
-            return notFound();
-        }
-        const bytes = new Uint8Array(await res.arrayBuffer());
-        await mkdir(THUMB_DIR, {
-            recursive: true
-        });
-        await Bun.write(cached, bytes);
-        return png(bytes);
-    } catch {
-        return notFound();
+    } catch (err) {
+        console.warn(`thumbs: ${id} ${err instanceof Error ? err.message : err}`);
     }
+    misses.set(missKey, Date.now() + MISS_TTL);
+    return png(Bun.file(placeholder));
 };
