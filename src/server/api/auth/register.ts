@@ -3,7 +3,8 @@ import { session, getUser } from "../../session";
 import { sql, now } from "../../db";
 import { rcc } from "../../rcc";
 import { siteSetting } from "../../settings";
-import { claimInvite, logInvite } from "../../invites";
+import { claimInvite, logInvite, clientIp } from "../../invites";
+import { verifyTurnstile } from "../../turnstile";
 
 
 export const register = new Elysia()
@@ -40,7 +41,11 @@ export const register = new Elysia()
                 error: "Username is already taken"
             });
         }
-
+        if (!(await verifyTurnstile(body.turnstile, clientIp(request, server)))) {
+            return status(400, {
+                error: "Please complete the captcha"
+            });
+        }
 
         const invite = await claimInvite(inviteKey);
         if (!invite) {
@@ -65,6 +70,7 @@ export const register = new Elysia()
             username: t.String({ maxLength: 32 }),
             password: t.String(),
             confirmpassword: t.String(),
-            invitekey: t.String()
+            invitekey: t.String(),
+            turnstile: t.Optional(t.String({ maxLength: 4000 }))
         })
     })

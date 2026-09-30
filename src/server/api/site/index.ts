@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { sql, now } from "../../db";
 import { siteSettings } from "../../settings";
+import { TURNSTILE_SITE_KEY, turnstileOn } from "../../turnstile";
 
 import { search } from "./search";
 import { feed } from "./feed";
@@ -52,4 +53,7 @@ export const site = new Elysia({ prefix: "/api/site" })
     .get("/downloads", () => DOWNLOADS)
 
     // signup and the invites tab check these
-    .get("/settings", () => siteSettings())
+    .get("/settings", async () => ({
+        ...await siteSettings(),
+        turnstile_site_key: turnstileOn() ? TURNSTILE_SITE_KEY : ""
+    }))
