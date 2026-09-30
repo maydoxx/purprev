@@ -65,6 +65,8 @@ export const profile = new Elysia({ prefix: "/profile" })
         ]);
 
         const playing = await rcc.players(favorites.map((g: any) => Number(g.id)));
+        const [followCounts] = await sql`SELECT (SELECT COUNT(*) FROM user_follows WHERE followed_id = ${row.id}) AS followers, (SELECT COUNT(*) FROM user_follows WHERE follower_id = ${row.id}) AS following`;
+        const [followed] = user ? await sql`SELECT 1 FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${row.id}` : [null];
 
         return {
             id: row.id,
@@ -90,6 +92,9 @@ export const profile = new Elysia({ prefix: "/profile" })
             online: isOnline(row.lastOnlineSite),
             friendStatus: user ? await friendStatus(user.id, row.id) : "guest",
             friendCount: await friendCount(row.id),
+            followerCount: Number(followCounts.followers),
+            followingCount: Number(followCounts.following),
+            isFollowing: !!followed,
             friends,
             wearing: await Promise.all(wearing.map(withThumbnail)),
             games,

@@ -5,6 +5,8 @@
     import Banners from "./Banners.svelte";
 
     let q = $state("");
+    let suggestions = $state<any[]>([]);
+    let searchFocused = $state(false);
     let pending = $state(0);
     let navOpen = $state(false);
 
@@ -13,6 +15,17 @@
         api("/user/friends?tab=requests").then(d => {
             pending = d.pendingCount;
         }).catch(() => {});
+    });
+
+    $effect(() => {
+        const term = q.trim();
+        if (!term) { suggestions = []; return; }
+        const timer = setTimeout(() => {
+            api(`/site/search/suggestions?q=${encodeURIComponent(term)}`).then(d => {
+                if (q.trim() === term) suggestions = Array.isArray(d) ? d : [];
+            }).catch(() => { suggestions = []; });
+        }, 180);
+        return () => clearTimeout(timer);
     });
 
     const search = (e: Event) => {
@@ -52,12 +65,12 @@
 
         <div id="navbar-universal-search" class="rbx-navbar-search search-form" role="search">
             <form onsubmit={search} class="rbx-input-group">
-                <input id="navbar-search-input" class="input-field" type="text" bind:value={q} placeholder="Search" maxlength="120" autocomplete="off">
+                <input id="navbar-search-input" class="input-field" type="text" bind:value={q} placeholder="Search" maxlength="120" autocomplete="off" onfocus={() => searchFocused = true} onblur={() => setTimeout(() => searchFocused = false, 120)}>
                 <button id="navbar-search-btn" class="rbx-input-addon-btn" type="submit" aria-label="Search">
                     <span class="icon-nav-search"></span>
                 </button>
             </form>
-            <ul class="dropdown-menu rbx-dropdown-menu" role="menu"></ul>
+            {#if searchFocused && suggestions.length}<ul class="dropdown-menu rbx-dropdown-menu show" role="menu">{#each suggestions as suggestion}<li><a class="dropdown-item" href={suggestion.url} onclick={() => searchFocused = false}>{suggestion.label}</a></li>{/each}</ul>{/if}
         </div>
 
         <div class="rbx-navbar-right">
@@ -117,7 +130,7 @@
             <li><a href="/my/forums"><span class="icon-nav-forum"></span><span class="rbx-text-nav">Forum</span></a></li>
             <li><a href="/blog"><span class="icon-nav-blog"></span><span class="rbx-text-nav">Blog</span></a></li>
             <li><a href="/catalog"><span class="icon-nav-shop"></span><span class="rbx-text-nav">Shop</span></a></li>
-            <li class="rbx-upgrade-now"><a href="/upgrades/builders-club">Upgrade Now</a></li>
+            <li class="rbx-upgrade-now"><a href="/premium/membership">Upgrade Now</a></li>
             <li class="rbx-sidebar-events">
                 <span class="rbx-sidebar-events-title">Events</span>
                 <a href="/blog?category=events" title="NONE BETA events">

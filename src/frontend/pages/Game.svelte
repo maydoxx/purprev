@@ -10,6 +10,14 @@
     let passes = $state<any[]>([]);
     let badges = $state<any[]>([]);
     let recommended = $state<any[]>([]);
+    let leaderboard = $state<any[]>([]);
+    let servers = $state<any[]>([]);
+    let vipServers = $state<any[]>([]);
+    let vipForm = $state(false);
+    let vipName = $state("");
+    let vipInvite = $state<Record<number, string>>({});
+    let vipBusy = $state(false);
+    let vipMessage = $state("");
     let tab = $state(location.hash === "#store" ? "store" : location.hash === "#servers" ? "servers" : location.hash === "#leaderboards" ? "leaderboards" : "about");
     let storeMsg = $state("");
     let storeOk = $state(false);
@@ -41,6 +49,8 @@
         api(`/games/${id}/badges`).then(d => {
             badges = list(d, "badges");
         }).catch(() => {});
+        api(`/games/${id}/leaderboard`).then(d => { leaderboard = Array.isArray(d) ? d : []; }).catch(() => { leaderboard = []; });
+        loadServers();
         api("/games?page=1").then(d => {
             recommended = list(d, "games").filter((item: any) => Number(item.id) !== id).slice(0, 6);
         }).catch(() => {});
@@ -52,14 +62,58 @@
     const isAndroid = isPhone && /Android/i.test(navigator.userAgent);
 
     // opens nonerev-launcher: which NoneRevLauncher.exe registered, the launcher reads the site url from placelauncherurl
-    const play = async () => {
+    const play = async (jobId = "") => {
         try {
-            const d = await api(`/games/${id}/launch`);
+            const d = await api(`/games/${id}/launch${jobId ? `?jobId=${encodeURIComponent(jobId)}` : ""}`);
             location.href = d.url;
             launching = true;
         } catch (err: any) {
             alert(err.message);
         }
+    };
+
+    const loadServers = async () => {
+        servers = await api(`/games/${id}/servers`).catch(() => []);
+        vipServers = session.me ? await api(`/games/${id}/vip`).catch(() => []) : [];
+    };
+    const createVip = async (e: Event) => {
+        e.preventDefault();
+        vipBusy = true;
+        vipMessage = "";
+        try {
+            await api(`/games/${id}/vip`, { name: vipName.trim() });
+            vipName = "";
+            vipForm = false;
+            await loadServers();
+        } catch (err: any) { vipMessage = err.message; }
+        vipBusy = false;
+    };
+    const inviteVip = async (vipId: number) => {
+        vipBusy = true;
+        vipMessage = "";
+        try {
+            await api(`/games/${id}/vip/${vipId}/invite`, { username: vipInvite[vipId]?.trim() || "" });
+            vipInvite[vipId] = "";
+            vipMessage = "Invitation saved.";
+            await loadServers();
+        } catch (err: any) { vipMessage = err.message; }
+        vipBusy = false;
+    };
+    const deleteVip = async (vipId: number) => {
+        vipBusy = true;
+        try {
+            await api(`/games/${id}/vip/${vipId}`, undefined, "DELETE");
+            await loadServers();
+        } catch (err: any) { vipMessage = err.message; }
+        vipBusy = false;
+    };
+    const removeVipMember = async (vipId: number, userId: number) => {
+        vipBusy = true;
+        try {
+            await api(`/games/${id}/vip/${vipId}/invite/${userId}`, undefined, "DELETE");
+            await loadServers();
+        } catch (err: any) { vipMessage = err.message; }
+        vipBusy = false;
     };
 
     const buy = async (pass: any) => {
@@ -172,7 +226,7 @@
                             <a class="btn-play-2016" href="/download">Play</a>
                             <p class="text-center mt-2">Playing on a phone needs the NoneRev app, which is Android only for now.</p>
                         {:else}
-                            <button id="MultiplayerVisitButton" type="button" class="btn-play-2016" onclick={play}>Play</button>
+                            <button id="MultiplayerVisitButton" type="button" class="btn-play-2016" onclick={() => play()}>Play</button>
                             <p id="launcher-hint" class="text-center mt-2" hidden={!launching}>Nothing happened? <a href="/setup/download">Download the NoneRev launcher</a>, run it once, then press Play again.</p>
                         {/if}
                     </div>
@@ -233,7 +287,7 @@
                         <h2 class="game-section-heading">VIP Servers</h2>
                         <div class="section-2016 game-vip-2016">
                             <p>Play this game with friends and other people you invite.<br>See all your VIP servers in the <button type="button" class="game-inline-link" onclick={() => tab = "servers"}>Servers</button> tab.</p>
-                            <button class="btn-2016-blue" type="button" disabled title="VIP servers are not available yet">Create VIP Server</button>
+                            {#if session.me}<button class="btn-2016-blue" type="button" onclick={() => { tab = "servers"; vipForm = true; }}>Create VIP Server</button>{:else}<a class="btn-2016-blue" href="/login">Create VIP Server</a>{/if}
                         </div>
 
                         {#if badges.length > 0}
@@ -303,9 +357,11 @@
                     </div>
 
                     <div class="tab-pane fade" class:show={tab === "leaderboards"} class:active={tab === "leaderboards"} id="leaderboards" role="tabpanel">
-                        <div class="section-2016 empty-tab-2016">
-                            <h3>Leaderboards</h3>
-                            <p>There are no leaderboards for this game.</p>
+                        <div class="section-2016 game-leaderboard-2016">
+                            <h3>Most Plays</h3>
+                            {#if leaderboard.length}
+                                <ol>{#each leaderboard as player (player.id)}<li><a href="/user?id={player.id}">{player.username}</a><strong>{player.plays.toLocaleString()}</strong></li>{/each}</ol>
+                            {:else}<p>No one has played this game yet.</p>{/if}
                         </div>
                     </div>
 
@@ -313,12 +369,29 @@
                         <div class="section-2016 servers-2016">
                             <div class="servers-banner-2016">
                                 <span>Play this game with friends and other people you invite.</span>
-                                <button class="btn-2016-gray" type="button" disabled>Create VIP Server</button>
+                                {#if session.me}<button class="btn-2016-gray" type="button" onclick={() => vipForm = !vipForm}>Create VIP Server</button>{/if}
                             </div>
-                            <div class="server-list-empty-2016">
-                                <h3>Servers</h3>
-                                <p>No servers are running right now.</p>
+                            {#if vipForm}
+                                <form class="game-vip-create" onsubmit={createVip}><label for="vip-name">Server name</label><input id="vip-name" type="text" maxlength="60" bind:value={vipName} required><button type="submit" disabled={vipBusy}>Create</button></form>
+                            {/if}
+                            {#if vipMessage}<p class="game-vip-message" role="status">{vipMessage}</p>{/if}
+                            <div class="server-list-empty-2016"><h3>Public Servers</h3>
+                                {#if servers.length === 0}<p>No servers are running right now.</p>
+                                {:else}<ul class="game-server-list">{#each servers as server (server.jobId)}<li><span>{server.players} playing · {server.ready ? "Ready" : "Starting"}</span><button type="button" disabled={!server.ready} onclick={() => play(server.jobId)}>Join</button></li>{/each}</ul>{/if}
                             </div>
+                            {#if session.me}
+                                <div class="game-vip-list"><h3>VIP Servers</h3>
+                                    {#if vipServers.length === 0}<p>You have no VIP servers for this game.</p>{/if}
+                                    {#each vipServers as vip (vip.id)}
+                                        <div class="game-vip-row"><strong>{vip.name}</strong><span>Owned by {vip.owner_name}</span>
+                                            {#if vip.owner_id === session.me.id}<form onsubmit={e => { e.preventDefault(); inviteVip(vip.id); }}><input type="text" placeholder="Username to invite" aria-label="Username to invite" bind:value={vipInvite[vip.id]} required><button type="submit" disabled={vipBusy}>Invite</button></form><button type="button" disabled={vipBusy} onclick={() => deleteVip(vip.id)}>Delete</button>
+                                                {#if vip.members?.length}<div class="game-vip-members">Invited: {#each vip.members as member (member.id)}<span><a href="/user?id={member.id}">{member.username}</a><button type="button" disabled={vipBusy} aria-label={`Remove ${member.username}`} onclick={() => removeVipMember(vip.id, member.id)}>×</button></span>{/each}</div>{/if}
+                                            {/if}
+                                        </div>
+                                    {/each}
+                                    <p class="game-vip-note">Private play needs game-server support before these VIP servers can be joined.</p>
+                                </div>
+                            {/if}
                         </div>
                     </div>
                 </div>

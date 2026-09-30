@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
-import { sql } from "../../db";
+import { sql, now } from "../../db";
 import { withThumbnail } from "../../paths";
 
 import { purchase } from "./purchase";
@@ -88,6 +88,8 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
         }
 
         const [owners] = await sql`SELECT COUNT(*) AS n FROM user_items WHERE item_id = ${params.id}`;
+        const [favoriteCount] = await sql`SELECT COUNT(*) AS n FROM catalog_favorites WHERE item_id = ${params.id}`;
+        const [favoriteMine] = user ? await sql`SELECT 1 FROM catalog_favorites WHERE user_id = ${user.id} AND item_id = ${params.id}` : [null];
         const [mine] = user
             ? await sql`SELECT wearing, serial_number FROM user_items WHERE user_id = ${user.id} AND item_id = ${params.id}`
             : [null];
@@ -95,6 +97,8 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
         return {
             ...await withThumbnail(item),
             sales: Number(owners.n),
+            favorites: Number(favoriteCount.n),
+            favorited: !!favoriteMine,
             owned: mine !== null && mine !== undefined,
             wearing: !!mine?.wearing,
             serial_number: mine?.serial_number ?? null
@@ -104,3 +108,12 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             id: t.Numeric()
         })
     })
+
+    .post("/:id/favorite", async ({ params, user, status }) => {
+        const [item] = await sql`SELECT id FROM catalog_items WHERE id = ${params.id}`;
+        if (!item) return status(404, { error: "Item not found" });
+        const removed = await sql`DELETE FROM catalog_favorites WHERE user_id = ${user.id} AND item_id = ${params.id}`;
+        if (!removed.affectedRows) await sql`INSERT INTO catalog_favorites (user_id, item_id, created_at) VALUES (${user.id}, ${params.id}, ${now()})`;
+        const [count] = await sql`SELECT COUNT(*) AS n FROM catalog_favorites WHERE item_id = ${params.id}`;
+        return { favorited: !removed.affectedRows, favorites: Number(count.n) };
+    }, { auth: true, params: t.Object({ id: t.Numeric() }) })
