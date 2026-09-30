@@ -10,6 +10,7 @@
     "build": "vite build",
     "start": "bun run src/server/index.ts",
     "db:migrate": "bun run src/server/db/migrate.ts",
+    "db:seed": "bun run src/server/db/seed.ts",
     "media:sync": "bun run src/server/media-sync.ts"
   },
   "devDependencies": {

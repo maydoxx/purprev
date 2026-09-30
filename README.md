@@ -109,6 +109,8 @@ bun run dev:web
 
 `bun run start` runs the API without the watcher.
 
+`bun run db:seed` puts the default avatars in the catalog, the Man and Woman bundles with their hair, shirt and jeans, owned by the first admin. Every new account gets one of the two and a random skin tone. Items an admin marks as Starter go to everyone on top.
+
 Moving to R2 or bringing an old `uploads/` folder over: set `STORAGE=cloudflare` and run `bun run media:sync [folder]`. It records every file in the `media` table and pushes it to the bucket, skipping what is already there.
 
 ### Roblox Studio
