@@ -53,6 +53,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
             tab,
             page,
             totalPages,
+            total: Number(count.n),
             newsUnread: Number(news.n),
             messages: rows.map((m: any) => ({
                 ...m,

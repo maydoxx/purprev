@@ -13,6 +13,7 @@
     let status = $state("");
     let statusError = $state(false);
     let busy = $state(false);
+    let favoriting = $state(false);
     let recommended = $state<any[]>([]);
     let range = $state(180);
 
@@ -68,6 +69,17 @@
         wear: !item.wearing
     }, "Updating your avatar...");
 
+    const favorite = async () => {
+        if (!session.me) { router.go("/login"); return; }
+        favoriting = true;
+        try {
+            const d = await api(`/catalog/${id}/favorite`, {});
+            item.favorited = d.favorited;
+            item.favorites = d.favorites;
+        } catch (err: any) { statusError = true; status = err.message; }
+        favoriting = false;
+    };
+
     $effect(() => {
         const currentId = id;
         recommended = [];
@@ -104,10 +116,10 @@
                         <span class="catalog-item-limited-label" class:unique={limitedUnique}>{limitedUnique ? "LIMITED U" : "LIMITED"}</span>
                     {/if}
                 </div>
-                <div class="catalog-item-favorites" title="Favorites are not available yet">
+                <button type="button" class="catalog-item-favorites" class:active={item.favorited} disabled={favoriting} aria-label={item.favorited ? "Remove from favorites" : "Add to favorites"} aria-pressed={!!item.favorited} onclick={favorite}>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 1.5 3.3 6.7 7.4 1.1-5.4 5.2 1.3 7.3-6.6-3.5-6.6 3.5 1.3-7.3-5.4-5.2 7.4-1.1z"/></svg>
                     <span>{n(item.favorites)}</span>
-                </div>
+                </button>
             </div>
             <div class="catalog-item-information">
                 <header class="catalog-item-heading">

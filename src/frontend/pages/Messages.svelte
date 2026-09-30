@@ -273,6 +273,8 @@
                 <a href={tabUrl("archive")} class:active={tab === "archive"}>Archive</a>
             </nav>
 
+            <div class="messages-folder-heading"><h2>{tab === "inbox" ? "Inbox" : tab === "sent" ? "Sent Messages" : tab === "news" ? "News" : "Archive"} <span>({data?.total ?? 0})</span></h2></div>
+
             {@render toolbar(tab === "sent" ? "top-toolbar sent-toolbar" : "top-toolbar")}
 
             <section class="messages-list">

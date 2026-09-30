@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { sql } from "../../db";
-import { mediaUrl } from "../../paths";
+import { mediaUrl, withThumbnail } from "../../paths";
 import { rcc } from "../../rcc";
 
 const PER_PAGE = 24;
@@ -13,9 +13,17 @@ export const favorites = new Elysia({ prefix: "/favorites" })
                 error: "unknown user"
             });
         }
-        const [count] = await sql`SELECT COUNT(*) AS n FROM game_favorites WHERE user_id = ${params.id}`;
+        const type = query.type ?? "games";
+        const [count] = type === "items"
+            ? await sql`SELECT COUNT(*) AS n FROM catalog_favorites WHERE user_id = ${params.id}`
+            : await sql`SELECT COUNT(*) AS n FROM game_favorites WHERE user_id = ${params.id}`;
         const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
+
+        if (type === "items") {
+            const items = await sql`SELECT c.*, u.username AS creator_name FROM catalog_favorites f JOIN catalog_items c ON c.id = f.item_id LEFT JOIN users u ON u.id = c.creator_id WHERE f.user_id = ${params.id} ORDER BY f.created_at DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}`;
+            return { username: who.username, page, totalPages, total: Number(count.n), type, items: await Promise.all(items.map(withThumbnail)), games: [] };
+        }
 
         const rows = await sql`
             SELECT games.id, games.title, games.creator_id, users.username AS creator_name FROM game_favorites f
@@ -45,6 +53,7 @@ export const favorites = new Elysia({ prefix: "/favorites" })
             id: t.Numeric()
         }),
         query: t.Object({
-            page: t.Optional(t.Numeric())
+            page: t.Optional(t.Numeric()),
+            type: t.Optional(t.Union([t.Literal("games"), t.Literal("items")]))
         })
     })

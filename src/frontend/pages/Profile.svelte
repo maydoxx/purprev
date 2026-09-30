@@ -82,6 +82,16 @@
         busy = false;
     };
 
+    const follow = async () => {
+        if (!session.me) { router.go("/login"); return; }
+        busy = true;
+        try {
+            await api("/user/friends/follow", { userId: id, follow: !profile.isFollowing });
+            await load();
+        } catch (err: any) { alert(err.message); }
+        busy = false;
+    };
+
     const date = (t: number) => t ? new Date(t * 1000).toLocaleDateString("en-US") : "Unknown";
     const pic = (userId: number, type: string) => `/api/user/getProfilePicture?userId=${userId}&type=${type}`;
 </script>
@@ -122,14 +132,14 @@
                                 </li>
                                 <li>
                                     <div class="text-label">Followers</div>
-                                    <a class="text-name" href="#">
-                                        <h3>0</h3>
+                                    <a class="text-name" href="/my/friends?tab=followers&user={id}">
+                                        <h3>{profile.followerCount}</h3>
                                     </a>
                                 </li>
                                 <li>
                                     <div class="text-label">Following</div>
-                                    <a class="text-name" href="#">
-                                        <h3>0</h3>
+                                    <a class="text-name" href="/my/friends?tab=following&user={id}">
+                                        <h3>{profile.followingCount}</h3>
                                     </a>
                                 </li>
                             </ul>
@@ -165,7 +175,7 @@
                                 <span class="rbx-icon-more"></span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end rbx-dropdown-menu" role="menu">
-                                <li><a href="#">Follow</a></li>
+                                <li><button type="button" class="dropdown-item" disabled={busy} onclick={follow}>{profile.isFollowing ? "Unfollow" : "Follow"}</button></li>
                                 <li><a href="/trade?with={id}">Trade Items</a></li>
                                 <li><a href="#">Block User</a></li>
                             </ul>

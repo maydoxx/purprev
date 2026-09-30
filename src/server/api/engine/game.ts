@@ -154,7 +154,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
         let server;
         try {
-            server = await rcc.findOrCreate(placeId);
+            server = query.jobId ? await rcc.server(query.jobId) : await rcc.findOrCreate(placeId);
         } catch (err) {
             console.error(`PlaceLauncher: could not start a server for place ${placeId}:`, err instanceof RccError ? err.message : err);
             return {
@@ -164,6 +164,10 @@ const routes = (prefix: string) => new Elysia({ prefix })
             };
         }
 
+        if (!server || Number(server.placeId) !== Number(placeId)) {
+            return { jobId: "", status: 5, message: "server not found" };
+        }
+
         if (!server.ready) {
             return {
                 jobId: server.jobId,
@@ -171,6 +175,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
                 message: "starting the game server"
             };
         }
+
+        await sql`INSERT IGNORE INTO game_visit_sessions (game_id, user_id, job_id, started_at) VALUES (${placeId}, ${user.id}, ${server.jobId}, ${now()})`;
 
         console.log(`PlaceLauncher: ${user.username} -> ${server.jobId} on ${server.address}:${server.port}`);
         return {
@@ -185,7 +191,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
         query: t.Object({
             placeId: t.Optional(t.Numeric()),
             placeid: t.Optional(t.Numeric()),
-            PlaceId: t.Optional(t.Numeric())
+            PlaceId: t.Optional(t.Numeric()),
+            jobId: t.Optional(t.String({ maxLength: 64 }))
         })
     })
 

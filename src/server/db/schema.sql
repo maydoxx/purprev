@@ -58,6 +58,14 @@ CREATE TABLE IF NOT EXISTS `catalog_items` (
     KEY `price` (`price`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
+CREATE TABLE IF NOT EXISTS `catalog_favorites` (
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `item_id` int(11) NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`user_id`,`item_id`),
+    KEY `item_id` (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `games` (
     `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `creator_id` int(10) UNSIGNED NOT NULL,
@@ -200,6 +208,29 @@ CREATE TABLE IF NOT EXISTS `group_wall_posts` (
     KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `group_store_items` (
+    `group_id` int(10) UNSIGNED NOT NULL,
+    `item_id` int(11) NOT NULL,
+    `added_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`group_id`,`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `group_games` (
+    `group_id` int(10) UNSIGNED NOT NULL,
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `added_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`group_id`,`game_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `group_affiliates` (
+    `group_id` int(10) UNSIGNED NOT NULL,
+    `other_group_id` int(10) UNSIGNED NOT NULL,
+    `status` enum('pending','accepted') NOT NULL DEFAULT 'pending',
+    `requested_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`group_id`,`other_group_id`),
+    KEY `other_group_id` (`other_group_id`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `trades` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `sender_id` int(10) UNSIGNED NOT NULL,
@@ -335,6 +366,17 @@ CREATE TABLE IF NOT EXISTS `user_avatar` (
     PRIMARY KEY (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `avatar_outfits` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `name` varchar(60) NOT NULL,
+    `colors` text NOT NULL,
+    `items` text NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `user_items` (
     `user_id` int(10) UNSIGNED NOT NULL,
     `item_id` int(11) NOT NULL,
@@ -356,6 +398,14 @@ CREATE TABLE IF NOT EXISTS `friendships` (
     UNIQUE KEY `pair` (`requester_id`, `target_id`),
     KEY `target` (`target_id`, `status`),
     KEY `requester` (`requester_id`, `status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_follows` (
+    `follower_id` int(10) UNSIGNED NOT NULL,
+    `followed_id` int(10) UNSIGNED NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`follower_id`,`followed_id`),
+    KEY `followed_id` (`followed_id`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `status_updates` (
@@ -415,6 +465,34 @@ CREATE TABLE IF NOT EXISTS `game_servers` (
     UNIQUE KEY `uq_job` (`jobId`),
     KEY `idx_place_open` (`placeId`, `closed`),
     KEY `idx_port_open` (`port`, `closed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `game_visit_sessions` (
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `job_id` varchar(64) NOT NULL,
+    `started_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`job_id`,`user_id`),
+    KEY `game_id` (`game_id`,`user_id`),
+    KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `vip_servers` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `game_id` int(10) UNSIGNED NOT NULL,
+    `owner_id` int(10) UNSIGNED NOT NULL,
+    `name` varchar(60) NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `game_id` (`game_id`),
+    KEY `owner_id` (`owner_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `vip_server_members` (
+    `vip_id` int(10) UNSIGNED NOT NULL,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`vip_id`,`user_id`),
+    KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

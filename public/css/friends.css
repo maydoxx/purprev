@@ -78,6 +78,7 @@
 .friends-page { width: min(970px, calc(100% - 24px)); margin: 0 auto; color: #191919; font-family: "Source Sans Pro", "Source Sans 3", Arial, sans-serif; }
 .friends-page h1 { margin: 0 0 12px; padding-left: 12px; font-size: 48px; line-height: 1.2; font-weight: 300; }
 .friends-page .friends-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 12px; background: #fff; box-shadow: 0 1px 3px #969696bd; }
+.friends-page .friends-tabs.public-view { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .friends-page .friends-tabs a { display: block; padding: 12px 5px; text-align: center; color: #191919; font-size: 20px; text-decoration: none; box-shadow: 0 -4px 0 transparent inset; }
 .friends-page .friends-tabs a.active, .friends-page .friends-tabs a:hover { box-shadow: 0 -4px 0 #7b2cbf inset; }
 .friends-page .friends-tabs a:hover { color: #7b2cbf; }
