@@ -65,7 +65,17 @@ const app = new Elysia()
     .use(studio)
     .use(applications)
     .use(process.env.PUBLIC_API === "1" ? publicApi : new Elysia())
-    .get("/api", () => "meow :3")
+    .get("/", () => new Response([
+        " /\\_/\\",
+        "( o.o )  you found the backend",
+        " > ^ <   the site lives on the other port, shoo :3",
+        ""
+    ].join("\n"), {
+        headers: {
+            "Content-Type": "text/plain; charset=utf-8"
+        }
+    }))
+    .get("/api", () => "meow :3 nothing to see here, the real stuff is under /api/<thing>")
     .listen(Number(process.env.API_PORT ?? 3000));
 
 
