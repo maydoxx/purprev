@@ -16,9 +16,12 @@ export type User = {
     ongoing_action_id: number | null;
     membership: Tier;
     membership_expires: number;
+    social_discord: string;
+    social_twitter: string;
+    social_youtube: string;
 };
 
-const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.ongoing_action_id, users.membership, users.membership_expires`;
+const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.ongoing_action_id, users.membership, users.membership_expires, users.social_discord, users.social_twitter, users.social_youtube`;
 
 // expired clubs read as None everywhere
 const withMembership = (row: any): User | null => row ? {

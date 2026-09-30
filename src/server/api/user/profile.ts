@@ -14,7 +14,7 @@ export const profile = new Elysia({ prefix: "/profile" })
     .use(session)
     .get("/:id", async ({ params, user, status }) => {
         const [row] = await sql`
-            SELECT id, username, about, admin, created_at, lastOnlineSite, ongoing_action_id, membership, membership_expires
+            SELECT id, username, about, admin, created_at, lastOnlineSite, ongoing_action_id, membership, membership_expires, social_discord, social_twitter, social_youtube
             FROM users WHERE id = ${params.id}
         `;
 
@@ -34,7 +34,7 @@ export const profile = new Elysia({ prefix: "/profile" })
         }
 
         const [games, badges, counts, wearing, friends, earned, favorites, history] = await Promise.all([
-            sql`SELECT id, title FROM games WHERE creator_id = ${row.id}`,
+            sql`SELECT id, title, visits FROM games WHERE creator_id = ${row.id}`,
             sql`
                 SELECT b.id, b.name, b.game_id, b.icon FROM user_badges ub
                 JOIN game_badges b ON b.id = ub.badge_id
@@ -79,6 +79,11 @@ export const profile = new Elysia({ prefix: "/profile" })
             }))),
             previousUsernames: history.map((h: any) => h.old_username),
             about: row.about ?? "",
+            socials: {
+                discord: row.social_discord ?? "",
+                twitter: row.social_twitter ?? "",
+                youtube: row.social_youtube ?? ""
+            },
             admin: row.admin > 0,
             membership: membershipOf(row),
             joined: row.created_at,
@@ -91,6 +96,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             badges,
             siteBadges: earned,
             badgeCount: Number(counts[0].badges),
+            placeVisits: games.reduce((sum: number, g: any) => sum + Number(g.visits ?? 0), 0),
             postCount: Number(counts[0].posts)
         };
     }, {
