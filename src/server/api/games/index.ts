@@ -20,7 +20,7 @@ const withMedia = async (game: any, playing = 0) => ({
     thumbnail: await mediaUrl("thumbnails", game.id),
     icon: await mediaUrl("icons", game.id),
     playing,
-    visits: 0,
+    visits: Number(game.visits ?? 0),
     favorites: 0,
     up_votes: 0,
     down_votes: 0,

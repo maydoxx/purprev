@@ -74,6 +74,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
         const placeId = server.placeId;
         const appearance = appearanceUrl(who.id);
+        await sql`UPDATE games SET visits = visits + 1 WHERE id = ${placeId}`;
         const time = String(now());
 
 
