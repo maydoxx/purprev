@@ -1,6 +1,15 @@
 <script lang="ts">
     let moreBadges = $state(false);
 
+    let copied = $state(false);
+    const copyDiscord = async (name: string) => {
+        try {
+            await navigator.clipboard.writeText(name);
+            copied = true;
+            setTimeout(() => copied = false, 1500);
+        } catch {}
+    };
+
     // ids on /Badges
     const badgeAnchor: Record<string, number> = {
         administrator: 1,
@@ -193,6 +202,19 @@
                                         <span class="profile-about-content-text">{profile.about || "Hi! I'm new to NoneRev!"}</span>
                                         <span class="toggle-para" style:display={overflows ? "" : "none"} onclick={() => expanded = !expanded}>{expanded ? "Read Less" : "Read More"}</span>
                                     </p>
+                                    {#if profile.socials?.discord || profile.socials?.twitter || profile.socials?.youtube}
+                                        <ul class="profile-social">
+                                            {#if profile.socials.discord}
+                                                <li><button type="button" class="profile-social-link discord" title="Copy Discord username" onclick={() => copyDiscord(profile.socials.discord)}><span class="profile-social-icon"></span>{copied ? "Copied!" : profile.socials.discord}</button></li>
+                                            {/if}
+                                            {#if profile.socials.twitter}
+                                                <li><a class="profile-social-link twitter" href="https://twitter.com/{profile.socials.twitter}" target="_blank" rel="noopener"><span class="profile-social-icon"></span>@{profile.socials.twitter}</a></li>
+                                            {/if}
+                                            {#if profile.socials.youtube}
+                                                <li><a class="profile-social-link youtube" href="https://www.youtube.com/{profile.socials.youtube}" target="_blank" rel="noopener"><span class="profile-social-icon"></span>{profile.socials.youtube}</a></li>
+                                            {/if}
+                                        </ul>
+                                    {/if}
                                 </div>
                                 <div class="profile-about-footer">
                                     {#if profile.previousUsernames?.length}
@@ -339,7 +361,7 @@
                                     </li>
                                     <li class="profile-stat">
                                         <p class="text-label">Place Visits</p>
-                                        <p class="text-lead">0</p>
+                                        <p class="text-lead">{Number(profile.placeVisits ?? 0).toLocaleString()}</p>
                                     </li>
                                     <li class="profile-stat">
                                         <p class="text-label">Forum Posts</p>
@@ -393,7 +415,7 @@
                                                             </li>
                                                             <li class="list-item">
                                                                 <p class="text-label slide-item-stat-title">Visits</p>
-                                                                <p class="text-lead slide-item-my-rank games">0</p>
+                                                                <p class="text-lead slide-item-my-rank games">{Number(g.visits ?? 0).toLocaleString()}</p>
                                                             </li>
                                                         </ul>
                                                     </div>

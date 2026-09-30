@@ -10,6 +10,9 @@ export type Me = {
     ongoing_action_id: number | null;
     membership: "None" | "BC" | "TBC" | "OBC";
     membership_expires: number;
+    social_discord: string;
+    social_twitter: string;
+    social_youtube: string;
 };
 
 let me = $state<Me | null>(null);

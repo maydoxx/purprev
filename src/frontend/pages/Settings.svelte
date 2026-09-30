@@ -19,6 +19,9 @@
     let notice = $state<{ text: string; ok: boolean } | null>(null);
     let newEmail = $state(session.me?.email ?? "");
     let newBio = $state(session.me?.about ?? "");
+    let socialDiscord = $state(session.me?.social_discord ?? "");
+    let socialTwitter = $state(session.me?.social_twitter ?? "");
+    let socialYoutube = $state(session.me?.social_youtube ?? "");
     let currentPassword = $state("");
     let newPassword = $state("");
     let confirmPassword = $state("");
@@ -151,10 +154,13 @@
                 <section class="settings-section">
                     <h2>Social Networks</h2>
                     <div class="settings-card settings-social-card">
-                        <p>Social profile links are not available for NoneRev accounts yet.</p>
-                        <label>Facebook<input type="text" placeholder="e.g. www.facebook.com/yourname" disabled></label>
-                        <label>Twitter<input type="text" placeholder="e.g. @yourname" disabled></label>
-                        <label>YouTube<input type="text" placeholder="e.g. youtube.com/yourchannel" disabled></label>
+                        <form onsubmit={e => { e.preventDefault(); save("/user/settings/socials", { discord: socialDiscord, twitter: socialTwitter, youtube: socialYoutube }, "Social networks saved."); }}>
+                            <p>These show on your profile. Leave one empty to hide it.</p>
+                            <label>Discord<input type="text" bind:value={socialDiscord} maxlength="40" placeholder="e.g. yourname" autocomplete="off"></label>
+                            <label>Twitter<input type="text" bind:value={socialTwitter} maxlength="60" placeholder="e.g. @yourname" autocomplete="off"></label>
+                            <label>YouTube<input type="text" bind:value={socialYoutube} maxlength="120" placeholder="e.g. @yourchannel or a youtube.com link" autocomplete="off"></label>
+                            <div class="settings-save-row"><button type="submit" disabled={busy}>Save</button></div>
+                        </form>
                     </div>
                 </section>
             {:else if tab === "security"}
