@@ -274,6 +274,22 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
     .all("/MachineConfiguration.ashx", () => "")
 
+    // phones report how the join went, c is the step and r the outcome
+    .all("/JoinRate.ashx", ({ query }) => {
+        console.log(`JoinRate: ${query.c ?? "?"} ${query.r ?? "?"} user ${query.i ?? "?"} place ${query.p ?? "?"} after ${query.d ?? "?"}ms, ${query.b ?? "?"} bytes in, ${query.platform ?? "?"}`);
+        return "";
+    }, {
+        query: t.Object({
+            i: t.Optional(t.String()),
+            p: t.Optional(t.String()),
+            c: t.Optional(t.String()),
+            r: t.Optional(t.String()),
+            d: t.Optional(t.String()),
+            b: t.Optional(t.String()),
+            platform: t.Optional(t.String())
+        })
+    })
+
 
     .all("/Badges/AwardBadge.ashx", async ({ query, request, server }) => {
         if (!isInternal(request, server)) {
