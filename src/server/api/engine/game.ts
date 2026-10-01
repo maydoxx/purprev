@@ -164,7 +164,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
             };
         }
 
-        if (!server || Number(server.placeId) !== Number(placeId)) {
+        // findOrCreate answers without a placeId, only a jobId join can point at the wrong place
+        if (!server || (query.jobId && Number(server.placeId) !== Number(placeId))) {
             return {
                 jobId: "",
                 status: 5,
