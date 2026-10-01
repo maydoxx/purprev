@@ -20,7 +20,7 @@ nonerev.de {
     root * C:\Users\Administrator\Desktop\purprev\dist
     encode gzip
 
-    @backend path /api/* /uploads/* /Game/* /game/* /Asset /asset /Asset/* /asset/* /Setting/* /Error/* /error/* /user/* /Friend/* /marketplace/* /ownership/* /currency/* /persistence/* /thumbs/* /Thumbs/* /moderation/* /corescripts/* /mobileapi/* /UserCheck/* /Login/* /login/* /device/* /notifications/* /sponsoredpage/* /v1.1/* /my/account/* /my/places.aspx /My/* /IDE/* /ide/* /Data/* /UI/* /universes/* /developerproducts/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
+    @backend path /api/* /uploads/* /Game/* /game/* /Asset /asset /Asset/* /asset/* /Setting/* /Error/* /error/* /user/* /Friend/* /marketplace/* /ownership/* /currency/* /persistence/* /thumbs/* /Thumbs/* /moderation/* /corescripts/* /mobileapi/* /UserCheck/* /Login/* /login/* /device/* /notifications/* /sponsoredpage/* /v1.1/* /my/account/* /My/Places.aspx /IDE/* /ide/* /Data/* /UI/* /universes/* /developerproducts/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
     handle @backend {
         reverse_proxy 127.0.0.1:3000
     }
