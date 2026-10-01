@@ -1,4 +1,4 @@
--- 2021. See through bar, dark round buttons, a dark chat window.
+-- 2021 look on the 2016 scripts: see through bar, dark round buttons, a dark chat window.
 local RobloxGui = game:GetService("CoreGui"):WaitForChild("RobloxGui")
 local DARK = Color3.new(0, 0, 0)
 

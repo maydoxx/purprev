@@ -109,7 +109,7 @@ bun run dev:web
 
 `bun run start` runs the API without the watcher.
 
-Game UI is a per account choice on the settings page. The client's starter script asks `/corescripts/ui` on join and fetches the look from `/corescripts/<year>/`. A look is a folder under `src/server/static/corescripts/`: a `StarterScript.lua` in it replaces the whole 2016 set (2014 is the real 2014 core scripts, fetched by asset id from the same folder), a `Skin.lua` only runs on top of the 2016 scripts (2021). The first comment line is the note on the settings page. 2016 is the bare client.
+Game UI is a per account choice on the settings page. The client's starter script asks `/corescripts/ui` on join and fetches the look from `/corescripts/<year>/`. A look is a folder under `src/server/static/corescripts/`: a `StarterScript.lua` in it replaces the whole 2016 set (2012, 2013 and 2014 are those years' real core scripts, fetched by asset id from the same folder), a `Skin.lua` only runs on top of the 2016 scripts (2021). The first comment line is the note on the settings page. 2016 is the bare client.
 
 `bun run db:seed` puts the default avatars in the catalog, the Man and Woman bundles with their hair, shirt and jeans, owned by the first admin. Every new account gets one of the two and a random skin tone. Items an admin marks as Starter go to everyone on top.
 
