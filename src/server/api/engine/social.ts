@@ -114,19 +114,27 @@ const user = new Elysia({ prefix: "/user" })
         })
     })
 
+const filtered = ({ body }: { body: { text: string } }) => ({
+    data: {
+        white: white(body.text),
+        black: black(body.text)
+    }
+});
+
+const filterBody = t.Object({
+    text: t.String(),
+    userId: t.Optional(t.Numeric())
+});
+
 export const social = new Elysia()
     .use(friend)
     .use(user)
 
 
-    .post("/moderation/filtertext", ({ body }) => ({
-        data: {
-            white: white(body.text),
-            black: black(body.text)
-        }
-    }), {
-        body: t.Object({
-            text: t.String(),
-            userId: t.Optional(t.Numeric())
-        })
+    // the server posts to //moderation/filtertext/, two slashes
+    .post("/moderation/filtertext", filtered, {
+        body: filterBody
+    })
+    .post("//moderation/filtertext", filtered, {
+        body: filterBody
     })
