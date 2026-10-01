@@ -100,7 +100,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
             SuperSafeChat: false,
             CharacterAppearance: appearance,
             ClientTicket: ticket,
-            GameId: placeId,
+            GameId: server.jobId,
             PlaceId: placeId,
             MeasurementUrl: "",
             WaitingForCharacterGuid: "26eb3e21-aa80-475b-a777-b43c3ea5f7d2",
@@ -390,11 +390,14 @@ export const game = new Elysia()
 
     .get("/games/start", ({ query, redirect }) => {
         const placeId = query.placeid ?? query.placeId;
-        return redirect(placeId === undefined ? "/games" : `/game?id=${placeId}`);
+        // a discord join brings the job along
+        const join = query.jobId ? `&join=${encodeURIComponent(query.jobId)}` : "";
+        return redirect(placeId === undefined ? "/games" : `/game?id=${placeId}${join}`);
     }, {
         query: t.Object({
             placeid: t.Optional(t.Numeric()),
-            placeId: t.Optional(t.Numeric())
+            placeId: t.Optional(t.Numeric()),
+            jobId: t.Optional(t.String({ maxLength: 64 }))
         })
     })
 

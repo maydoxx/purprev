@@ -74,6 +74,18 @@
         }
     };
 
+    // ?join=<jobId> is a discord join, press play once
+    let autoJoined = false;
+    $effect(() => {
+        const join = String(router.query.join ?? "");
+        if (!join || autoJoined || !game || !session.me) {
+            return;
+        }
+        autoJoined = true;
+        tab = "servers";
+        play(join);
+    });
+
     const loadServers = async () => {
         servers = await api(`/games/${id}/servers`).catch(() => []);
         vipServers = session.me ? await api(`/games/${id}/vip`).catch(() => []) : [];
