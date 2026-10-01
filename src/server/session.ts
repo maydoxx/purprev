@@ -20,9 +20,10 @@ export type User = {
     social_discord: string;
     social_twitter: string;
     social_youtube: string;
+    game_ui: string;
 };
 
-const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.tix, users.ongoing_action_id, users.membership, users.membership_expires, users.social_discord, users.social_twitter, users.social_youtube`;
+const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.tix, users.ongoing_action_id, users.membership, users.membership_expires, users.social_discord, users.social_twitter, users.social_youtube, users.game_ui`;
 
 export const claimDailyLoginRewards = async (userId: number) => {
     const day = Math.floor(now() / 86400);

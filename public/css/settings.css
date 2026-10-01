@@ -143,6 +143,42 @@
     margin-top: 8px;
 }
 
+.settings-ui-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.settings-ui-option {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid #c6ccd0;
+    border-radius: 2px;
+    color: #68717a;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.settings-ui-option strong {
+    color: #191919;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.settings-ui-option.selected {
+    border-color: #7b2cbf;
+    box-shadow: 0 0 0 1px #7b2cbf inset;
+}
+
+@media (max-width: 767px) {
+    .settings-ui-options {
+        grid-template-columns: 1fr;
+    }
+}
+
 .settings-save-row button,
 .settings-inline-controls button,
 .settings-password-form button,

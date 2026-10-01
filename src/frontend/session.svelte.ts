@@ -14,6 +14,7 @@ export type Me = {
     social_discord: string;
     social_twitter: string;
     social_youtube: string;
+    game_ui: string;
 };
 
 let me = $state<Me | null>(null);

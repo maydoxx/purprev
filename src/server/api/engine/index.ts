@@ -8,6 +8,7 @@ import { persistence } from "./persistence";
 import { settings } from "./settings";
 import { mobile } from "./mobile";
 import { thumbs } from "./thumbs";
+import { corescripts } from "./corescripts";
 
 export const engine = new Elysia()
     .use(asset)
@@ -18,6 +19,7 @@ export const engine = new Elysia()
     .use(settings)
     .use(mobile)
     .use(thumbs)
+    .use(corescripts)
 
     .all("/Error/*", () => "")
     .all("/error/*", () => "")

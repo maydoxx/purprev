@@ -2,13 +2,14 @@
     import { api } from "../api";
     import { session } from "../session.svelte";
 
-    type Tab = "account" | "security" | "privacy" | "billing" | "notifications" | "invites";
+    type Tab = "account" | "security" | "privacy" | "billing" | "notifications" | "gameui" | "invites";
     const tabs: { id: Tab; label: string }[] = [
         { id: "account", label: "Account Info" },
         { id: "security", label: "Security" },
         { id: "privacy", label: "Privacy" },
         { id: "billing", label: "Billing" },
         { id: "notifications", label: "Notifications" },
+        { id: "gameui", label: "Game UI" },
         { id: "invites", label: "Invites" }
     ];
 
@@ -22,6 +23,16 @@
     let socialDiscord = $state(session.me?.social_discord ?? "");
     let socialTwitter = $state(session.me?.social_twitter ?? "");
     let socialYoutube = $state(session.me?.social_youtube ?? "");
+    let gameUi = $state(session.me?.game_ui ?? "2016");
+    let gameUis = $state<{ id: string; note: string }[]>([]);
+
+    // 2016 is the client itself, the rest are skins the site serves
+    fetch("/corescripts/skins").then(r => r.json()).then(list => {
+        gameUis = [...list, {
+            id: "2016",
+            note: "The client as it shipped. Dark top bar with chat, backpack and your health in it."
+        }].sort((a, b) => a.id.localeCompare(b.id));
+    }).catch(() => {});
     let currentPassword = $state("");
     let newPassword = $state("");
     let confirmPassword = $state("");
@@ -188,6 +199,25 @@
                             <p>You are not a Builders Club member.</p>
                             <p class="settings-help">Builders Club gives you daily Nonebux and the club only items in the catalog. <a href="/premium/membership">Upgrade now</a>.</p>
                         {/if}
+                    </div>
+                </section>
+            {:else if tab === "gameui"}
+                <section class="settings-section">
+                    <h2>Game UI</h2>
+                    <div class="settings-card">
+                        <p class="settings-help">How the game looks once you are in it. The client picks this up on the next join.</p>
+                        <div class="settings-ui-options">
+                            {#each gameUis as choice}
+                                <label class="settings-ui-option" class:selected={gameUi === choice.id}>
+                                    <input type="radio" name="gameui" value={choice.id} bind:group={gameUi}>
+                                    <strong>{choice.id}</strong>
+                                    <span>{choice.note}</span>
+                                </label>
+                            {/each}
+                        </div>
+                        <div class="settings-save-row">
+                            <button type="button" disabled={busy} onclick={() => save("/user/settings/gameui", { ui: gameUi }, "Game UI saved.")}>Save</button>
+                        </div>
                     </div>
                 </section>
             {:else if tab === "invites"}

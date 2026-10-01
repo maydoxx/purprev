@@ -16,6 +16,7 @@ const columns: [string, string, string][] = [
     ["users", "social_discord", "varchar(40) NOT NULL DEFAULT ''"],
     ["users", "social_twitter", "varchar(60) NOT NULL DEFAULT ''"],
     ["users", "social_youtube", "varchar(120) NOT NULL DEFAULT ''"],
+    ["users", "game_ui", "enum('2014','2016','2021') NOT NULL DEFAULT '2016'"],
     ["catalog_items", "bc_only", "tinyint(1) NOT NULL DEFAULT 0"],
     ["catalog_items", "tix_price", "int(10) UNSIGNED DEFAULT NULL"],
     ["users", "tix", "int(11) NOT NULL DEFAULT 0"],
