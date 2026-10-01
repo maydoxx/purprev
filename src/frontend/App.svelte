@@ -32,6 +32,8 @@
     import MembershipCheckout from "./pages/MembershipCheckout.svelte";
     import Trade from "./pages/Trade.svelte";
     import Messages from "./pages/Messages.svelte";
+    import Notifications from "./pages/Notifications.svelte";
+    import Money from "./pages/Money.svelte";
     import Groups from "./pages/groups/Groups.svelte";
     import GroupsMy from "./pages/groups/My.svelte";
     import ForumIndex from "./pages/forum/Index.svelte";
@@ -90,6 +92,8 @@
         "membership-checkout": MembershipCheckout,
         trade: Trade,
         messages: Messages,
+        notifications: Notifications,
+        money: Money,
         groups: Groups,
         "groups-my": GroupsMy,
         forum: ForumIndex,
@@ -133,6 +137,8 @@
         "inventory",
         "trade",
         "messages",
+        "notifications",
+        "money",
         "groups-my",
         "forum-new",
         "forum-reply",
@@ -161,7 +167,6 @@
 
     const Page = $derived(pages[router.name] ?? NotFound);
 
-    // the android app draws its own bar, so no header or left nav inside its webview
     const inApp = /ROBLOX (Android|iOS) App/i.test(navigator.userAgent);
 
     $effect(() => {
@@ -184,6 +189,10 @@
             ? "rbx-in-app"
             : landing.includes(router.name)
               ? "none-landing"
+              : router.name === "blog"
+                ? "none-blog"
+                : router.name === "download"
+                  ? "none-download-page"
               : session.me && !bare.includes(router.name)
                 ? "rbx-has-left-nav"
                 : "";
@@ -199,14 +208,14 @@
     });
 </script>
 
-{#if !session.loaded}
-    <!-- nothing till we know who you are, stops the login page flashing -->
-{:else if inApp}
-    <Banners />
-    <Page />
-{:else if landing.includes(router.name) || bare.includes(router.name)}
-    <Page />
-{:else}
-    <Header />
-    <Page />
+{#if session.loaded}
+    {#if inApp}
+        <Banners />
+        <Page />
+    {:else if landing.includes(router.name) || bare.includes(router.name)}
+        <Page />
+    {:else}
+        <Header />
+        <Page />
+    {/if}
 {/if}

@@ -3,7 +3,6 @@ import { session, getUser } from "../../../session";
 import { sql, now } from "../../../db";
 import { clientIp } from "../../../invites";
 
-// same as roblox
 export const USERNAME_PRICE = 1000;
 
 export const changeusername = new Elysia()
@@ -35,7 +34,6 @@ export const changeusername = new Elysia()
             });
         }
 
-        // old names stay reserved
         const [taken] = await sql`SELECT id FROM users WHERE username = ${username}`;
         const [used] = await sql`SELECT id FROM username_history WHERE old_username = ${username} AND user_id != ${user.id}`;
         if (taken || used) {

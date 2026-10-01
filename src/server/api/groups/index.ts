@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { saveImage, UploadError, withThumbnail, mediaUrl } from "../../paths";
+import { notify } from "../../notifications";
 
 const PER_PAGE = 20;
 const MEMBERS_PER_PAGE = 9;
@@ -801,7 +802,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             if (params.id === body.targetId) {
                 throw new GroupError("A group cannot affiliate with itself.");
             }
-            await getGroup(body.targetId);
+            const target = await getGroup(body.targetId);
             const [existing] = await sql`
                 SELECT status FROM group_affiliates
                 WHERE (group_id = ${params.id} AND other_group_id = ${body.targetId}) OR (group_id = ${body.targetId} AND other_group_id = ${params.id})
@@ -810,6 +811,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
                 throw new GroupError("There is already an affiliate request between these groups.");
             }
             await sql`INSERT INTO group_affiliates (group_id, other_group_id, status, requested_at) VALUES (${params.id}, ${body.targetId}, 'pending', ${now()})`;
+            await notify(Number(target.owner_id), user.id, "group_affiliate", body.targetId);
             return {
                 ok: true
             };
@@ -834,6 +836,8 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             if (!changed.affectedRows) {
                 throw new GroupError("Affiliate request not found.");
             }
+            const source = await getGroup(params.targetId);
+            await notify(Number(source.owner_id), user.id, "group_affiliate_accepted", params.id);
             return {
                 ok: true
             };

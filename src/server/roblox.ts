@@ -19,7 +19,6 @@ export const ROBLOX_TYPES: Record<number, string> = {
     47: "Hat"
 };
 
-// torso, arms, legs, hats and accessories, face, mesh head
 const BODY_TYPES = [27, 28, 29, 30, 31, 8, 41, 42, 43, 44, 45, 46, 47, 18, 17];
 
 const fetchJson = async (url: string) => {
@@ -48,7 +47,6 @@ export const lookupRobloxAsset = async (assetId: number) => {
     };
 };
 
-// thumbnails outlive the economy entry
 export const assetThumbnail = async (assetId: number) => {
     const thumbs = await fetchJson(`https://thumbnails.roblox.com/v1/assets?assetIds=${assetId}&size=420x420&format=Png`).catch(() => null);
     const thumb = thumbs?.data?.[0];
@@ -62,7 +60,6 @@ export const lookupRobloxBundle = async (bundleId: number) => {
     }
     const thumbs = await fetchJson(`https://thumbnails.roblox.com/v1/bundles/thumbnails?bundleIds=${bundleId}&size=420x420&format=Png`).catch(() => null);
     const thumb = thumbs?.data?.[0];
-    // newer bundles carry dynamic heads, moods and animations the 2016 client cannot load
     const parts: number[] = [];
     for (const i of (details.items ?? []).filter((i: any) => i.type === "Asset")) {
         const d = await fetchJson(`https://economy.roblox.com/v2/assets/${i.id}/details`).catch(() => null);

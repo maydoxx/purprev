@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { giveStarterItems } from "../../starter";
-import { session, getUser } from "../../session";
+import { session, getUser, claimDailyLoginRewards } from "../../session";
 import { sql, now } from "../../db";
 import { rcc } from "../../rcc";
 import { siteSetting } from "../../settings";
@@ -63,6 +63,7 @@ export const register = new Elysia()
         await giveStarterItems(id);
         rcc.render.avatar(id);
         await login(id);
+        await claimDailyLoginRewards(id);
         return {
             ok: true,
             user: await getUser(id)

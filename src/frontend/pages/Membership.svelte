@@ -27,7 +27,6 @@
 
     const until = (t: number) => new Date(t * 1000).toLocaleDateString("en-US");
 
-    // the 2016 rows, free then bc tbc obc, last flag = the bigger green number
     const big: [string, string, string, string, string, boolean][] = [
         ["Daily NONEBUX", "No", "N$15", "N$35", "N$60", true],
         ["Active Places", "1", "10", "25", "100!", true],

@@ -28,7 +28,6 @@ export const membership = new Elysia({ prefix: "/api/membership" })
         } : null
     }))
 
-    // paid in nonebux, same tier extends, a different tier starts over from today
     .post("/buy", async ({ body, user, status }) => {
         const tier = body.tier;
         const days = PERIODS[body.period];

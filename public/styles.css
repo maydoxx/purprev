@@ -391,6 +391,8 @@ body {
     vertical-align: middle;
 }
 
+.rbx-header .rbx-topbar-badge { position: absolute; top: 1px; right: 1px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px; background: #fff; color: #7b2cbf; font-size: 10px; font-weight: 700; line-height: 16px; }
+
 .rbx-header .rbx-maintenance-bypass {
     float: right;
     margin: 5px 6px 0 0;
@@ -842,7 +844,11 @@ a:hover .icon-nav-shop {
     }
 
     .rbx-header .rbx-navbar-icon-group li {
-        width: 25%;
+        width: 20%;
+    }
+
+    .rbx-header .rbx-navbar-icon-group li>a {
+        padding: 6px 4px;
     }
 
     .rbx-header .rbx-navbar-right {

@@ -360,7 +360,6 @@ export const games = new Elysia({ prefix: "/api/games" })
         })
     })
 
-    // the star on the game page, on again off again
     .post("/:id/favorite", async ({ params, user, status }) => {
         const [game] = await sql`SELECT id FROM games WHERE id = ${params.id}`;
         if (!game) {

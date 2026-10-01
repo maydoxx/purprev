@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { isOnline, friendStatus, friendCount, friendsOf } from "../../friends";
+import { notify } from "../../notifications";
 
 const pendingCount = async (userId: number) => {
     const [row] = await sql`SELECT COUNT(*) AS n FROM friendships WHERE status = 'pending' AND target_id = ${userId}`;
@@ -93,7 +94,10 @@ export const friends = new Elysia({ prefix: "/friends" })
             });
         }
         if (body.follow) {
-            await sql`INSERT IGNORE INTO user_follows (follower_id, followed_id, created_at) VALUES (${user.id}, ${body.userId}, ${now()})`;
+            const inserted = await sql`INSERT IGNORE INTO user_follows (follower_id, followed_id, created_at) VALUES (${user.id}, ${body.userId}, ${now()})`;
+            if (inserted.affectedRows) {
+                await notify(body.userId, user.id, "follow", user.id);
+            }
         } else {
             await sql`DELETE FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${body.userId}`;
         }
@@ -170,10 +174,12 @@ export const friends = new Elysia({ prefix: "/friends" })
 
                 if (current === "pending_in") {
                     await sql`UPDATE friendships SET status = 'accepted', accepted_at = ${now()} WHERE requester_id = ${other} AND target_id = ${me}`;
+                    await notify(other, me, "friend_accepted", me);
                     next = "friends";
                     break;
                 }
                 await sql`INSERT INTO friendships (requester_id, target_id, status, created_at) VALUES (${me}, ${other}, 'pending', ${now()})`;
+                await notify(other, me, "friend_request", me);
                 next = "pending_out";
                 break;
             }
@@ -185,6 +191,7 @@ export const friends = new Elysia({ prefix: "/friends" })
                     });
                 }
                 await sql`UPDATE friendships SET status = 'accepted', accepted_at = ${now()} WHERE requester_id = ${other} AND target_id = ${me}`;
+                await notify(other, me, "friend_accepted", me);
                 next = "friends";
                 break;
             }

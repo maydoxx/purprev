@@ -63,6 +63,7 @@ const item = t.Object({
     category: t.Optional(t.String()),
     asset_id: t.Optional(t.Numeric()),
     price: t.Optional(t.Numeric({ minimum: 0 })),
+    tix_price: t.Optional(t.Numeric({ minimum: 0, maximum: 2000000000 })),
     thumbnail: t.Optional(t.String()),
     is_featured: t.Optional(t.Boolean()),
     is_limited: t.Optional(t.Boolean()),
@@ -251,6 +252,7 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
         category,
         asset_id: assetId,
         price: body.price ?? null,
+        tix_price: body.tix_price ?? null,
         thumbnail,
         is_featured: body.is_featured ? 1 : 0,
         bc_only: body.bc_only ? 1 : 0,
@@ -461,8 +463,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         try {
             const c = await cleanItem(body, null);
             const created = await sql`
-                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, bc_only, is_starter, package_parts, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
-                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_starter}, ${c.package_parts}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()})
+                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, tix_price, thumbnail, is_featured, bc_only, is_starter, package_parts, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
+                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.tix_price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_starter}, ${c.package_parts}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()})
             `;
             const itemId = Number(created.lastInsertRowid);
             if (c.remote !== "") {
@@ -489,7 +491,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             const c = await cleanItem(body, existing);
             await sql`
                 UPDATE catalog_items SET name = ${c.name}, description = ${c.description}, creator_id = ${c.creator_id}, category = ${c.category},
-                    asset_id = ${c.asset_id}, price = ${c.price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured}, bc_only = ${c.bc_only}, is_starter = ${c.is_starter}, package_parts = ${c.package_parts},
+                    asset_id = ${c.asset_id}, price = ${c.price}, tix_price = ${c.tix_price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured}, bc_only = ${c.bc_only}, is_starter = ${c.is_starter}, package_parts = ${c.package_parts},
                     is_limited = ${c.is_limited}, is_limited_unique = ${c.is_limited_unique}, limited_stock = ${c.limited_stock}, updated_at = ${now()}
                 WHERE id = ${params.id}
             `;
@@ -510,7 +512,6 @@ export const admin = new Elysia({ prefix: "/api/admin" })
     })
 
 
-    // manager queues them
     .post("/render/avatars", async ({ user }) => {
         const users = await sql`SELECT id FROM users ORDER BY id ASC`;
         console.log(`admin: ${user.username} queued avatar renders for ${users.length} users`);
@@ -697,7 +698,6 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         })
     })
 
-    // used keys
     .get("/invitekeys/log", ({ query }) => paginate(
         sql`SELECT COUNT(*) AS n FROM invite_log`,
         query.page,
@@ -834,7 +834,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             sql`SELECT COUNT(*) AS n FROM users WHERE ${where}`,
             query.page,
             limit => sql`
-                SELECT users.id, users.username, users.email, users.admin, users.currency, users.ongoing_action_id, users.created_at, users.membership, users.membership_expires,
+                SELECT users.id, users.username, users.email, users.admin, users.currency, users.tix, users.ongoing_action_id, users.created_at, users.membership, users.membership_expires,
                     joined.created_by AS invited_by_id, maker.username AS invited_by,
                     (SELECT COUNT(*) FROM invite_log l WHERE l.created_by = users.id) AS invited
                 FROM users
@@ -849,7 +849,6 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         query: list
     })
 
-    // alt hunting
     .get("/users/:id/history", async ({ params }) => {
         const [joined] = await sql`
             SELECT invite_log.*, maker.username AS creator_name FROM invite_log
@@ -888,7 +887,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
     })
 
     .patch("/users/:id", async ({ params, body, user, status }) => {
-        const [target] = await sql`SELECT admin, currency, membership, membership_expires FROM users WHERE id = ${params.id}`;
+        const [target] = await sql`SELECT admin, currency, tix, membership, membership_expires FROM users WHERE id = ${params.id}`;
         if (!target) {
             return status(400, {
                 error: "User not found."
@@ -896,12 +895,12 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         }
         const adminLevel = Math.max(0, Math.min(255, body.admin_level ?? Number(target.admin)));
         const currency = Math.max(0, body.currency ?? Number(target.currency));
+        const tix = Math.max(0, Math.min(2000000000, body.tix ?? Number(target.tix)));
         if (params.id === user.id && adminLevel < 1) {
             return status(400, {
                 error: "You cannot remove your own admin access here."
             });
         }
-        // days blank = keep the expiry, 0 = never expires
         const membership = body.membership ?? target.membership;
         if (!isTier(membership)) {
             return status(400, {
@@ -914,7 +913,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         } else if (membership !== target.membership) {
             expires = 0;
         }
-        await sql`UPDATE users SET admin = ${adminLevel}, currency = ${currency}, membership = ${membership}, membership_expires = ${expires} WHERE id = ${params.id}`;
+        await sql`UPDATE users SET admin = ${adminLevel}, currency = ${currency}, tix = ${tix}, membership = ${membership}, membership_expires = ${expires} WHERE id = ${params.id}`;
         return {
             ok: true
         };
@@ -924,6 +923,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         body: t.Object({
             admin_level: t.Optional(t.Numeric({ minimum: 0 })),
             currency: t.Optional(t.Numeric({ minimum: 0 })),
+            tix: t.Optional(t.Numeric({ minimum: 0, maximum: 2000000000 })),
             membership: t.Optional(t.String()),
             membership_days: t.Optional(t.Numeric({ minimum: 0 }))
         })

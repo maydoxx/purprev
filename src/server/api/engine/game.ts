@@ -33,7 +33,6 @@ const userFromToken = async (token: string) => {
 };
 
 
-// studio setup, also in the edit script
 export const studioSetup = (site: string) => {
     const social = `${site}/Game/LuaWebService/HandleSocialRequest.ashx?method=`;
     return [
@@ -411,7 +410,6 @@ export const game = new Elysia()
             httpOnly: true,
             sameSite: "lax"
         });
-        // studio wants an empty body
         return text("");
     }, {
         query: t.Object({

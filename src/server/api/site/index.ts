@@ -52,7 +52,6 @@ export const site = new Elysia({ prefix: "/api/site" })
 
     .get("/downloads", () => DOWNLOADS)
 
-    // signup and the invites tab check these
     .get("/settings", async () => ({
         ...await siteSettings(),
         turnstile_site_key: turnstileOn() ? TURNSTILE_SITE_KEY : ""

@@ -25,6 +25,8 @@ const routes: [string, string][] = [
     ["/upgrades/paymentmethods", "membership-checkout"],
     ["/trade", "trade"],
     ["/my/messages", "messages"],
+    ["/my/notifications", "notifications"],
+    ["/my/money", "money"],
     ["/groups", "groups"],
     ["/my/groups", "groups-my"],
     ["/forum", "forum"],
@@ -59,7 +61,6 @@ const routes: [string, string][] = [
 ];
 
 const parse = () => {
-    // paths match case blind, the old site had /Badges and friends capitalised
     const path = (location.pathname.replace(/\/+$/, "") || "/").toLowerCase();
     const query: Record<string, string> = {};
     new URLSearchParams(location.search).forEach((v, k) => {

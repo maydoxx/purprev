@@ -15,6 +15,7 @@
     let error = $state("");
     let sent = $state<Record<number, boolean>>({});
 
+    $effect(() => { term = q; });
     $effect(() => {
         term = q;
     });
@@ -49,10 +50,7 @@
 
     const request = async (userId: number) => {
         try {
-            await api("/user/friends", {
-                action: "request",
-                userId
-            });
+            await api("/user/friends", { action: "request", userId });
             sent[userId] = true;
         } catch (err: any) {
             error = err.message;

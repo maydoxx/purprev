@@ -23,6 +23,7 @@
         category: "Hat",
         asset_id: "",
         price: "",
+        tix_price: "",
         thumbnail: "",
         is_featured: false,
         bc_only: false,
@@ -72,6 +73,7 @@
             category: item.category ?? "Hat",
             asset_id: item.asset_id ?? "",
             price: item.price ?? "",
+            tix_price: item.tix_price ?? "",
             thumbnail: item.thumbnail ?? "",
             is_featured: Number(item.is_featured) === 1,
             bc_only: Number(item.bc_only) === 1,
@@ -97,6 +99,7 @@
                 category: form.category,
                 asset_id: opt(form.asset_id),
                 price: opt(form.price),
+                tix_price: opt(form.tix_price),
                 thumbnail: form.thumbnail,
                 is_featured: form.is_featured,
                 bc_only: form.bc_only,
@@ -204,7 +207,12 @@
                         <div class="col-md-6">
                             <label class="form-label" for="price">Price</label>
                             <input type="number" min="0" class="form-control" id="price" bind:value={form.price} placeholder="Leave blank for Off Sale">
-                            <div class="form-text">0 = Free, blank = Off Sale.</div>
+                            <div class="form-text">Nonebux price. 0 = Free.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="tix-price">Tix price</label>
+                            <input type="number" min="0" max="2000000000" class="form-control" id="tix-price" bind:value={form.tix_price} placeholder="Leave blank for no Tix option">
+                            <div class="form-text">Leave both prices blank for Off Sale.</div>
                         </div>
 
                         <div class="col-12">
@@ -304,7 +312,7 @@
                                 </td>
                                 <td>{item.category}</td>
                                 <td>{item.creator_name || "Unknown"}</td>
-                                <td>{price(item.price)}</td>
+                                <td>{#if item.price !== null}{price(item.price)} Nonebux{/if}{#if item.tix_price !== null}<div>{price(item.tix_price)} Tix</div>{/if}{#if item.price === null && item.tix_price === null}Off Sale{/if}</td>
                                 <td>
                                     {#if Number(item.is_limited_unique) === 1}
                                         <span class="badge text-bg-warning">Limited U</span>

@@ -23,7 +23,6 @@ const load = async (id: number): Promise<(Application & { discord_message_id: st
     } : null;
 };
 
-// only once
 export const decideApplication = async (id: number, approve: boolean, by: string, byUserId: number, byDiscordId = "", reason = "") => {
     const app = await load(id);
     if (!app) {
@@ -284,7 +283,6 @@ export const applications = new Elysia()
         if (interaction.type === 3 && verdict === "deny") {
             return denyModal(Number(idText));
         }
-        // discord gives us 3 seconds
         (async () => {
             const { app, error } = await decideApplication(Number(idText), verdict === "approve", who, 0, interactionUserId(interaction), interaction.type === 5 ? modalReason(interaction) : "");
             if (!app || error) {

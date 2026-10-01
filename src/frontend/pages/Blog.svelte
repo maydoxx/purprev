@@ -23,11 +23,6 @@
     let loaded = $state(false);
 
     $effect(() => {
-        document.body.classList.add("none-blog");
-        return () => document.body.classList.remove("none-blog");
-    });
-
-    $effect(() => {
         loaded = false;
         post = null;
         more = [];

@@ -9,7 +9,6 @@ for (const chunk of schema.split(";")) {
     await sql.unsafe(stmt);
 }
 
-// columns that came later, create table if not exists wont add them to an old db
 const columns: [string, string, string][] = [
     ["users", "membership", "enum('None','BC','TBC','OBC') NOT NULL DEFAULT 'None'"],
     ["users", "membership_expires", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
@@ -18,6 +17,10 @@ const columns: [string, string, string][] = [
     ["users", "social_twitter", "varchar(60) NOT NULL DEFAULT ''"],
     ["users", "social_youtube", "varchar(120) NOT NULL DEFAULT ''"],
     ["catalog_items", "bc_only", "tinyint(1) NOT NULL DEFAULT 0"],
+    ["catalog_items", "tix_price", "int(10) UNSIGNED DEFAULT NULL"],
+    ["users", "tix", "int(11) NOT NULL DEFAULT 0"],
+    ["users", "last_tix_day", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
+    ["users", "last_nonebux_day", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
     ["catalog_items", "is_starter", "tinyint(1) NOT NULL DEFAULT 0"],
     ["catalog_items", "package_parts", "varchar(255) NOT NULL DEFAULT ''"],
     ["games", "created_at", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
@@ -41,7 +44,6 @@ for (const [table, column, definition] of columns) {
     }
 }
 
-// older places never had dates, the place file upload is the best guess for both
 await sql`
     UPDATE games JOIN media ON media.kind = 'places' AND media.id = games.id
     SET games.created_at = media.updated_at, games.updated_at = media.updated_at

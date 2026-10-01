@@ -2,7 +2,6 @@ import { sql, now } from "./db";
 import { friendCount } from "./friends";
 import { membershipOf } from "./membership";
 
-// only what the site can actually track
 export const SITE_BADGES = {
     administrator: "Administrator",
     "welcome-to-the-club": "Welcome To The Club",

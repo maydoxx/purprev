@@ -1,7 +1,6 @@
 const SECRET = process.env.TURNSTILE_SECRET_KEY ?? "";
 export const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY ?? "";
 
-// no secret, no captcha
 export const turnstileOn = () => SECRET !== "" && TURNSTILE_SITE_KEY !== "";
 
 export const verifyTurnstile = async (token: string | undefined, ip: string) => {

@@ -16,7 +16,6 @@ const ASSET_MAX = 20 * 1024 * 1024;
 const PER_PAGE_MAX = 50;
 const USER_SET = 1000000;
 
-// NewAsset.ashx type numbers
 const ASSET_TYPES: Record<number, string> = {
     1: "Image",
     4: "Mesh",
@@ -44,7 +43,6 @@ const json = (data: unknown) =>
         }
     });
 
-// studio gzips over 256 bytes
 const unpack = (bytes: Uint8Array<ArrayBuffer>) => {
     if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
         return Bun.gunzipSync(bytes);
@@ -127,7 +125,6 @@ export const studio = new Elysia()
     .get("/game/GetCurrentUser.ashx", ({ user }) => text(user ? String(user.id) : "null"))
     .get("/Game/GetCurrentUser.ashx", ({ user }) => text(user ? String(user.id) : "null"))
 
-    // gets the cookie into the other layer
     .get("/login/RequestAuth.ashx", ({ user, token, status }) => user && token ? text(`${SITE_URL}/Login/Negotiate.ashx?suggest=${token}`) : status(403, ""))
     .get("/Login/RequestAuth.ashx", ({ user, token, status }) => user && token ? text(`${SITE_URL}/Login/Negotiate.ashx?suggest=${token}`) : status(403, ""))
 
@@ -141,7 +138,6 @@ export const studio = new Elysia()
     })
 
 
-    // studio puts recent files in the query
     .get("/ide/welcome", async ({ user, request }) => {
         const params = new URL(request.url).searchParams;
         const paths = params.getAll("filepath");
@@ -160,7 +156,6 @@ export const studio = new Elysia()
     .get("/my/places.aspx", ({ redirect }) => redirect("/ide/welcome", 302))
 
 
-    // place files are public anyway, upload checks the owner
     .get("/Game/edit.ashx", async ({ query, user, status }) => {
         const placeId = num(query.PlaceID, query.placeId, query.placeid);
         const game = placeId ? await placeInfo(placeId) : null;
@@ -190,7 +185,6 @@ export const studio = new Elysia()
     })
 
 
-    // a place is its own universe
     .get("/universes/get-universe-containing-place", async ({ query }) => {
         const placeId = num(query.placeId, query.placeid, query.PlaceId);
         const game = placeId ? await placeInfo(placeId) : null;

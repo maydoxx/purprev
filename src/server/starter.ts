@@ -10,7 +10,6 @@ type StarterSet = {
     items: Piece[];
 };
 
-// the 2014 defaults, bundle ids and part ids from roblox
 export const STARTER_SETS: StarterSet[] = [
     {
         bundle: 238,
@@ -48,7 +47,6 @@ const starterColors = async (userId: number) => {
     `;
 };
 
-// one of the sets plus whatever admins flagged as starter
 export const giveStarterItems = async (userId: number) => {
     await starterColors(userId);
     const set = pick(STARTER_SETS);
@@ -87,7 +85,6 @@ const create = async (creator: number, i: Seed) => {
     console.log(`${i.category} ${i.name} -> ${id}`);
 };
 
-// puts the sets in the catalog, free, owned by the first admin
 export const seedStarterItems = async () => {
     const [owner] = await sql`SELECT id FROM users ORDER BY admin DESC, id ASC LIMIT 1`;
     if (!owner) {

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS `catalog_items` (
     ) NOT NULL,
     `asset_id` bigint(20) UNSIGNED DEFAULT NULL,
     `price` int(10) UNSIGNED DEFAULT NULL,
+    `tix_price` int(10) UNSIGNED DEFAULT NULL,
     `thumbnail` varchar(255) NOT NULL DEFAULT '',
     `is_featured` tinyint(1) NOT NULL DEFAULT 0,
     `is_limited` tinyint(1) NOT NULL DEFAULT 0,
@@ -105,6 +106,19 @@ CREATE TABLE IF NOT EXISTS `messages` (
     KEY `idx_messages_unread` (`recipient_id`, `is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `notifications` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `actor_id` int(10) UNSIGNED NOT NULL,
+    `kind` varchar(32) NOT NULL,
+    `target_id` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+    `is_read` tinyint(1) NOT NULL DEFAULT 0,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `user_unread` (`user_id`,`is_read`,`created_at`),
+    KEY `user_created` (`user_id`,`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `moderation_actions` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` int(10) UNSIGNED NOT NULL,
@@ -134,6 +148,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     `about` text DEFAULT NULL,
     `admin` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
     `currency` int(11) NOT NULL DEFAULT 0,
+    `tix` int(11) NOT NULL DEFAULT 0,
+    `last_tix_day` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `last_nonebux_day` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `ongoing_action_id` int(10) UNSIGNED DEFAULT NULL,
     `lastInviteKeyCreated` int(10) UNSIGNED NOT NULL DEFAULT 0,
     `lastOnlineSite` int(10) UNSIGNED DEFAULT NULL,
@@ -522,7 +539,6 @@ CREATE TABLE IF NOT EXISTS `media` (
     PRIMARY KEY (`kind`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- admin toggles, registration_enabled and invites_enabled
 CREATE TABLE IF NOT EXISTS `applications` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` varchar(20) NOT NULL,
@@ -559,7 +575,6 @@ CREATE TABLE IF NOT EXISTS `site_settings` (
     PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- every used invite key, who made it and who signed up with it from where
 CREATE TABLE IF NOT EXISTS `invite_log` (
     `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `inviteKey` char(32) NOT NULL,

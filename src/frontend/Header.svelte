@@ -8,13 +8,30 @@
     let suggestions = $state<any[]>([]);
     let searchFocused = $state(false);
     let pending = $state(0);
+    let unread = $state(0);
     let navOpen = $state(false);
 
     $effect(() => {
         if (!session.me) return;
-        api("/user/friends?tab=requests").then(d => {
-            pending = d.pendingCount;
-        }).catch(() => {});
+        const refresh = () => {
+            api("/user/friends?tab=requests").then(d => pending = d.pendingCount).catch(() => {});
+            api("/notifications/count").then(d => unread = d.unread).catch(() => {});
+        };
+        refresh();
+        window.addEventListener("notifications:refresh", refresh);
+        const timer = setInterval(refresh, 30000);
+        return () => { window.removeEventListener("notifications:refresh", refresh); clearInterval(timer); };
+    });
+
+    $effect(() => {
+        const term = q.trim();
+        if (!term) { suggestions = []; return; }
+        const timer = setTimeout(() => {
+            api(`/site/search/suggestions?q=${encodeURIComponent(term)}`).then(d => {
+                if (q.trim() === term) suggestions = Array.isArray(d) ? d : [];
+            }).catch(() => { suggestions = []; });
+        }, 180);
+        return () => clearTimeout(timer);
     });
 
     $effect(() => {
@@ -102,9 +119,21 @@
                         </ul>
                     </li>
                     <li>
+                        <a href="/my/money" title="Tix balance" aria-label={`Tix balance: ${(session.me.tix ?? 0).toLocaleString()}`}>
+                            <span class="icon-nav-tix"></span>
+                            <span class="rbx-text-navbar-right">{(session.me.tix ?? 0).toLocaleString()}</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="/upgrades/nonebux" title="Nonebux">
                             <span class="icon-nav-robux"></span>
                             <span class="rbx-text-navbar-right">{session.me.currency.toLocaleString()}</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/my/notifications" title="Notifications" aria-label={`Notifications: ${unread} unread`}>
+                            <span class="icon-nav-message"></span>
+                            {#if unread > 0}<span class="rbx-topbar-badge">{badge(unread)}</span>{/if}
                         </a>
                     </li>
                 </ul>

@@ -8,10 +8,6 @@
         if (Array.isArray(d)) downloads = d;
     }).catch(() => {});
 
-    $effect(() => {
-        document.body.classList.add("none-download-page");
-        return () => document.body.classList.remove("none-download-page");
-    });
 </script>
 
 <svelte:head>

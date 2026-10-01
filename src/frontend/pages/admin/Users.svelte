@@ -14,7 +14,6 @@
     let users = $state<any[]>([]);
     let flash = $state<Flash>(null);
 
-    // one open row
     let open = $state(0);
     let edit = $state<any>(null);
     let history = $state<any>(null);
@@ -49,6 +48,7 @@
         edit = {
             admin: Number(u.admin),
             currency: Number(u.currency),
+            tix: Number(u.tix),
             membership: u.membership ?? "None",
             membership_days: ""
         };
@@ -70,6 +70,7 @@
             await api(`/admin/users/${u.id}`, {
                 admin_level: Number(edit.admin),
                 currency: Number(edit.currency),
+                tix: Number(edit.tix),
                 membership: edit.membership,
                 membership_days: edit.membership_days === "" ? undefined : Number(edit.membership_days)
             }, "PATCH");
@@ -121,6 +122,7 @@
                         <th>User</th>
                         <th>Status</th>
                         <th>Nonebux</th>
+                        <th>Tix</th>
                         <th>Invited by</th>
                         <th>Joined</th>
                         <th></th>
@@ -145,6 +147,7 @@
                                 {#if u.ongoing_action_id == null && Number(u.admin) === 0 && !club(u)}<span class="admin-muted">—</span>{/if}
                             </td>
                             <td>{num(u.currency)}</td>
+                            <td>{num(u.tix)}</td>
                             <td>
                                 {#if u.invited_by}<a href="/user?id={u.invited_by_id}">{u.invited_by}</a>{:else}<span class="admin-muted">—</span>{/if}
                                 {#if Number(u.invited) > 0}<div class="admin-muted">brought {u.invited}</div>{/if}
@@ -157,7 +160,7 @@
                         </tr>
                         {#if open === u.id && edit}
                             <tr class="admin-editor">
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="row g-3 align-items-end mb-3">
                                         <div class="col-sm-3 col-lg-2">
                                             <label for="admin-{u.id}">Admin level</label>
@@ -166,6 +169,10 @@
                                         <div class="col-sm-4 col-lg-2">
                                             <label for="bux-{u.id}">Nonebux</label>
                                             <input id="bux-{u.id}" type="number" class="form-control" min="0" bind:value={edit.currency}>
+                                        </div>
+                                        <div class="col-sm-4 col-lg-2">
+                                            <label for="tix-{u.id}">Tix</label>
+                                            <input id="tix-{u.id}" type="number" class="form-control" min="0" max="2000000000" bind:value={edit.tix}>
                                         </div>
                                         <div class="col-sm-3 col-lg-2">
                                             <label for="club-{u.id}">Builders Club</label>
@@ -221,7 +228,7 @@
                             </tr>
                         {/if}
                     {:else}
-                        <tr><td colspan="6" class="admin-empty">No users found.</td></tr>
+                        <tr><td colspan="7" class="admin-empty">No users found.</td></tr>
                     {/each}
                 </tbody>
             </table>

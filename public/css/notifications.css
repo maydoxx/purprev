@@ -1,0 +1,41 @@
+.notifications-page,.money-page{max-width:960px;margin:0 auto;padding:24px 16px;color:#191919}
+.notifications-page h1,.money-page h1{font-size:32px;font-weight:300;margin:0 0 16px}
+.notifications-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.notifications-heading button{border:1px solid #aaa;background:#fff;padding:7px 14px;cursor:pointer}
+.notifications-heading button:disabled{opacity:.5;cursor:default}
+.notifications-list{list-style:none;padding:0;margin:0;background:#fff;box-shadow:0 1px 3px #0002}
+.notifications-list li+li{border-top:1px solid #e2e2e2}
+.notifications-list li.unread{border-left:4px solid #7b2cbf;background:#fbf7ff}
+.notifications-list a{display:flex;align-items:center;gap:14px;padding:14px;color:#191919;text-decoration:none}
+.notifications-list a:hover{background:#f5effb}
+.notifications-list img{width:48px;height:48px;object-fit:cover;background:#eee}
+.notifications-list span{display:flex;flex-direction:column;gap:5px}
+.notifications-list small{color:#888}
+.notifications-empty{padding:55px;text-align:center;background:#fff;color:#777}
+.notifications-error{color:#c44}
+.notifications-pages{display:flex;justify-content:center;gap:5px;margin-top:18px}
+.notifications-pages a{padding:6px 11px;background:#fff;color:#7b2cbf;text-decoration:none}
+.notifications-pages a.active{background:#7b2cbf;color:#fff}
+.money-balances{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:20px}
+.money-balances section{display:flex;align-items:center;gap:14px;padding:20px;background:#fff;box-shadow:0 1px 3px #0002}
+.money-balances .icon-nav-robux,.money-balances .icon-nav-tix{flex:none}
+.money-balances h2{font-size:17px;font-weight:400;margin:0 0 6px}
+.money-balances strong{font-size:27px;font-weight:400}
+.money-exchange{padding:24px;background:#fff;box-shadow:0 1px 3px #0002}
+.money-exchange-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;border-bottom:1px solid #dedede;padding-bottom:14px}
+.money-exchange-heading h2{margin:0;font-size:24px;font-weight:400}
+.money-exchange-rate{color:#6c338e;font-size:18px;font-weight:600}
+.money-exchange label{display:block;margin-bottom:8px;font-weight:600}
+.money-exchange-controls{display:flex;align-items:center;gap:14px}
+.money-exchange-controls input{width:160px;min-width:0;height:40px;padding:7px 10px;border:1px solid #aaa;background:#fff;color:#191919;font:inherit}
+.money-exchange-arrow{color:#888;font-size:24px}
+.money-exchange-controls output{min-width:0;flex:1;color:#00a651;font-size:20px;font-weight:600}
+.money-exchange-controls button{min-width:140px;min-height:40px;border:0;border-radius:3px;background:#7b2cbf;color:#fff;font:600 17px/1 Arial,sans-serif;cursor:pointer}
+.money-exchange-controls button:hover:not(:disabled){background:#6922a4}
+.money-exchange-controls button:disabled{background:#aaa;cursor:default}
+.money-exchange-hint{margin:10px 0 0;color:#777;font-size:14px}
+.money-exchange-message{margin:18px 0 0;color:#168847}
+.money-exchange-message.error{color:#bb3434}
+.money-daily-note{margin-top:20px;color:#666}
+@media(max-width:560px){.money-balances{grid-template-columns:1fr}.notifications-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:560px){.money-exchange-heading{align-items:flex-start;flex-direction:column}.money-exchange-controls{flex-wrap:wrap}.money-exchange-controls input{flex:1}.money-exchange-controls output{flex:1 0 calc(100% - 40px)}.money-exchange-controls button{width:100%}}

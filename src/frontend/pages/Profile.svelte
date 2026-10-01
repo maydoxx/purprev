@@ -10,7 +10,6 @@
         } catch {}
     };
 
-    // ids on /Badges
     const badgeAnchor: Record<string, number> = {
         administrator: 1,
         friendship: 2,

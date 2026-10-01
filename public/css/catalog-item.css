@@ -20,10 +20,17 @@
 .catalog-field-label, .catalog-item-fields dt { color: #b8b8b8; font-weight: 600; font-size: 16px; padding-top: 1px; }
 .catalog-item-price-details { min-width: 0; }
 .catalog-price { display: flex; align-items: center; gap: 4px; color: #00bf56; font-size: 24px; line-height: 28px; font-weight: 600; white-space: nowrap; }
-.catalog-currency { display: inline-block; flex-shrink: 0; width: 23px; height: 23px; background: currentColor; -webkit-mask: url("/img/nonebux-icon.png") center / contain no-repeat; mask: url("/img/nonebux-icon.png") center / contain no-repeat; vertical-align: -3px; }
+.catalog-currency { display: inline-block; flex-shrink: 0; width: 23px; height: 23px; background: url("/img/nonebux-green.png") center / contain no-repeat; vertical-align: -3px; }
+.catalog-tix-price { color: #7b2cbf; font-size: 20px; }
+.catalog-tix-price::before { content: ""; display: inline-block; width: 20px; height: 20px; margin-right: 4px; vertical-align: -3px; background: url("/img/tix-gold.png") center / contain no-repeat; }
+.catalog-buy-options { display: flex; flex-direction: column; gap: 8px; }
+.catalog-tix-label { display: inline-block; margin-left: 8px; color: #7b2cbf; font-weight: 600; }
+.catalog-tix-label::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 3px; vertical-align: -2px; background: url("/img/tix-gold.png") center / contain no-repeat; }
 .catalog-reseller-link { display: block; margin-top: 6px; font-size: 14px; font-weight: 300; white-space: nowrap; }
 .catalog-item-page .catalog-buy-button { display: block; width: 100%; padding: 14px 10px; border: 0; border-radius: 3px; background: #28b753; color: #fff; font: 600 20px/25px "Source Sans Pro", Arial, sans-serif; text-align: center; text-decoration: none; cursor: pointer; }
 .catalog-item-page .catalog-buy-button:hover { background: #20a64a; text-decoration: none; }
+.catalog-item-page .catalog-buy-button.catalog-buy-tix { background: #7b2cbf; }
+.catalog-item-page .catalog-buy-button.catalog-buy-tix:hover { background: #6922a4; }
 .catalog-item-page .catalog-buy-button:disabled { background: #b8b8b8; cursor: default; }
 .catalog-owned-label { display: block; color: #00bf56; padding: 14px 0; text-align: center; }
 .catalog-offsale { color: #757575; font-size: 16px; }

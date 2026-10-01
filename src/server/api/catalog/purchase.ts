@@ -18,14 +18,16 @@ export const purchase = new Elysia()
                 if (owned) {
                     throw new PurchaseError("You already own this item");
                 }
-                if (item.price === null) {
+                const method = body.currency ?? "nonebux";
+                const priceValue = method === "tix" ? item.tix_price : item.price;
+                if (priceValue === null) {
                     throw new PurchaseError("This item is off sale");
                 }
                 if (item.bc_only && user.membership === "None") {
                     throw new PurchaseError("This item is for Builders Club members only");
                 }
 
-                const price = Number(item.price);
+                const price = Number(priceValue);
                 let serial: number | null = null;
 
                 if (item.is_limited_unique) {
@@ -37,15 +39,19 @@ export const purchase = new Elysia()
                     serial = sold + 1;
                 }
 
-                const [me] = await tx`SELECT currency FROM users WHERE id = ${user.id} FOR UPDATE`;
-                if (Number(me.currency) < price) {
-                    throw new PurchaseError("You do not have enough currency for this item");
+                const [me] = await tx`SELECT currency, tix FROM users WHERE id = ${user.id} FOR UPDATE`;
+                if (Number(method === "tix" ? me.tix : me.currency) < price) {
+                    throw new PurchaseError(`You do not have enough ${method === "tix" ? "Tix" : "Nonebux"} for this item`);
                 }
 
                 if (price > 0) {
-                    await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id}`;
+                    const debit = method === "tix"
+                        ? await tx`UPDATE users SET tix = tix - ${price} WHERE id = ${user.id} AND tix >= ${price}`
+                        : await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id} AND currency >= ${price}`;
+                    if (!debit.affectedRows) throw new PurchaseError("Your balance changed. Please try again.");
                     if (item.creator_id && item.creator_id !== user.id) {
-                        await tx`UPDATE users SET currency = currency + ${price} WHERE id = ${item.creator_id}`;
+                        if (method === "tix") await tx`UPDATE users SET tix = LEAST(tix + ${price}, 2147483647) WHERE id = ${item.creator_id}`;
+                        else await tx`UPDATE users SET currency = currency + ${price} WHERE id = ${item.creator_id}`;
                     }
                 }
                 if (serial !== null) {
@@ -54,12 +60,12 @@ export const purchase = new Elysia()
 
                 await tx`INSERT INTO user_items (user_id, item_id, wearing, purchased_at, serial_number) VALUES (${user.id}, ${body.itemId}, 0, ${now()}, ${serial})`;
 
-                return Number(me.currency) - price;
+                return { balance: Number(me.currency) - (method === "nonebux" ? price : 0), tixBalance: Number(me.tix) - (method === "tix" ? price : 0) };
             });
 
             return {
                 ok: true,
-                balance
+                ...balance
             };
         } catch (err) {
             if (err instanceof PurchaseError) {
@@ -72,6 +78,7 @@ export const purchase = new Elysia()
     }, {
         auth: true,
         body: t.Object({
-            itemId: t.Numeric()
+            itemId: t.Numeric(),
+            currency: t.Optional(t.Union([t.Literal("nonebux"), t.Literal("tix")]))
         })
     })

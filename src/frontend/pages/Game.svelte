@@ -60,12 +60,10 @@
         }).catch(() => {});
     });
 
-    // the app is a webview, it watches for /games/start?placeid= and launches the game itself
     const isApp = /ROBLOX (Android|iOS) App/i.test(navigator.userAgent);
     const isPhone = !isApp && /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
     const isAndroid = isPhone && /Android/i.test(navigator.userAgent);
 
-    // opens nonerev-launcher: which NoneRevLauncher.exe registered, the launcher reads the site url from placelauncherurl
     const play = async (jobId = "") => {
         try {
             const d = await api(`/games/${id}/launch${jobId ? `?jobId=${encodeURIComponent(jobId)}` : ""}`);
