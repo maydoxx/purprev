@@ -24,14 +24,17 @@
     let socialTwitter = $state(session.me?.social_twitter ?? "");
     let socialYoutube = $state(session.me?.social_youtube ?? "");
     let gameUi = $state(session.me?.game_ui ?? "2016");
-    let gameUis = $state<{ id: string; note: string }[]>([]);
+    const bareClient = {
+        id: "2016",
+        note: "The client as it shipped. Dark top bar with chat, backpack and your health in it."
+    };
+    let gameUis = $state<{ id: string; note: string }[]>([bareClient]);
 
     // 2016 is the client itself, the rest are skins the site serves
-    fetch("/corescripts/skins").then(r => r.json()).then(list => {
-        gameUis = [...list, {
-            id: "2016",
-            note: "The client as it shipped. Dark top bar with chat, backpack and your health in it."
-        }].sort((a, b) => a.id.localeCompare(b.id));
+    fetch("/corescripts/skins").then(r => r.ok ? r.json() : []).then(list => {
+        if (Array.isArray(list)) {
+            gameUis = [...list, bareClient].sort((a, b) => a.id.localeCompare(b.id));
+        }
     }).catch(() => {});
     let currentPassword = $state("");
     let newPassword = $state("");
