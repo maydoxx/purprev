@@ -161,7 +161,6 @@ CREATE TABLE IF NOT EXISTS `users` (
     `social_discord` varchar(40) NOT NULL DEFAULT '',
     `social_twitter` varchar(60) NOT NULL DEFAULT '',
     `social_youtube` varchar(120) NOT NULL DEFAULT '',
-    `game_ui` enum('2014','2016','2021') NOT NULL DEFAULT '2016',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_users_username` (`username`),
     UNIQUE KEY `uq_users_email` (`email`)
