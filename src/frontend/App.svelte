@@ -193,9 +193,9 @@
                 ? "none-blog"
                 : router.name === "download"
                   ? "none-download-page"
-              : session.me && !bare.includes(router.name)
-                ? "rbx-has-left-nav"
-                : "";
+                  : session.me && !bare.includes(router.name)
+                    ? "rbx-has-left-nav"
+                    : "";
     });
 
     $effect(() => {

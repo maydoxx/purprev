@@ -48,10 +48,15 @@ export const purchase = new Elysia()
                     const debit = method === "tix"
                         ? await tx`UPDATE users SET tix = tix - ${price} WHERE id = ${user.id} AND tix >= ${price}`
                         : await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id} AND currency >= ${price}`;
-                    if (!debit.affectedRows) throw new PurchaseError("Your balance changed. Please try again.");
+                    if (!debit.affectedRows) {
+                        throw new PurchaseError("Your balance changed. Please try again.");
+                    }
                     if (item.creator_id && item.creator_id !== user.id) {
-                        if (method === "tix") await tx`UPDATE users SET tix = LEAST(tix + ${price}, 2147483647) WHERE id = ${item.creator_id}`;
-                        else await tx`UPDATE users SET currency = currency + ${price} WHERE id = ${item.creator_id}`;
+                        if (method === "tix") {
+                            await tx`UPDATE users SET tix = LEAST(tix + ${price}, 2147483647) WHERE id = ${item.creator_id}`;
+                        } else {
+                            await tx`UPDATE users SET currency = currency + ${price} WHERE id = ${item.creator_id}`;
+                        }
                     }
                 }
                 if (serial !== null) {
@@ -60,7 +65,10 @@ export const purchase = new Elysia()
 
                 await tx`INSERT INTO user_items (user_id, item_id, wearing, purchased_at, serial_number) VALUES (${user.id}, ${body.itemId}, 0, ${now()}, ${serial})`;
 
-                return { balance: Number(me.currency) - (method === "nonebux" ? price : 0), tixBalance: Number(me.tix) - (method === "tix" ? price : 0) };
+                return {
+                    balance: Number(me.currency) - (method === "nonebux" ? price : 0),
+                    tixBalance: Number(me.tix) - (method === "tix" ? price : 0)
+                };
             });
 
             return {
@@ -79,6 +87,9 @@ export const purchase = new Elysia()
         auth: true,
         body: t.Object({
             itemId: t.Numeric(),
-            currency: t.Optional(t.Union([t.Literal("nonebux"), t.Literal("tix")]))
+            currency: t.Optional(t.Union([
+                t.Literal("nonebux"),
+                t.Literal("tix")
+            ]))
         })
     })

@@ -31,13 +31,28 @@
     };
 </script>
 
-<svelte:head><title>My Money - NoneRev</title><link rel="stylesheet" href="/css/notifications.css"></svelte:head>
+<svelte:head>
+    <title>My Money - NoneRev</title>
+    <link rel="stylesheet" href="/css/notifications.css">
+</svelte:head>
 
 <main class="rbx-content money-page">
     <h1>My Money</h1>
     <div class="money-balances">
-        <section><span class="icon-nav-robux" aria-hidden="true"></span><div><h2>Nonebux</h2><strong>{(session.me?.currency ?? 0).toLocaleString()}</strong></div></section>
-        <section><span class="icon-nav-tix" aria-hidden="true"></span><div><h2>Tix</h2><strong>{(session.me?.tix ?? 0).toLocaleString()}</strong></div></section>
+        <section>
+            <span class="icon-nav-robux" aria-hidden="true"></span>
+            <div>
+                <h2>Nonebux</h2>
+                <strong>{(session.me?.currency ?? 0).toLocaleString()}</strong>
+            </div>
+        </section>
+        <section>
+            <span class="icon-nav-tix" aria-hidden="true"></span>
+            <div>
+                <h2>Tix</h2>
+                <strong>{(session.me?.tix ?? 0).toLocaleString()}</strong>
+            </div>
+        </section>
     </div>
     <section class="money-exchange">
         <div class="money-exchange-heading">
@@ -54,7 +69,9 @@
             </div>
             <p class="money-exchange-hint">Enter a multiple of 10. You can exchange up to {available.toLocaleString()} Tix.</p>
         </form>
-        {#if message}<p class="money-exchange-message" class:error role="status">{message}</p>{/if}
+        {#if message}
+            <p class="money-exchange-message" class:error role="status">{message}</p>
+        {/if}
     </section>
     <p class="money-daily-note">Log in each UTC day to receive 10 Tix and 5 Nonebux. You can also spend Tix on eligible items in the <a href="/catalog">Catalog</a>.</p>
 </main>

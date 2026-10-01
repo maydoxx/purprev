@@ -312,7 +312,17 @@
                                 </td>
                                 <td>{item.category}</td>
                                 <td>{item.creator_name || "Unknown"}</td>
-                                <td>{#if item.price !== null}{price(item.price)} Nonebux{/if}{#if item.tix_price !== null}<div>{price(item.tix_price)} Tix</div>{/if}{#if item.price === null && item.tix_price === null}Off Sale{/if}</td>
+                                <td>
+                                    {#if item.price !== null}
+                                        {price(item.price)} Nonebux
+                                    {/if}
+                                    {#if item.tix_price !== null}
+                                        <div>{price(item.tix_price)} Tix</div>
+                                    {/if}
+                                    {#if item.price === null && item.tix_price === null}
+                                        Off Sale
+                                    {/if}
+                                </td>
                                 <td>
                                     {#if Number(item.is_limited_unique) === 1}
                                         <span class="badge text-bg-warning">Limited U</span>

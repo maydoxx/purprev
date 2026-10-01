@@ -112,9 +112,13 @@
                 {:else if item.price !== null && Number(item.price) === 0}
                     <span class="catalog-free">Free</span>
                 {:else}
-                    {#if item.price !== null}<span class="robux">{Number(item.price).toLocaleString()}</span>{/if}
+                    {#if item.price !== null}
+                        <span class="robux">{Number(item.price).toLocaleString()}</span>
+                    {/if}
                 {/if}
-                {#if item.tix_price !== null}<span class="catalog-tix-label">{Number(item.tix_price).toLocaleString()} Tix</span>{/if}
+                {#if item.tix_price !== null}
+                    <span class="catalog-tix-label">{Number(item.tix_price).toLocaleString()} Tix</span>
+                {/if}
             </div>
         </div>
     </article>

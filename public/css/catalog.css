@@ -840,18 +840,47 @@ span.robux::before {
 }
 
 @media (max-width: 1050px) {
-    #catalog .catalog-card { grid-column: span 3; }
-    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) { grid-column: span 3; }
+    #catalog .catalog-card {
+        grid-column: span 3;
+    }
+
+    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) {
+        grid-column: span 3;
+    }
 }
 
 @media (max-width: 850px) {
-    #catalog .catalog-card { grid-column: span 4; }
-    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) { grid-column: span 6; }
+    #catalog .catalog-card {
+        grid-column: span 4;
+    }
+
+    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) {
+        grid-column: span 6;
+    }
 }
 
 @media (max-width: 600px) {
-    #catalog .catalog-card { grid-column: span 6; }
-    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) { grid-column: span 6; }
+    #catalog .catalog-card {
+        grid-column: span 6;
+    }
+
+    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) {
+        grid-column: span 6;
+    }
 }
-.catalog-card-price .catalog-tix-label { margin-left: 6px; color: #7b2cbf; font-weight: 600; }
-.catalog-card-price .catalog-tix-label::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 3px; vertical-align: -2px; background: url("/img/tix-gold.png") center / contain no-repeat; }
+
+.catalog-card-price .catalog-tix-label {
+    margin-left: 6px;
+    color: #7b2cbf;
+    font-weight: 600;
+}
+
+.catalog-card-price .catalog-tix-label::before {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 3px;
+    vertical-align: -2px;
+    background: url("/img/tix-gold.png") center / contain no-repeat;
+}

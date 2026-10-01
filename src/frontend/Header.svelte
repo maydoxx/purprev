@@ -14,24 +14,20 @@
     $effect(() => {
         if (!session.me) return;
         const refresh = () => {
-            api("/user/friends?tab=requests").then(d => pending = d.pendingCount).catch(() => {});
-            api("/notifications/count").then(d => unread = d.unread).catch(() => {});
+            api("/user/friends?tab=requests").then(d => {
+                pending = d.pendingCount;
+            }).catch(() => {});
+            api("/notifications/count").then(d => {
+                unread = d.unread;
+            }).catch(() => {});
         };
         refresh();
         window.addEventListener("notifications:refresh", refresh);
         const timer = setInterval(refresh, 30000);
-        return () => { window.removeEventListener("notifications:refresh", refresh); clearInterval(timer); };
-    });
-
-    $effect(() => {
-        const term = q.trim();
-        if (!term) { suggestions = []; return; }
-        const timer = setTimeout(() => {
-            api(`/site/search/suggestions?q=${encodeURIComponent(term)}`).then(d => {
-                if (q.trim() === term) suggestions = Array.isArray(d) ? d : [];
-            }).catch(() => { suggestions = []; });
-        }, 180);
-        return () => clearTimeout(timer);
+        return () => {
+            window.removeEventListener("notifications:refresh", refresh);
+            clearInterval(timer);
+        };
     });
 
     $effect(() => {
@@ -133,7 +129,9 @@
                     <li>
                         <a href="/my/notifications" title="Notifications" aria-label={`Notifications: ${unread} unread`}>
                             <span class="icon-nav-message"></span>
-                            {#if unread > 0}<span class="rbx-topbar-badge">{badge(unread)}</span>{/if}
+                            {#if unread > 0}
+                                <span class="rbx-topbar-badge">{badge(unread)}</span>
+                            {/if}
                         </a>
                     </li>
                 </ul>
