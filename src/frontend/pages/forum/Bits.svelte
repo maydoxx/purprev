@@ -1,28 +1,34 @@
 <script module lang="ts">
     import { forumUrl } from "./common";
 
-    export { topLinks, breadcrumb, pager, body };
+    export { top, breadcrumb, pager, body };
 </script>
 
-{#snippet topLinks()}
-    <div class="forum-top-links">
-        <a href="/forum">Home</a>
-        <span>|</span>
-        <a href="/forum/search">Search</a>
-        <span>|</span>
-        <a href="/my/forums">MyForums</a>
+{#snippet top(category?: any, tail?: string)}
+    <div class="forum-top">
+        {#if category || tail}
+            {@render breadcrumb(category, tail)}
+        {/if}
+        <div class="forum-links">
+            <a href="/forum">Home</a>
+            <a href="/forum/search">Search</a>
+            <a href="/my/forums">MyForums</a>
+        </div>
     </div>
 {/snippet}
 
 {#snippet breadcrumb(category?: any, tail?: string)}
-    <div class="forum-breadcrumb">
+    <div class="forum-crumbs">
         <a href="/forum">None Forum</a>
         {#if category}
-            <span>»</span><a href="/forum#{encodeURIComponent(category.section)}">{category.section}</a>
-            <span>»</span><a href={forumUrl(category.id)}>{category.name}</a>
+            »
+            <a href="/forum#{encodeURIComponent(category.section)}">{category.section}</a>
+            »
+            <a href={forumUrl(category.id)}>{category.name}</a>
         {/if}
         {#if tail}
-            <span>»</span><span>{tail}</span>
+            »
+            <span>{tail}</span>
         {/if}
     </div>
 {/snippet}
@@ -33,30 +39,47 @@
     {@const url = (p: number) => base + (base.includes("?") ? "&" : "?") + "page=" + p}
     {@const start = Math.max(1, cur - 2)}
     {@const end = Math.min(last, cur + 2)}
-    <div class="forum-pagination">
-        <span class="forum-page-count">Page {cur} of {last}</span>
+    <div class="forum-pager">
+        <span>Page {cur} of {last}</span>
         {#if last > 1}
             <div class="forum-goto">
-                <strong>Goto page:</strong>
-                {#if cur > 1}<a href={url(cur - 1)}>Prev</a>{/if}
+                <span>Goto page:</span>
+                {#if cur > 1}
+                    <a href={url(cur - 1)}>Prev</a>
+                {/if}
                 {#if start > 1}
-                    <a href={url(1)}>1</a>
-                    {#if start > 2}<span>...</span>{/if}
+                    <a class="forum-goto-page" href={url(1)}>1</a>
+                    {#if start > 2}
+                        <span class="forum-goto-page">…</span>
+                    {/if}
                 {/if}
                 {#each { length: end - start + 1 } as _, i}
                     {@const p = start + i}
-                    {#if p === cur}<span class="current">{p}</span>{:else}<a href={url(p)}>{p}</a>{/if}
+                    {#if p === cur}
+                        <span class="forum-goto-page current">{p}</span>
+                    {:else}
+                        <a class="forum-goto-page" href={url(p)}>{p}</a>
+                    {/if}
                 {/each}
                 {#if end < last}
-                    {#if end < last - 1}<span>...</span>{/if}
-                    <a href={url(last)}>{last}</a>
+                    {#if end < last - 1}
+                        <span class="forum-goto-page">…</span>
+                    {/if}
+                    <a class="forum-goto-page" href={url(last)}>{last}</a>
                 {/if}
-                {#if cur < last}<a href={url(cur + 1)}>Next</a>{/if}
+                {#if cur < last}
+                    <a href={url(cur + 1)}>Next</a>
+                {/if}
             </div>
         {/if}
     </div>
 {/snippet}
 
 {#snippet body(text: string)}
-    {#each String(text ?? "").split("\n") as line, i}{#if i > 0}<br>{/if}{line}{/each}
+    {#each String(text ?? "").split("\n") as line, i}
+        {#if i > 0}
+            <br>
+        {/if}
+        {line}
+    {/each}
 {/snippet}

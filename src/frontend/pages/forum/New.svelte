@@ -2,7 +2,7 @@
     import { api } from "../../api";
     import { router } from "../../router.svelte";
     import { forumUrl, threadUrl } from "./common";
-    import { topLinks, breadcrumb, body as bodyText } from "./Bits.svelte";
+    import { top, breadcrumb, body as bodyText } from "./Bits.svelte";
 
     const forumId = $derived(Number(router.query.ForumID) || 0);
 
@@ -17,15 +17,20 @@
 
     $effect(() => {
         notFound = forumId <= 0;
-        if (notFound) return;
+        if (notFound) {
+            return;
+        }
         api(`/forum/${forumId}/threads?page=1`).then(d => {
             forum = d.forum ?? null;
         }).catch(err => {
-            if (err.status === 404) notFound = true;
+            if (err.status === 404) {
+                notFound = true;
+            }
         });
     });
 
-    const post = async () => {
+    const post = async (e: Event) => {
+        e.preventDefault();
         busy = true;
         error = "";
         try {
@@ -48,27 +53,49 @@
     <link rel="stylesheet" href="/css/forum.css">
 </svelte:head>
 
-<main class="forum-legacy-page">
-    <div class="forum-legacy-shell">
-        <div class="forum-top-row">{@render breadcrumb(forum)}{@render topLinks()}</div>
+<main class="forum-page">
+    <div class="forum-container">
+        {@render top(forum)}
         {#if notFound}
             <div class="forum-empty">That forum does not exist.</div>
         {:else}
-            <h1 class="forum-form-title">New Post</h1>
-            {#if error}<div class="forum-alert error">{error}</div>{/if}
+            <h1 class="forum-title">New Post</h1>
             {#if preview}
-                <div class="forum-preview-box"><div class="forum-blue-title">Preview</div><div><h3>{subject}</h3>{@render bodyText(body)}</div></div>
+                <div class="forum-bar forum-original-bar">
+                    <span class="forum-bar-title">Preview</span>
+                </div>
+                <div class="forum-original">
+                    <span class="forum-original-title">{subject}</span>
+                    <div class="forum-original-body">{@render bodyText(body)}</div>
+                </div>
+                <div class="forum-bar forum-bar-form">
+                    <span class="forum-bar-title">New Post</span>
+                </div>
             {/if}
-            <form class="forum-new-form" onsubmit={e => { e.preventDefault(); post(); }}>
-                <div class="forum-field-line"><label>Subject:</label><input type="text" name="subject" maxlength="120" bind:value={subject}></div>
-                <div class="forum-field-line message"><label>Message:</label><textarea name="body" maxlength="10000" rows="15" bind:value={body}></textarea></div>
-                <label class="forum-lock-check"><input type="checkbox" name="locked" value="1" bind:checked={locked}> Do not allow replies to this post</label>
-                <div class="forum-form-buttons">
-                    <a class="forum-form-button" href={forumUrl(forumId)}>Cancel</a>
-                    <button class="forum-form-button" type="button" onclick={() => preview = true}>Preview</button>
-                    <button class="forum-form-button" type="submit" disabled={busy}>Post</button>
+            <form class="forum-form" onsubmit={post}>
+                <div class="forum-field">
+                    <label for="forum-subject">Subject:</label>
+                    <input id="forum-subject" class="forum-text" type="text" name="subject" maxlength="120" bind:value={subject}>
+                </div>
+                <div class="forum-field">
+                    <label for="forum-body">Message:</label>
+                    <textarea id="forum-body" class="forum-text" name="body" maxlength="10000" cols="80" rows="15" bind:value={body}></textarea>
+                </div>
+                <div class="forum-submit">
+                    <label class="forum-lock">
+                        <input type="checkbox" name="locked" value="1" bind:checked={locked}>
+                        Do not allow replies to this post
+                    </label>
+                    <div class="forum-submit-buttons">
+                        <a class="forum-btn forum-btn-wide" href={forumUrl(forumId)}>Cancel</a>
+                        <button class="forum-btn forum-btn-wide" type="button" onclick={() => preview = true}>Preview</button>
+                        <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>Post</button>
+                    </div>
                 </div>
             </form>
+            {#if error}
+                <div class="forum-error">{error}</div>
+            {/if}
             {@render breadcrumb(forum)}
         {/if}
     </div>

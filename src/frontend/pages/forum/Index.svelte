@@ -2,14 +2,15 @@
     import { api } from "../../api";
     import { router } from "../../router.svelte";
     import { list, num, activityTime, currentTime, forumUrl } from "./common";
-    import { topLinks } from "./Bits.svelte";
+    import { top } from "./Bits.svelte";
 
     let groups = $state<any[]>([]);
+    let loaded = $state(false);
     let q = $state("");
 
     api("/forum").then(d => {
         groups = list(d.groups);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => loaded = true);
 
     const search = (e: Event) => {
         e.preventDefault();
@@ -22,52 +23,49 @@
     <link rel="stylesheet" href="/css/forum.css">
 </svelte:head>
 
-<main class="forum-legacy-page">
-    <div class="forum-legacy-shell">
-        {@render topLinks()}
-        <div class="forum-index-tools">
-            <div class="forum-current-time"><strong>Current time:</strong> {currentTime()}</div>
-            <div class="forum-search-inline">
-                <form onsubmit={search}>
-                    <label>Search None Forums:</label>
-                    <input type="text" name="q" maxlength="120" bind:value={q}>
-                    <button type="submit">Go</button>
-                </form>
+<main class="forum-page">
+    <div class="forum-container">
+        {@render top()}
+        <div class="forum-tools">
+            <div class="forum-time">
+                <strong>Current time:</strong>
+                {currentTime()}
             </div>
+            <form class="forum-search" onsubmit={search}>
+                <label for="forum-q">Search None Forums:</label>
+                <input id="forum-q" type="text" name="q" maxlength="120" bind:value={q}>
+                <button class="forum-btn forum-btn-go" type="submit">Go</button>
+            </form>
         </div>
 
-        <div class="forum-index">
-            {#if groups.length === 0}
-                <div class="forum-empty">No forums yet.</div>
-            {/if}
-            {#each groups as group}
-                <section class="forum-index-section" id={encodeURIComponent(group.section)}>
-                    <div class="forum-index-header">
-                        <div>{group.section}</div>
-                        <div>Threads</div>
-                        <div>Posts</div>
-                        <div>Last Post</div>
-                    </div>
-                    {#each list(group.forums) as forum}
-                        <div class="forum-index-row">
-                            <div class="forum-index-info">
-                                <a href={forumUrl(forum.id)} class="forum-index-name">{forum.name}</a>
-                                <div class="forum-index-desc">{forum.description}</div>
-                            </div>
-                            <div class="forum-index-number">{num(forum.threads)}</div>
-                            <div class="forum-index-number">{num(forum.posts)}</div>
-                            <div class="forum-index-last">
-                                {#if forum.last}
-                                    <strong>{activityTime(forum.last.created_at)}</strong>
-                                    <span class="forum-last-user">{forum.last.username || "Unknown"}</span>
-                                {:else}
-                                    No posts yet
-                                {/if}
-                            </div>
+        {#if loaded && groups.length === 0}
+            <div class="forum-empty">No forums yet.</div>
+        {/if}
+        {#each groups as group}
+            <section class="forum-section" id={encodeURIComponent(group.section)}>
+                <div class="forum-head">
+                    <div>{group.section}</div>
+                    <div class="forum-col-threads">Threads</div>
+                    <div class="forum-col-posts">Posts</div>
+                    <div class="forum-col-latest">Last Post</div>
+                </div>
+                {#each list(group.forums) as forum}
+                    <div class="forum-row">
+                        <a class="forum-info" href={forumUrl(forum.id)}>
+                            <strong>{forum.name}</strong>
+                            <span>{forum.description}</span>
+                        </a>
+                        <div class="forum-cell forum-col-threads">{num(forum.threads)}</div>
+                        <div class="forum-cell forum-col-posts">{num(forum.posts)}</div>
+                        <div class="forum-cell forum-col-latest forum-last">
+                            {#if forum.last}
+                                <strong>{activityTime(forum.last.created_at)}</strong>
+                                <span>{forum.last.username || "Unknown"}</span>
+                            {/if}
                         </div>
-                    {/each}
-                </section>
-            {/each}
-        </div>
+                    </div>
+                {/each}
+            </section>
+        {/each}
     </div>
 </main>

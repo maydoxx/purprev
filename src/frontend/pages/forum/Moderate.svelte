@@ -3,7 +3,7 @@
     import { router } from "../../router.svelte";
     import { session } from "../../session.svelte";
     import { list, forumUrl, threadUrl } from "./common";
-    import { topLinks, breadcrumb, body as bodyText } from "./Bits.svelte";
+    import { top, body as bodyText } from "./Bits.svelte";
 
     const action = $derived(router.query.action ?? "");
     const id = $derived(Number(router.query.PostID) || 0);
@@ -25,7 +25,9 @@
     $effect(() => {
         notFound = id <= 0;
         error = "";
-        if (notFound || !admin) return;
+        if (notFound || !admin) {
+            return;
+        }
 
         if (action === "move") {
             api(`/forum/threads/${id}?page=1`).then(d => {
@@ -33,8 +35,11 @@
                 forum = d.forum ?? null;
                 forumId = Number(thread?.forum_id) || 0;
             }).catch(err => {
-                if (err.status === 404) notFound = true;
-                else error = err.message;
+                if (err.status === 404) {
+                    notFound = true;
+                } else {
+                    error = err.message;
+                }
             });
             api("/forum").then(d => {
                 groups = list(d.groups);
@@ -46,15 +51,19 @@
                 subject = post?.subject ?? "";
                 body = post?.body ?? "";
             }).catch(err => {
-                if (err.status === 404) notFound = true;
-                else error = err.message;
+                if (err.status === 404) {
+                    notFound = true;
+                } else {
+                    error = err.message;
+                }
             });
         }
     });
 
     const backUrl = $derived(post?.thread_id ? `${threadUrl(post.thread_id)}#post-${id}` : "/forum");
 
-    const save = async () => {
+    const save = async (e: Event) => {
+        e.preventDefault();
         busy = true;
         error = "";
         try {
@@ -72,7 +81,8 @@
         busy = false;
     };
 
-    const move = async () => {
+    const move = async (e: Event) => {
+        e.preventDefault();
         busy = true;
         error = "";
         try {
@@ -87,7 +97,8 @@
         busy = false;
     };
 
-    const remove = async () => {
+    const remove = async (e: Event) => {
+        e.preventDefault();
         busy = true;
         error = "";
         try {
@@ -117,56 +128,81 @@
     <link rel="stylesheet" href="/css/forum.css">
 </svelte:head>
 
-<main class="forum-legacy-page">
-    <div class="forum-legacy-shell">
-        {@render breadcrumb(forum, tails[action] ?? "Moderate")}
-        <div class="forum-head-row compact">{@render topLinks()}</div>
+<main class="forum-page">
+    <div class="forum-container">
+        {@render top(forum, tails[action] ?? "Moderate")}
         {#if !admin}
             <div class="forum-empty">Forbidden</div>
         {:else if notFound}
             <div class="forum-empty">{action === "move" ? "That thread does not exist." : "That post does not exist."}</div>
         {:else if action === "edit"}
-            <div class="forum-moderation-box">
-                <h1>Edit Post</h1>
-                <p class="forum-mod-note">Editing post #{id} by {post?.author_username || "Unknown"}</p>
-                {#if error}<div class="forum-alert error">{error}</div>{/if}
-                <form class="forum-mod-form" onsubmit={e => { e.preventDefault(); save(); }}>
-                    {#if isFirst}
-                        <label>Subject<input type="text" name="subject" maxlength="120" bind:value={subject} required></label>
-                    {/if}
-                    <label>Message<textarea name="body" rows="12" maxlength="10000" bind:value={body} required></textarea></label>
-                    <div class="forum-mod-actions"><button type="submit" disabled={busy}>Save Changes</button><a href={backUrl}>Cancel</a></div>
-                </form>
-            </div>
+            <h1 class="forum-title">Edit Post</h1>
+            <div class="forum-note">Editing post #{id} by {post?.author_username || "Unknown"}</div>
+            <form class="forum-form forum-mod" onsubmit={save}>
+                {#if isFirst}
+                    <div class="forum-field">
+                        <label for="forum-subject">Subject:</label>
+                        <input id="forum-subject" class="forum-text" type="text" name="subject" maxlength="120" bind:value={subject} required>
+                    </div>
+                {/if}
+                <div class="forum-field">
+                    <label for="forum-body">Message:</label>
+                    <textarea id="forum-body" class="forum-text" name="body" rows="12" maxlength="10000" bind:value={body} required></textarea>
+                </div>
+                <div class="forum-submit">
+                    <div class="forum-submit-buttons">
+                        <a class="forum-btn forum-btn-wide" href={backUrl}>Cancel</a>
+                        <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>Save Changes</button>
+                    </div>
+                </div>
+            </form>
+            {#if error}
+                <div class="forum-error">{error}</div>
+            {/if}
         {:else if action === "move"}
-            <div class="forum-moderation-box">
-                <h1>Move Thread</h1>
-                <p class="forum-mod-note">{thread?.subject ?? ""}</p>
-                {#if error}<div class="forum-alert error">{error}</div>{/if}
-                <form class="forum-mod-form" onsubmit={e => { e.preventDefault(); move(); }}>
-                    <label>Move to
-                        <select name="forum_id" bind:value={forumId} required>
-                            {#each groups as group}
-                                <optgroup label={group.section}>
-                                    {#each list(group.forums) as f}<option value={f.id}>{f.name}</option>{/each}
-                                </optgroup>
-                            {/each}
-                        </select>
-                    </label>
-                    <div class="forum-mod-actions"><button type="submit" disabled={busy}>Move Thread</button><a href={threadUrl(id)}>Cancel</a></div>
-                </form>
-            </div>
+            <h1 class="forum-title">Move Thread</h1>
+            <div class="forum-note">{thread?.subject ?? ""}</div>
+            <form class="forum-form forum-mod" onsubmit={move}>
+                <div class="forum-field">
+                    <label for="forum-target">Move to:</label>
+                    <select id="forum-target" class="forum-text" name="forum_id" bind:value={forumId} required>
+                        {#each groups as group}
+                            <optgroup label={group.section}>
+                                {#each list(group.forums) as f}
+                                    <option value={f.id}>{f.name}</option>
+                                {/each}
+                            </optgroup>
+                        {/each}
+                    </select>
+                </div>
+                <div class="forum-submit">
+                    <div class="forum-submit-buttons">
+                        <a class="forum-btn forum-btn-wide" href={threadUrl(id)}>Cancel</a>
+                        <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>Move Thread</button>
+                    </div>
+                </div>
+            </form>
+            {#if error}
+                <div class="forum-error">{error}</div>
+            {/if}
         {:else if action === "delete"}
-            <div class="forum-moderation-box">
-                <h1>{isFirst ? "Delete Thread" : "Delete Post"}</h1>
-                {#if error}<div class="forum-alert error">{error}</div>{/if}
-                <div class="forum-delete-preview"><strong>{post?.author_username || "Unknown"}:</strong><div>{@render bodyText(post?.body ?? "")}</div></div>
-                <p>{isFirst ? "This is the first post. Deleting it will delete the entire thread and all replies." : "Are you sure you want to delete this reply?"}</p>
-                <form class="forum-mod-actions" onsubmit={e => { e.preventDefault(); remove(); }}>
-                    <button class="danger" type="submit" disabled={busy}>{isFirst ? "Delete Thread" : "Delete Post"}</button>
-                    <a href={backUrl}>Cancel</a>
-                </form>
+            <h1 class="forum-title">{isFirst ? "Delete Thread" : "Delete Post"}</h1>
+            <div class="forum-bar forum-original-bar">
+                <span class="forum-bar-title">{isFirst ? "Original Post" : "Post"}</span>
             </div>
+            <div class="forum-original">
+                <span class="forum-original-title">{post?.author_username || "Unknown"}</span>
+                <div class="forum-original-body">{@render bodyText(post?.body ?? "")}</div>
+            </div>
+            <div class="forum-bar forum-bar-form"></div>
+            <div class="forum-note">{isFirst ? "This is the first post. Deleting it will delete the entire thread and all replies." : "Are you sure you want to delete this reply?"}</div>
+            <form class="forum-actions" onsubmit={remove}>
+                <a class="forum-btn forum-btn-wide" href={backUrl}>Cancel</a>
+                <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>{isFirst ? "Delete Thread" : "Delete Post"}</button>
+            </form>
+            {#if error}
+                <div class="forum-error">{error}</div>
+            {/if}
         {:else}
             <div class="forum-empty">Unknown action.</div>
         {/if}
