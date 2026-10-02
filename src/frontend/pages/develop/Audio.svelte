@@ -27,7 +27,9 @@
     const upload = async (e: Event) => {
         e.preventDefault();
         const file = files?.[0];
-        if (!file) return;
+        if (!file) {
+            return;
+        }
 
         const form = new FormData();
         form.append("name", name);
@@ -47,7 +49,9 @@
     };
 
     const remove = async (id: number) => {
-        if (!confirm("Delete this audio?")) return;
+        if (!confirm("Delete this audio?")) {
+            return;
+        }
         try {
             await api(`/develop/audio/${id}`, undefined, "DELETE");
             await load();
@@ -70,51 +74,61 @@
     <link rel="stylesheet" href="/css/develop.css">
 </svelte:head>
 
-<main class="develop-2016">
-    <div class="develop-shell">
-        <div class="develop-page-heading"><h1>Develop</h1></div>
-        <div class="develop-panel">
-            <Sidebar />
-            <section class="develop-main">
-                <h2>Audio</h2>
-                <p class="develop-muted">Upload audio for use in your places.</p>
-                {#if error}<div class="develop-alert error">{error}</div>{/if}
-                {#if success}<div class="develop-alert success">{success}</div>{/if}
-                <form class="develop-form develop-audio-upload" onsubmit={upload}>
-                    <div class="develop-field">
-                        <label for="name">Name</label>
-                        <input id="name" name="name" type="text" maxlength="100" placeholder="Audio name" bind:value={name}>
+<main class="develop-page">
+    <div class="develop-container">
+        <div class="develop-tabs">
+            <a class="develop-tab active" href="/develop">My Creations</a>
+        </div>
+        <div class="develop-sheet">
+            <div class="develop-creations">
+                <Sidebar />
+                <section class="develop-content">
+                    <div class="develop-header">
+                        <h2 class="develop-heading">Audio</h2>
+                        <span class="develop-count">{audio.length.toLocaleString()} total</span>
                     </div>
-                    <div class="develop-field">
-                        <label for="audio_file">File</label>
-                        <input id="audio_file" name="audio_file" type="file" accept=".mp3,.ogg,.wav" bind:files required>
-                        <small>MP3, OGG or WAV, up to 12 MB.</small>
-                    </div>
-                    <button class="develop-primary-btn" type="submit" disabled={busy}>{busy ? "Uploading..." : "Upload"}</button>
-                </form>
-                <div class="develop-section-heading"><h3>Your Audio</h3><span>{audio.length} total</span></div>
-                {#if !loaded}
-                    <div class="develop-empty compact"><p>Loading...</p></div>
-                {:else if audio.length === 0}
-                    <div class="develop-empty compact"><p>No audio uploaded yet.</p></div>
-                {:else}
-                    <div class="develop-audio-list">
+                    <div class="develop-hint">Upload audio for use in your places.</div>
+                    {#if error}
+                        <div class="develop-error">{error}</div>
+                    {/if}
+                    {#if success}
+                        <div class="develop-success">{success}</div>
+                    {/if}
+                    <form class="develop-form" onsubmit={upload}>
+                        <div class="develop-field">
+                            <label class="develop-label" for="name">Name:</label>
+                            <input id="name" class="develop-text" name="name" type="text" maxlength="100" placeholder="Audio name" bind:value={name}>
+                        </div>
+                        <div class="develop-field">
+                            <label class="develop-label" for="audio_file">File:</label>
+                            <input id="audio_file" class="develop-file" name="audio_file" type="file" accept=".mp3,.ogg,.wav" bind:files required>
+                            <span class="develop-help">MP3, OGG or WAV, up to 12 MB.</span>
+                        </div>
+                        <div class="develop-actions">
+                            <button class="develop-btn" type="submit" disabled={busy}>{busy ? "Uploading..." : "Upload"}</button>
+                        </div>
+                    </form>
+                    <h3 class="develop-subheading">Your Audio</h3>
+                    {#if loaded && audio.length === 0}
+                        <div class="develop-empty">No audio uploaded yet.</div>
+                    {/if}
+                    <div class="develop-list">
                         {#each audio as asset}
-                            <div class="develop-audio-row">
-                                <div class="develop-audio-main">
-                                    <strong>{asset.name}</strong>
-                                    <span>Asset ID: {asset.id} · {String(asset.extension ?? "").toUpperCase()}</span>
+                            <div class="develop-item">
+                                <div class="develop-info develop-info-wide">
+                                    <span class="develop-name">{asset.name}</span>
+                                    <div class="develop-meta">Asset ID: {asset.id} · {String(asset.extension ?? "").toUpperCase()}</div>
                                     <audio controls preload="none" src="/asset/?id={asset.id}"></audio>
                                 </div>
-                                <div class="develop-audio-actions">
-                                    <button type="button" class="develop-secondary-btn" onclick={() => copy(asset.id)}>{copied === asset.id ? "Copied" : "Copy ID"}</button>
-                                    <button class="develop-text-danger" type="button" onclick={() => remove(asset.id)}>Delete</button>
+                                <div class="develop-item-actions">
+                                    <button class="develop-control" type="button" onclick={() => copy(asset.id)}>{copied === asset.id ? "Copied" : "Copy ID"}</button>
+                                    <button class="develop-control" type="button" onclick={() => remove(asset.id)}>Delete</button>
                                 </div>
                             </div>
                         {/each}
                     </div>
-                {/if}
-            </section>
+                </section>
+            </div>
         </div>
     </div>
 </main>
