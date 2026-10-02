@@ -401,6 +401,16 @@ export const game = new Elysia()
         data: ["0.249.0pcplayer"]
     }))
 
+    .get("/users/:userId/canmanage/:placeId", async ({ params }) => {
+        const [game] = await sql`SELECT creator_id FROM games WHERE id = ${params.placeId}`;
+        return { Success: true, CanManage: !!game && Number(game.creator_id) === params.userId };
+    }, {
+        params: t.Object({
+            userId: t.Numeric(),
+            placeId: t.Numeric()
+        })
+    })
+
     .get("/discord", ({ redirect }) => redirect("https://discord.gg/qvYkJ6q6A9", 302))
 
 
