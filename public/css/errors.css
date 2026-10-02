@@ -1,188 +1,96 @@
-.request-error-page-content {
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap");
+
+.error-page {
+    min-height: calc(100vh - 40px);
+    padding: 10px 12px 25px;
+    background-color: #fff;
+    color: #191919;
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.3em;
+}
+
+.error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     max-width: 970px;
-    width: 800px;
+    min-height: 550px;
     margin: 0 auto;
-    margin-top: 15%;
-    color: #191919;
-    font-family: "Source Sans 3", "Source Sans Pro", Arial, Helvetica, sans-serif;
-    font-weight: 300;
-    font-size: 16px;
-}
-
-.request-error-page-content .default-error-page {
-    background: #fff;
-    overflow: hidden;
-    padding: 15px;
-    position: relative;
-}
-
-.request-error-page-content .default-error-page .message-container {
-    float: left;
-    width: 45%;
-    margin: 0 auto;
-}
-
-.request-error-page-content .default-error-page .message-container .error-title,
-.request-error-page-content .default-error-page .message-container .error-message {
-    margin-bottom: 12px;
-}
-
-.request-error-page-content .default-error-page .message-container .error-title {
-    font-weight: 400;
-    font-size: 36px;
-}
-
-.request-error-page-content .default-error-page .message-container .error-message {
-    font-weight: 300;
-    font-size: 16px;
-}
-
-.request-error-page-content .default-error-page .message-container .error-message span {
-    padding: 0 5px;
-}
-
-.request-error-page-content .default-error-page .error-image {
-    height: 300px;
-    float: right;
-    display: block;
-    margin: 20px 0;
-}
-
-.request-error-page-content .default-error-page .action-buttons {
-    padding: 18px 0;
-    position: absolute;
-    bottom: 0;
-}
-
-.request-error-page-content .default-error-page .action-buttons a:first-child {
-    margin-right: 12px;
-}
-
-.btn-control-md {
-    user-select: none;
-    border: 1px solid transparent;
-    background-color: #fff;
-    border-color: #B8B8B8;
-    color: #191919;
-    cursor: pointer;
-    display: inline-block;
-    font-weight: 400;
-    height: auto;
-    transition: all 0.2s ease-in-out;
+    padding-top: 32px;
     text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    padding: 9px 9px;
-    font-size: 18px;
-    line-height: 100%;
-    border-radius: 3px;
+}
+
+.error-container img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.error-container h1 {
+    margin: 20px 0 0;
+    padding: 5px 0;
+    color: #1f2937;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1em;
+    letter-spacing: -2px;
+}
+
+.error-container h3 {
+    margin: 0;
+    padding: 5px 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.5em;
+}
+
+.error-divider {
+    width: 90%;
+    margin: 15px auto;
+    border-top: 1px solid #ccc;
+}
+
+.error-actions {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.error-btn {
+    display: inline-block;
+    min-width: 56px;
+    height: 23px;
+    padding: 1px 7px 0;
+    border: 1px solid #7b2cbf;
+    background-color: #7b2cbf;
+    background-image: linear-gradient(#9a4ee0, #7b2cbf);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 18px;
+    text-align: center;
     text-decoration: none;
+    cursor: pointer;
 }
 
-.btn-control-md:link,
-.btn-control-md:visited {
-    color: #191919;
-    text-decoration: none;
+.error-btn:hover {
+    background-image: linear-gradient(#bd85f0, #9d4edd);
+    color: #fff;
 }
 
-.btn-control-md:hover,
-.btn-control-md:focus {
-    background-color: #fff;
-    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
-    border-color: #B8B8B8;
-    color: #191919;
-    text-decoration: none;
-}
-
-.btn-control-md:active {
-    box-shadow: none;
-    background-color: #fff;
-    color: #191919;
-}
-
-.btn-fixed-width {
-    width: 90px;
-}
-
-@media (max-width: 991px) {
-    .request-error-page-content {
-        width: 100%;
-        margin-top: 0;
-    }
-
-    .request-error-page-content .default-error-page .message-container {
-        float: none;
-        width: 100%;
-    }
-
-    .request-error-page-content .default-error-page .message-container .error-title,
-    .request-error-page-content .default-error-page .message-container .error-message {
-        text-align: center;
-    }
-
-    .request-error-page-content .default-error-page .message-container .error-title {
-        font-size: 24px;
-    }
-
-    .request-error-page-content .default-error-page .error-image {
-        float: none;
-        margin: 36px auto;
-    }
-
-    .request-error-page-content .default-error-page .action-buttons {
-        position: static;
-        text-align: center;
+@media (max-width: 991.98px) {
+    .error-page {
+        min-height: calc(100vh - 80px);
     }
 }
 
 @media (max-width: 767px) {
-    .request-error-page-content .default-error-page .message-container {
-        float: left;
-        width: 45%;
-    }
-
-    .request-error-page-content .default-error-page .message-container .error-title,
-    .request-error-page-content .default-error-page .message-container .error-message {
-        text-align: left;
-    }
-
-    .request-error-page-content .default-error-page .error-image {
-        float: right;
-        height: 126px;
-    }
-
-    .request-error-page-content .default-error-page .action-buttons {
-        position: absolute;
-    }
-}
-
-@media (max-width: 543px) {
-    .request-error-page-content {
-        width: 100%;
-        margin-top: 0;
-    }
-
-    .request-error-page-content .default-error-page .message-container {
-        float: none;
-        width: 100%;
-    }
-
-    .request-error-page-content .default-error-page .message-container .error-title,
-    .request-error-page-content .default-error-page .message-container .error-message {
-        text-align: center;
-    }
-
-    .request-error-page-content .default-error-page .message-container .error-title {
-        font-size: 24px;
-    }
-
-    .request-error-page-content .default-error-page .error-image {
-        float: none;
-        margin: 36px auto;
-    }
-
-    .request-error-page-content .default-error-page .action-buttons {
-        position: static;
-        text-align: center;
+    .error-container h1 {
+        font-size: 30px;
+        letter-spacing: -1px;
     }
 }
