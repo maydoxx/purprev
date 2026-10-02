@@ -1,5 +1,4 @@
 <script lang="ts">
-    let moreBadges = $state(false);
 
     let copied = $state(false);
     const copyDiscord = async (name: string) => {
@@ -331,14 +330,14 @@
                             <div class="container-header">
                                 <h3>NoneRev Badges <span class="assets-count">({profile.siteBadges?.length ?? 0})</span></h3>
                                 {#if profile.siteBadges?.length}
-                                    <button type="button" class="rbx-btn-secondary-xs btn-fixed-width btn-more" onclick={() => moreBadges = !moreBadges}>{moreBadges ? "See Less" : "See More"}</button>
+                                    <a class="rbx-btn-secondary-xs btn-fixed-width btn-more" href="/badges">See More</a>
                                 {/if}
                             </div>
                             <div class="section-content">
                                 {#if !profile.siteBadges?.length}
                                     <div class="section-content-off">{profile.username} has no NoneRev badges yet.</div>
                                 {:else}
-                                    <ul class="hlist badge-list" class:badge-list-more={moreBadges}>
+                                    <ul class="hlist badge-list">
                                         {#each profile.siteBadges as b}
                                             <li class="list-item badge-item asset-item">
                                                 <a href="/badges#Badge{badgeAnchor[b.id] ?? ""}" class="badge-link" title={b.name}>

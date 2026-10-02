@@ -766,16 +766,6 @@ body {
     max-height: 170px;
 }
 
-.profile-container .badge-list-more {
-    overflow: auto;
-    max-height: 100%;
-}
-
-.container-header button.btn-more {
-    border-width: 1px;
-    border-style: solid;
-}
-
 .profile-container .asset-item {
     padding: 5px 0;
     width: 16.66667%;
