@@ -1,431 +1,427 @@
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600&display=swap");
 
-.home2015-page {
+.home-page {
     width: 100%;
-    padding: 0 24px 60px;
+    padding: 12px 12px 40px;
     color: #191919;
-    font-family: "Source Sans Pro", "Source Sans 3", Arial, sans-serif;
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.3em;
 }
 
-.home2015-page button,
-.home2015-page input,
-.home2015-page textarea,
-.home2015-page select {
-    font-family: "Source Sans Pro", "Source Sans 3", Arial, sans-serif;
+.home-page a {
+    font-weight: 400;
+    text-decoration: none;
 }
 
-.home2015-wrap {
+.home-page button,
+.home-page input {
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+}
+
+.home-container {
     width: 100%;
-    max-width: 1036px;
-    margin: 26px auto 0;
+    max-width: 970px;
+    margin: 0 auto;
 }
 
-.home2015-hero {
-    height: 164px;
+.home-hero {
     display: flex;
-    align-items: flex-start;
-    padding: 0;
-    justify-content: flex-start;
 }
 
-.home2015-hero-avatar {
-    width: 145px;
-    height: 145px;
-    margin-top: 4px;
-    flex: 0 0 145px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.home2015-hero-avatar img {
+.home-avatar {
     display: block;
-    width: 145px;
-    height: 145px;
-    object-fit: contain;
-    border: 0;
-    background: transparent;
+    flex: 0 0 180px;
+    width: 180px;
+    height: 180px;
+    margin: 0 24px 0 32px;
 }
 
-.home2015-hero-text {
-    margin: 41px 0 0 28px;
+.home-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.home2015-club {
+.home-hello {
+    min-width: 0;
+}
+
+.home-hello h1 {
+    margin: 80px 0 12px;
+    padding: 5px 0;
+    font-size: 40px;
+    font-weight: 400;
+    line-height: 1em;
+}
+
+.home-hello h1 a {
+    color: #000;
+    letter-spacing: -1px;
+}
+
+.home-club {
     display: inline-block;
-    margin-top: 8px;
 }
 
-.home2015-club .icon-bc,
-.home2015-club .icon-tbc,
-.home2015-club .icon-obc {
+.home-club .icon-bc,
+.home-club .icon-tbc,
+.home-club .icon-obc {
     display: inline-block;
     width: 52px;
     height: 28px;
     background: url("/img/bc/bc.svg") 0 0 no-repeat;
 }
 
-.home2015-club .icon-tbc {
+.home-club .icon-tbc {
     background-position: 0 -28px;
 }
 
-.home2015-club .icon-obc {
+.home-club .icon-obc {
     background-position: 0 -56px;
 }
 
-.home2015-hero h1 {
-    margin: 0;
-    padding: 0;
-    font-size: 48px;
-    line-height: 1.1;
-    font-weight: 300;
-    letter-spacing: -0.5px;
-    color: #191919;
-    white-space: nowrap;
+.home-section {
+    margin-top: 2px;
+    margin-bottom: 12px;
 }
 
-.home2015-hero h1 a {
-    color: inherit;
-    text-decoration: none;
-    font-weight: inherit;
-}
-
-.home2015-box {
-    background: #fff;
-    border: 1px solid #d4d4d4;
-    box-shadow: 0 1px 2px rgba(0,0,0,.18);
-}
-
-.home2015-box-header {
-    min-height: 46px;
-    padding: 12px 13px 7px;
+.home-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
 }
 
-.home2015-box-header h2 {
+.home-header h3 {
     margin: 0;
-    padding: 0;
-    color: #222;
+    padding: 5px 0;
     font-size: 24px;
-    line-height: 32px;
     font-weight: 300;
-    text-transform: uppercase;
+    line-height: 1em;
 }
 
-.home2015-btn,
-.home2015-btn:link,
-.home2015-btn:visited {
+.home-sheet {
+    position: relative;
+    margin-top: 4px;
+    padding: 15px;
+    background-color: #fff;
+    box-shadow: 0 1px 4px 0 rgba(25, 25, 25, 0.3);
+}
+
+.home-empty {
+    font-size: 18px;
+}
+
+.home-btn,
+.home-btn:link,
+.home-btn:visited {
     display: inline-block;
-    min-width: 84px;
-    height: 35px;
-    padding: 6px 15px;
-    border: 1px solid #6A1B9A;
-    border-radius: 2px;
-    background: #7B2CBF;
-    color: #fff;
+    padding: 7px 16px;
+    border: 1px solid transparent;
+    border-radius: 3px;
     font-size: 16px;
-    line-height: 21px;
     font-weight: 400;
+    line-height: 100%;
     text-align: center;
-    text-decoration: none;
     white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease-in-out;
 }
 
-.home2015-btn:hover {
-    border-color: #5A189A;
-    background: #6A1B9A;
+.home-btn:hover,
+.home-btn:focus {
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+}
+
+.home-btn-secondary,
+.home-btn-secondary:link,
+.home-btn-secondary:visited {
+    background-color: #7b2cbf;
+    border-color: #7b2cbf;
     color: #fff;
 }
 
-.home2015-btn-control,
-.home2015-btn-control:link,
-.home2015-btn-control:visited {
-    display: inline-block;
-    height: 35px;
-    min-width: 102px;
-    padding: 6px 14px;
-    border: 1px solid #b8b8b8;
-    border-radius: 2px;
-    background: #fff;
-    color: #555;
-    font-size: 16px;
-    line-height: 21px;
-    text-align: center;
-    text-decoration: none;
-    white-space: nowrap;
+.home-btn-secondary:hover,
+.home-btn-secondary:focus {
+    background-color: #9d4edd;
+    border-color: #9d4edd;
+    color: #fff;
 }
 
-.home2015-friends-box {
-    min-height: 196px;
+.home-btn-control,
+.home-btn-control:link,
+.home-btn-control:visited {
+    background-color: #fff;
+    border-color: #b8b8b8;
+    color: #757575;
 }
 
-.home2015-games-box {
-    margin-top: 12px;
+.home-btn-control:hover,
+.home-btn-control:focus {
+    color: #757575;
 }
 
-.home2015-games-box .game-sort-row {
-    padding: 0 13px;
+.home-btn-primary {
+    flex: 0 0 120px;
+    width: 120px;
+    margin-left: 38px;
+    padding: 7px;
+    background-color: #02b757;
+    border-color: #02b757;
+    color: #fff;
 }
 
-.home2015-games-box .game-sort-list ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+.home-btn-primary:hover,
+.home-btn-primary:focus {
+    background-color: #3fc679;
+    border-color: #3fc679;
 }
 
-.home2015-friend-list {
-    list-style: none;
-    margin: 0;
-    padding: 0 20px 15px;
+.home-friends {
     display: flex;
     gap: 16px;
+    margin: 0;
+    padding: 0;
     overflow: hidden;
+    list-style: none;
 }
 
-.home2015-friend {
-    width: 96px;
+.home-friends li {
     flex: 0 0 96px;
+    width: 96px;
     min-width: 0;
 }
 
-.home2015-friend a {
+.home-friends a {
     display: block;
     color: #191919;
-    text-decoration: none;
 }
 
-.home2015-friend-thumb {
-    position: relative;
+.home-friend-thumb {
     display: block;
     width: 96px;
     height: 96px;
-    border: 1px solid #aaa;
-    border-radius: 2px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
     background: #fff;
     overflow: hidden;
 }
 
-.home2015-friend-thumb img {
+.home-friend-thumb img {
     display: block;
-    width: 94px;
-    height: 94px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    background: #fff;
 }
 
-.home2015-friend-name {
+.home-friend-name {
     display: block;
-    width: 96px;
     margin-top: 4px;
     overflow: hidden;
-    color: #222;
     font-size: 16px;
-    line-height: 20px;
-    font-weight: 400;
+    font-weight: 300;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
-.home2015-lower {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 18px;
-    align-items: start;
-    margin-top: 20px;
+.home-games {
+    padding-bottom: 3px;
 }
 
-.home2015-feed-box,
-.home2015-blog-box {
-    min-width: 0;
+.home-games .game-sort-row {
+    margin: 0;
 }
 
-.home2015-feed-form {
+.home-games .game-sort-list ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.home-columns {
     display: flex;
-    gap: 5px;
-    padding: 0 13px 10px;
+    gap: 20px;
+    margin-top: 2px;
 }
 
-.home2015-feed-input {
-    display: block;
+.home-column {
+    flex: 1 1 0;
     min-width: 0;
-    flex: 1 1 auto;
-    height: 40px;
-    padding: 8px 13px;
-    border: 1px solid #aaa;
-    border-radius: 2px;
-    background: #fff;
-    color: #333;
+}
+
+.home-share {
+    display: flex;
+}
+
+.home-input {
+    display: block;
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #191919;
     font-size: 16px;
-    line-height: 22px;
-    outline: 0;
+    font-weight: 300;
+    line-height: 100%;
 }
 
-.home2015-feed-input::placeholder {
-    color: #bbb;
-    opacity: 1;
-}
-
-.home2015-share-btn {
-    width: 106px;
-    height: 40px;
-    border: 1px solid #00a83d;
-    border-radius: 2px;
-    background: #00b846;
-    color: #fff;
-    font-size: 18px;
-    line-height: 25px;
+.home-flash {
+    margin-top: 8px;
+    color: #d86868;
+    font-size: 12px;
     font-weight: 400;
 }
 
-.home2015-share-btn:hover {
-    background: #00a940;
-}
-
-.home2015-feed-list {
-    list-style: none;
-    margin: 0 13px;
+.home-feed {
+    margin: 8px 0 0;
     padding: 0;
-    border-top: 1px solid #ccc;
-}
-
-.home2015-feed-item {
-    display: flex;
-    gap: 17px;
-    min-height: 132px;
-    padding: 14px 12px 15px;
-    border-bottom: 1px solid #ccc;
-}
-
-.home2015-feed-avatar {
-    flex: 0 0 56px;
-    width: 56px;
-    height: 56px;
-}
-
-.home2015-feed-avatar img {
-    display: block;
-    width: 56px;
-    height: 56px;
-    object-fit: contain;
-}
-
-.home2015-feed-body {
-    min-width: 0;
-    padding-top: 2px;
-}
-
-.home2015-feed-user {
-    display: block;
-    margin-bottom: 11px;
-    color: #444;
-    font-size: 16px;
-    line-height: 20px;
-    text-decoration: none;
-}
-
-.home2015-feed-text {
-    margin: 0 0 13px;
-    color: #333;
-    font-size: 16px;
-    line-height: 21px;
-    overflow-wrap: anywhere;
-}
-
-.home2015-feed-date {
-    color: #aaa;
-    font-size: 14px;
-    line-height: 18px;
-}
-
-.home2015-feed-empty {
-    padding: 24px 12px;
-    color: #888;
-    font-size: 15px;
-    text-align: center;
-}
-
-.home2015-blog-list {
     list-style: none;
-    margin: 0;
-    padding: 0 18px 18px;
 }
 
-.home2015-blog-list li {
-    min-height: 32px;
+.home-feed-item {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #3d3d3d;
-    font-size: 17px;
-    line-height: 22px;
+    margin-bottom: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e3e3e3;
 }
 
-.home2015-page-icon {
-    position: relative;
+.home-feed-game {
+    border-top: 2px solid #02b757;
+}
+
+.home-feed-creation {
+    border-top: 2px solid #f68802;
+}
+
+.home-feed-social {
+    border-top: 2px solid #00a2ff;
+}
+
+.home-feed-avatar {
+    flex: 0 0 60px;
+    width: 60px;
+    height: 60px;
+}
+
+.home-feed-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.home-feed-icon {
+    flex: 0 0 60px;
+}
+
+.home-feed-icon span {
     display: inline-block;
-    width: 18px;
-    height: 23px;
-    flex: 0 0 18px;
-    border: 2px solid #111;
-    background: #fff;
+    width: 60px;
+    height: 60px;
+    background-repeat: no-repeat;
+    background-size: 200% auto;
 }
 
-.home2015-page-icon::before {
-    content: "";
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 8px;
-    height: 8px;
-    border-left: 2px solid #111;
-    border-bottom: 2px solid #111;
-    background: #fff;
+.home-icon-games {
+    background-image: url("/img/home/games.svg");
+    background-position: 0 -60px;
 }
 
-.home2015-blog-list a {
-    color: #444;
-    text-decoration: none;
+.home-icon-avatar {
+    background-image: url("/img/home/creation.svg");
+    background-position: 0 -120px;
 }
 
-.home2015-blog-list a:hover {
-    text-decoration: underline;
+.home-icon-develop {
+    background-image: url("/img/home/creation.svg");
+    background-position: 0 -60px;
 }
 
-.home2015-flash {
-    margin: 0 13px 10px;
-    padding: 8px 10px;
-    border: 1px solid #b8b8b8;
-    background: #f5f5f5;
-    color: #555;
-    font-size: 14px;
+.home-icon-friends {
+    background-image: url("/img/home/social.svg");
+    background-position: 0 -120px;
 }
 
-.home2015-flash.error {
-    border-color: #d8a0a0;
-    color: #a22;
+.home-feed-body {
+    min-width: 0;
+    margin-left: 10px;
 }
 
-@media (max-width: 900px) {
-   .home2015-page { padding-left: 14px; padding-right: 14px; }
-    .home2015-hero { padding-left: 20px; padding-right: 20px; }
-    .home2015-hero h1 { font-size: 40px; }
-    .home2015-lower { grid-template-columns: 1fr; }
+.home-feed-body h2 {
+    margin: 0;
+    padding: 5px 0;
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1em;
 }
 
-@media (max-width: 600px) {
-    .home2015-hero { height: 126px; padding-left: 0; }
-    .home2015-hero-avatar, .home2015-hero-avatar img { width: 110px; height: 110px; flex-basis: 110px; }
-    .home2015-hero h1 { margin-top: 34px; margin-left: 12px; font-size: 29px; white-space: normal; }
-    .home2015-friend-list { overflow-x: auto; }
-    .home2015-box-header h2 { font-size: 21px; }
-    .home2015-feed-form { flex-wrap: wrap; }
-    .home2015-share-btn { width: 100%; }
+.home-feed-body p {
+    margin: 3px 0;
+    font-size: 16px;
+    line-height: 1.5em;
+    word-wrap: break-word;
 }
 
-.home2015-blog-empty {
-    padding: 0 18px 22px;
-    color: #888;
-    font-size: 15px;
+.home-feed-user,
+.home-feed-body p a,
+.home-blog-link {
+    color: #7b2cbf;
+}
+
+.home-feed-date {
+    color: #b8b8b8;
+    font-size: 12px;
+}
+
+.home-feed-gallery {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 40px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.home-blog-link {
+    display: block;
+    padding: 3px 0;
+    overflow: hidden;
+    font-size: 18px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 767px) {
+    .home-avatar {
+        display: none;
+    }
+
+    .home-hello h1 {
+        margin-top: 20px;
+        margin-left: 16px;
+        font-size: 30px;
+    }
+
+    .home-club {
+        margin-left: 16px;
+    }
+
+    .home-header h3 {
+        margin-left: 16px;
+        font-size: 21px;
+    }
+
+    .home-columns {
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+
+    .home-feed-body h2 {
+        font-size: 24px;
+    }
 }
