@@ -332,7 +332,8 @@ body {
 }
 
 .rbx-header .rbx-navbar-right {
-    flex: 0 0 25%;
+    flex: 0 0 auto;
+    min-width: 25%;
     margin-left: auto;
     margin-right: 12px;
 }
@@ -361,13 +362,16 @@ body {
 }
 
 .rbx-header .rbx-navbar-icon-group {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-wrap: nowrap;
     margin: 0;
     width: 100%;
     line-height: 28px;
 }
 
 .rbx-header .rbx-navbar-icon-group li {
-    float: right;
+    flex: 0 0 auto;
     width: auto;
     text-align: center;
     position: relative;
@@ -892,7 +896,7 @@ a:hover .icon-nav-shop {
     }
 
     .rbx-header .rbx-navbar-right {
-        flex-basis: 33.3333%;
+        min-width: 33.3333%;
     }
 }
 
@@ -902,11 +906,11 @@ a:hover .icon-nav-shop {
     }
 
     .rbx-header .rbx-navbar-icon-group li {
-        width: 25%;
+        flex: 1 1 0;
     }
 
     .rbx-header .rbx-navbar-right {
-        flex-basis: 58.3333%;
+        min-width: 58.3333%;
     }
 
     .rbx-header .rbx-navbar li a {
