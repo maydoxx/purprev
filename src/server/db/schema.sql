@@ -421,6 +421,18 @@ CREATE TABLE IF NOT EXISTS `user_items` (
     KEY `item_id` (`item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `chat_messages` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `sender_id` int(10) UNSIGNED NOT NULL,
+    `recipient_id` int(10) UNSIGNED NOT NULL,
+    `body` varchar(500) NOT NULL,
+    `is_read` tinyint(1) NOT NULL DEFAULT 0,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `unread` (`recipient_id`, `is_read`),
+    KEY `pair` (`sender_id`, `recipient_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `friendships` (
     `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `requester_id` int(10) UNSIGNED NOT NULL,

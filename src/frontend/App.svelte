@@ -6,6 +6,7 @@
 
     import Header from "./Header.svelte";
     import Banners from "./Banners.svelte";
+    import ChatBar from "./ChatBar.svelte";
     import Landing from "./pages/Landing.svelte";
     import Login from "./pages/Login.svelte";
     import Signup from "./pages/Signup.svelte";
@@ -217,5 +218,8 @@
     {:else}
         <Header />
         <Page />
+        {#if session.me}
+            <ChatBar />
+        {/if}
     {/if}
 {/if}
