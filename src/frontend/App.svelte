@@ -20,6 +20,7 @@
     import Inventory from "./pages/Inventory.svelte";
     import NotApproved from "./pages/NotApproved.svelte";
     import NotFound from "./pages/NotFound.svelte";
+    import Tos from "./pages/Tos.svelte";
     import Games from "./pages/Games.svelte";
     import Game from "./pages/Game.svelte";
     import Catalog from "./pages/Catalog.svelte";
@@ -80,6 +81,7 @@
         avatar: Avatar,
         inventory: Inventory,
         "not-approved": NotApproved,
+        tos: Tos,
         games: Games,
         game: Game,
         catalog: Catalog,
@@ -180,7 +182,8 @@
             router.replace("/login");
         } else if (
             session.me?.ongoing_action_id &&
-            router.name !== "not-approved"
+            router.name !== "not-approved" &&
+            router.name !== "tos"
         ) {
             router.replace("/not-approved");
         }

@@ -11,6 +11,7 @@ const routes: [string, string][] = [
     ["/my/avatar", "avatar"],
     ["/my/inventory", "inventory"],
     ["/not-approved", "not-approved"],
+    ["/info/tos", "tos"],
     ["/games", "games"],
     ["/game", "game"],
     ["/catalog", "catalog"],

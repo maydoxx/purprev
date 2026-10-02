@@ -1,0 +1,33 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap");
+
+.tos-page {
+    min-height: calc(100vh - 40px);
+    padding: 10px 12px 25px;
+    background-color: #fff;
+    color: #191919;
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.3em;
+}
+
+.tos-container {
+    max-width: 928px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.tos-container h1 {
+    margin: 0 0 12px;
+    padding: 5px 0;
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 1em;
+    letter-spacing: -1px;
+}
+
+.tos-container p {
+    margin: 0 0 6px;
+    font-weight: 400;
+    line-height: 1.5em;
+}
