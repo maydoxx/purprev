@@ -19,6 +19,10 @@
         friendCount = d.friendCount;
     }).catch(() => {});
 
+    // one row only, 96px tiles with a 16px gap inside 20px of padding
+    let friendListWidth = $state(0);
+    const shownFriends = $derived(friends.slice(0, Math.max(1, Math.floor((friendListWidth - 40 + 16) / 112))));
+
     api("/games?sort=recently-played").then(d => {
         played = d.games ?? [];
     }).catch(() => {});
@@ -48,6 +52,7 @@
         }
     };
 
+    const clubName = me.membership === "BC" ? "Builders Club" : me.membership === "TBC" ? "Turbo Builders Club" : "Outrageous Builders Club";
     const avatar = (id: number) => `/api/user/getProfilePicture?userId=${id}&type=full`;
     const when = (t: number) => new Date(t * 1000).toLocaleString();
 </script>
@@ -63,9 +68,16 @@
             <a class="home2015-hero-avatar" href="/user?id={me.id}">
                 <img src={avatar(me.id)} alt={me.username}>
             </a>
-            <h1>
-                <a href="/user?id={me.id}">Hello, {me.username}!</a>
-            </h1>
+            <div class="home2015-hero-text">
+                <h1>
+                    <a href="/user?id={me.id}">Hello, {me.username}!</a>
+                </h1>
+                {#if me.membership && me.membership !== "None"}
+                    <a class="home2015-club" href="/premium/membership" title={clubName} aria-label={clubName}>
+                        <span class="icon-{me.membership.toLowerCase()}"></span>
+                    </a>
+                {/if}
+            </div>
         </section>
 
         <section class="home2015-box home2015-friends-box">
@@ -75,8 +87,8 @@
             </div>
 
             {#if friends.length > 0}
-                <ul class="home2015-friend-list">
-                    {#each friends as friend}
+                <ul class="home2015-friend-list" bind:clientWidth={friendListWidth}>
+                    {#each shownFriends as friend}
                         <li class="home2015-friend">
                             <a href="/user?id={friend.id}" title={friend.username}>
                                 <span class="home2015-friend-thumb">

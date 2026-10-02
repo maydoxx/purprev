@@ -47,8 +47,34 @@
     background: transparent;
 }
 
-.home2015-hero h1 {
+.home2015-hero-text {
     margin: 41px 0 0 28px;
+}
+
+.home2015-club {
+    display: inline-block;
+    margin-top: 8px;
+}
+
+.home2015-club .icon-bc,
+.home2015-club .icon-tbc,
+.home2015-club .icon-obc {
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    background: url("/img/bc/bc.svg") 0 0 no-repeat;
+}
+
+.home2015-club .icon-tbc {
+    background-position: 0 -28px;
+}
+
+.home2015-club .icon-obc {
+    background-position: 0 -56px;
+}
+
+.home2015-hero h1 {
+    margin: 0;
     padding: 0;
     font-size: 48px;
     line-height: 1.1;
