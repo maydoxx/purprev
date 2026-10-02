@@ -88,7 +88,7 @@
         busy = null;
     };
 
-    const pic = (id: number) => `/api/user/getProfilePicture?userId=${id}&type=full`;
+    const pic = (id: number) => `/api/user/getProfilePicture?userId=${id}&type=headshot`;
 </script>
 
 <svelte:head>
@@ -99,22 +99,31 @@
 {#snippet card(u: any, kind: string)}
     <li class="friends-list-item">
         <div class="friends-list-card">
-            <a class="friends-list-avatar" href="/user?id={u.id}" title={u.username}>
-                <img src={pic(u.id)} alt="">
-                {#if u.online && kind === "friends"}<span class="friends-online-indicator" title="Online" aria-label="Online"></span>{/if}
-            </a>
-            <div class="friends-list-info">
-                <a class="friends-list-name" href="/user?id={u.id}" title={u.username}>{u.username}</a>
-                {#if kind === "friends"}<span class="friends-list-status">{u.online ? "Online" : "Offline"}</span>{/if}
-                {#if kind === "sent"}<span class="friends-list-status">Request sent</span>{/if}
+            <div class="friends-list-top">
+                <a class="friends-list-avatar" href="/user?id={u.id}" title={u.username}>
+                    <img src={pic(u.id)} alt="">
+                    {#if u.online && kind === "friends"}
+                        <span class="friends-online-indicator" title="Online" aria-label="Online"></span>
+                    {/if}
+                </a>
+                <div class="friends-list-info">
+                    <a class="friends-list-name" href="/user?id={u.id}" title={u.username}>{u.username}</a>
+                    {#if kind === "sent"}
+                        <span class="friends-list-status">Request sent</span>
+                    {:else}
+                        <span class="friends-list-status" class:online={u.online}>{u.online ? "Online" : "Offline"}</span>
+                    {/if}
+                </div>
             </div>
             {#if kind === "requests"}
                 <div class="friends-list-actions">
-                    <button class="friends-accept" disabled={busy !== null} onclick={() => act("accept", u.id)}>Accept</button>
                     <button disabled={busy !== null} onclick={() => act("decline", u.id)}>Ignore</button>
+                    <button class="friends-accept" disabled={busy !== null} onclick={() => act("accept", u.id)}>Accept</button>
                 </div>
             {:else if kind === "sent"}
-                <div class="friends-list-actions"><button disabled={busy !== null} onclick={() => act("decline", u.id)}>Cancel</button></div>
+                <div class="friends-list-actions">
+                    <button disabled={busy !== null} onclick={() => act("decline", u.id)}>Cancel</button>
+                </div>
             {:else if kind === "following" && !publicView}
                 <div class="friends-list-actions">
                     <button disabled={busy !== null} onclick={() => setFollow(u.id, false)}>Unfollow</button>
@@ -128,8 +137,6 @@
                     <summary aria-label={`Actions for ${u.username}`}>⋯</summary>
                     <button disabled={busy !== null} onclick={() => act("remove", u.id)}>Unfriend</button>
                 </details>
-            {:else}
-                <span></span>
             {/if}
         </div>
     </li>
