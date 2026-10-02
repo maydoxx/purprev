@@ -1,7 +1,7 @@
 <script lang="ts">
     import { api } from "../api";
     import { router } from "../router.svelte";
-    import GameCard from "../GameCard.svelte";
+    import GameCard, { sortRow } from "../GameCard.svelte";
 
     const sort = $derived(router.query.sort ?? "");
 
@@ -40,6 +40,7 @@
             load(1);
             return;
         }
+        title = "";
         api("/games/sorts").then(d => {
             rows = d.rows ?? [];
             sorts = d.sorts ?? [];
@@ -62,22 +63,28 @@
             <div class="rbx-select dropdown">
                 <button type="button" class="rbx-select-btn" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="rbx-select-label">{title || "Default"}</span>
-                    <span class="rbx-select-arrow"><i class="bi bi-chevron-down"></i></span>
+                    <span class="rbx-select-arrow"></span>
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a href="/games">Default</a></li>
+                    <li>
+                        <a href="/games">Default</a>
+                    </li>
                     {#each sorts as s}
-                        <li><a href="/games?sort={s.id}">{s.title}</a></li>
+                        <li>
+                            <a href="/games?sort={s.id}">{s.title}</a>
+                        </li>
                     {/each}
                 </ul>
             </div>
             <div class="rbx-select dropdown">
                 <button type="button" class="rbx-select-btn" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="rbx-select-label">All Genres</span>
-                    <span class="rbx-select-arrow"><i class="bi bi-chevron-down"></i></span>
+                    <span class="rbx-select-arrow"></span>
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a href="/games">All Genres</a></li>
+                    <li>
+                        <a href="/games">All Genres</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -113,7 +120,7 @@
                         <h3>{row.title}</h3>
                         <a class="btn-see-all" href="/games?sort={row.id}">See All</a>
                     </div>
-                    <div class="game-sort-row">
+                    <div class="game-sort-row" use:sortRow>
                         <div class="game-sort-scroller">
                             <div class="game-sort-list">
                                 <ul>
@@ -123,6 +130,12 @@
                                 </ul>
                             </div>
                         </div>
+                        <button type="button" class="game-sort-arrow left" aria-label="Scroll Previous" hidden>
+                            <span></span>
+                        </button>
+                        <button type="button" class="game-sort-arrow right" aria-label="Scroll Next" hidden>
+                            <span></span>
+                        </button>
                     </div>
                 </div>
             {/each}
