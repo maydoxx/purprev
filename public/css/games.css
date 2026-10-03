@@ -1029,3 +1029,269 @@
         flex-wrap: wrap;
     }
 }
+
+
+.comments-container .section-content {
+    margin: 0;
+}
+
+.comments-container .form-horizontal::after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
+.comments-container .comment-form .form-group {
+    float: left;
+    width: calc(100% - 132px - 12px);
+    margin-bottom: 10px;
+}
+
+.comments-container .rbx-comment-input {
+    display: block;
+    width: 100%;
+    height: 38px;
+    padding: 5px 12px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #191919;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.5em;
+    resize: none;
+}
+
+.comments-container .rbx-comment-input::placeholder {
+    color: #b8b8b8;
+    font-weight: 300;
+    opacity: 1;
+}
+
+.comments-container .rbx-comment-input:focus {
+    border-color: #7b2cbf;
+    box-shadow: none;
+    outline: 0;
+}
+
+.comments-container .rbx-comment-msgs {
+    position: relative;
+    height: 1em;
+}
+
+.comments-container .rbx-comment-count {
+    position: absolute;
+    right: 0;
+    color: #191919;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.comments-container .rbx-post-comment {
+    float: left;
+    width: auto;
+    margin: 0 0 12px 12px;
+    padding: 9px;
+    border: 1px solid #7b2cbf;
+    border-radius: 3px;
+    background-color: #7b2cbf;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 100%;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.comments-container .rbx-post-comment:hover,
+.comments-container .rbx-post-comment:focus {
+    border-color: #9d4edd;
+    background-color: #9d4edd;
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+}
+
+.comments-container .rbx-post-comment:disabled {
+    border-color: #caabe5;
+    background-color: #caabe5;
+    box-shadow: none;
+}
+
+.comments-container .vlist .list-item {
+    position: relative;
+    display: block;
+    margin-bottom: 12px;
+    padding: 0;
+    border-top: 1px solid #b8b8b8;
+}
+
+.comments-container .vlist .list-item::after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
+.comments-container .vlist .list-item .list-header,
+.comments-container .vlist .list-item .list-body {
+    display: inline-block;
+    float: left;
+    margin: 12px 0;
+}
+
+.comments-container .vlist .list-item .list-header {
+    margin-right: 24px;
+}
+
+.comments-container .vlist .list-item .list-body {
+    position: relative;
+    width: calc(100% - 124px);
+}
+
+.comments-container .comment-item .avatar {
+    position: relative;
+    display: block;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 1px 4px 0 rgba(25, 25, 25, 0.3);
+}
+
+.comments-container .comment-item .avatar:hover {
+    box-shadow: 0 1px 6px 0 rgba(25, 25, 25, 0.75);
+    transition: box-shadow 200ms ease;
+}
+
+.comments-container .comment-item .avatar img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 0 none;
+    border-radius: 50%;
+}
+
+.comments-container .comment-item .comment-content {
+    margin: 0 0 12px;
+    overflow: hidden;
+    white-space: pre-line;
+    word-break: break-word;
+}
+
+.comments-container .comment-item .text-date-hint {
+    color: #b8b8b8;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.comments-container .comment-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.comments-container .rbx-comment-remove {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.comments-container .icon-remove,
+.comments-container .icon-flag {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-image: url("/img/games/negative.svg");
+    background-repeat: no-repeat;
+    background-size: 200% auto;
+    vertical-align: middle;
+}
+
+.comments-container .icon-remove {
+    background-position: 0 -20px;
+}
+
+.comments-container .rbx-comment-remove:hover .icon-remove {
+    background-position: -20px -20px;
+}
+
+.comments-container .icon-flag {
+    background-position: 0 -40px;
+}
+
+.comments-container .rbx-comment-report-link:hover .icon-flag {
+    background-position: -20px -40px;
+}
+
+.comments-container .loading {
+    width: 100px;
+    height: 27px;
+    margin: 0 auto;
+    background: #fff url("/img/games/loading.gif") no-repeat center;
+    background-size: 100%;
+}
+
+.ajax-comments-more-button-container {
+    padding-top: 5px;
+}
+
+.ajax-comments-more-button-container .rbx-comments-see-more {
+    display: inline-block;
+    width: 100%;
+    padding: 7px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #757575;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 100%;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.ajax-comments-more-button-container .rbx-comments-see-more:hover,
+.ajax-comments-more-button-container .rbx-comments-see-more:focus {
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+}
+
+.ajax-comments-more-button-container .rbx-comments-see-more:disabled {
+    color: #b8b8b8;
+    box-shadow: none;
+    cursor: default;
+}
+
+@media (max-width: 767px) {
+    .comments-container .section-content {
+        padding: 12px;
+    }
+
+    .comments-container .rbx-comment-input {
+        height: 32px;
+    }
+
+    .comments-container .rbx-post-comment {
+        padding: 7px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 543px) {
+    .comments-container .comment-form .form-group {
+        width: 100%;
+    }
+
+    .comments-container .rbx-post-comment {
+        float: none;
+        width: 100%;
+        margin: 0 0 12px;
+    }
+}

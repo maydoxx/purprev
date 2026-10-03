@@ -3,6 +3,7 @@
     import { router } from "../router.svelte";
     import { session } from "../session.svelte";
     import GameCard from "../GameCard.svelte";
+    import Comments from "../Comments.svelte";
 
     const id = $derived(Number(router.query.id) || 0);
 
@@ -408,24 +409,48 @@
                         </div>
 
                         {#if badges.length > 0}
-                            <div class="game-section">
-                                <h3>Badges</h3>
-                                <div class="game-sheet">
-                                    <ul class="game-badges">
-                                        {#each badges as b (b.id)}
-                                            <li class:disabled={b.disabled}>
+                            <div class="game-section badge-container">
+                                <h3>Game Badges</h3>
+                                <ul class="badge-list">
+                                    {#each badges as b, i (b.id)}
+                                        <li class="section-row badge-row" class:badge-see-more-row={i >= BADGES_SHOWN && !allBadges} class:badge-disabled={Number(b.enabled) === 0}>
+                                            <div class="badge-image">
                                                 <img src={b.icon || "/img/pending.png"} alt={b.name}>
-                                                <div>
-                                                    <strong>{b.name}</strong>
-                                                    <p>{b.description || ""}</p>
-                                                    <span>{b.disabled ? "Disabled" : `Won by ${(Number(b.awarded_count) || 0).toLocaleString()} players`}</span>
+                                            </div>
+                                            <div class="badge-content">
+                                                <div class="badge-data-container">
+                                                    <div class="badge-name">{b.name}</div>
+                                                    <p class="para-overflow">{b.description || ""}</p>
                                                 </div>
-                                            </li>
-                                        {/each}
-                                    </ul>
-                                </div>
+                                                <ul class="badge-stats-container">
+                                                    <li>
+                                                        <div class="text-label">Rarity</div>
+                                                        <div class="badge-stats-info">{rarity(b)}</div>
+                                                    </li>
+                                                    <li>
+                                                        <div class="text-label">Won Yesterday</div>
+                                                        <div class="badge-stats-info">{Number(b.won_yesterday) || 0}</div>
+                                                    </li>
+                                                    <li>
+                                                        <div class="text-label">Won Ever</div>
+                                                        <div class="badge-stats-info">{Number(b.awarded_count) || 0}</div>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </li>
+                                    {/each}
+                                    {#if badges.length > BADGES_SHOWN && !allBadges}
+                                        <li>
+                                            <button type="button" class="btn-full-width btn-control-sm" id="badges-see-more" onclick={() => allBadges = true}>See More</button>
+                                        </li>
+                                    {/if}
+                                </ul>
                             </div>
                         {/if}
+
+                        <div class="game-section">
+                            <Comments kind="game" target={id} />
+                        </div>
 
                         {#if recommended.length > 0}
                             <div class="game-section">
