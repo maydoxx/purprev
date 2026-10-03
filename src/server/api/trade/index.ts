@@ -229,12 +229,14 @@ export const trade = new Elysia({ prefix: "/api/trade" })
                     if (moved.affectedRows !== 1) {
                         throw new TradeError("An offered item is no longer available.");
                     }
+                    await tx`DELETE FROM resale_listings WHERE user_id = ${senderId} AND item_id = ${itemId}`;
                 }
                 for (const itemId of request) {
                     const moved = await tx`UPDATE user_items SET user_id = ${senderId}, wearing = 0, purchased_at = ${now()} WHERE user_id = ${user.id} AND item_id = ${itemId}`;
                     if (moved.affectedRows !== 1) {
                         throw new TradeError("A requested item is no longer available.");
                     }
+                    await tx`DELETE FROM resale_listings WHERE user_id = ${user.id} AND item_id = ${itemId}`;
                 }
                 await tx`UPDATE trades SET status = 'completed', completed_at = ${now()} WHERE id = ${params.id}`;
             });

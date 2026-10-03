@@ -1,82 +1,1278 @@
-@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600&display=swap");
-
-.catalog-item-shell { background: transparent; padding: 24px 18px 70px; }
-.catalog-item-page { max-width: 970px; margin: 0 auto; color: #191919; font: 400 16px/1.3 "Source Sans Pro", Arial, sans-serif; }
-.catalog-item-page a { color: #7b2cbf; text-decoration: none; }
-.catalog-item-page a:hover { text-decoration: underline; }
-.catalog-item-hero { display: grid; grid-template-columns: 420px minmax(0, 1fr); gap: 12px; padding: 15px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
-.catalog-item-picture-wrap { position: relative; width: 100%; aspect-ratio: 1; border: 1px solid #ddd; background: #fff; }
-.catalog-item-picture { display: block; width: 100%; height: 100%; object-fit: contain; }
-.catalog-item-limited-label { position: absolute; bottom: 0; left: 0; padding: 0 12px 0 3px; background: #25bf62; clip-path: polygon(0 0, 86% 0, 100% 100%, 0 100%); color: #fff; font-size: 14px; line-height: 19px; font-weight: 600; }
-.catalog-item-limited-label.unique { background: #e2ab00; }
-.catalog-item-favorites { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 0; border: 0; background: transparent; color: #ffb000; font-size: 14px; height: 26px; cursor: pointer; }
-.catalog-item-favorites.active svg { fill: currentColor; }
-.catalog-item-favorites svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
-.catalog-item-information { min-width: 0; }
-.catalog-item-heading { padding: 3px 0 12px; border-bottom: 1px solid #e1e1e1; }
-.catalog-item-heading h1 { margin: 0 0 3px; font-size: 30px; line-height: 1.1; font-weight: 400; overflow-wrap: anywhere; }
-.catalog-item-creator { color: #b8b8b8; font-size: 16px; }
-.catalog-item-purchase-row { display: grid; grid-template-columns: 80px minmax(0, 1fr) 180px; gap: 10px; align-items: start; padding: 12px 0; }
-.catalog-field-label, .catalog-item-fields dt { color: #b8b8b8; font-weight: 600; font-size: 16px; padding-top: 1px; }
-.catalog-item-price-details { min-width: 0; }
-.catalog-price { display: flex; align-items: center; gap: 4px; color: #00bf56; font-size: 24px; line-height: 28px; font-weight: 600; white-space: nowrap; }
-.catalog-currency { display: inline-block; flex-shrink: 0; width: 23px; height: 23px; background: url("/img/nonebux-green.png") center / contain no-repeat; vertical-align: -3px; }
-.catalog-tix-price { color: #7b2cbf; font-size: 20px; }
-.catalog-tix-price::before { content: ""; display: inline-block; width: 20px; height: 20px; margin-right: 4px; vertical-align: -3px; background: url("/img/tix-gold.png") center / contain no-repeat; }
-.catalog-buy-options { display: flex; flex-direction: column; gap: 8px; }
-.catalog-tix-label { display: inline-block; margin-left: 8px; color: #7b2cbf; font-weight: 600; }
-.catalog-tix-label::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 3px; vertical-align: -2px; background: url("/img/tix-gold.png") center / contain no-repeat; }
-.catalog-reseller-link { display: block; margin-top: 6px; font-size: 14px; font-weight: 300; white-space: nowrap; }
-.catalog-item-page .catalog-buy-button { display: block; width: 100%; padding: 14px 10px; border: 0; border-radius: 3px; background: #28b753; color: #fff; font: 600 20px/25px "Source Sans Pro", Arial, sans-serif; text-align: center; text-decoration: none; cursor: pointer; }
-.catalog-item-page .catalog-buy-button:hover { background: #20a64a; text-decoration: none; }
-.catalog-item-page .catalog-buy-button.catalog-buy-tix { background: #7b2cbf; }
-.catalog-item-page .catalog-buy-button.catalog-buy-tix:hover { background: #6922a4; }
-.catalog-item-page .catalog-buy-button:disabled { background: #b8b8b8; cursor: default; }
-.catalog-owned-label { display: block; color: #00bf56; padding: 14px 0; text-align: center; }
-.catalog-offsale { color: #757575; font-size: 16px; }
-.catalog-item-fields { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 12px 10px; margin: 0; }
-.catalog-item-fields dd { margin: 0; }
-.catalog-item-description { white-space: pre-line; overflow-wrap: anywhere; font-weight: 300; line-height: 21px; }
-.catalog-item-status { margin: 18px 0 0; font-size: 14px; color: #757575; }
-.catalog-item-status.error { color: #c33; }
-.catalog-item-admin-link { display: inline-block; margin-top: 15px; font-size: 13px; }
-.catalog-item-page h2 { margin: 17px 0 8px; font-size: 24px; line-height: 1.3; font-weight: 300; }
-.catalog-price-panel, .catalog-resellers-panel { padding: 15px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
-.catalog-chart-controls { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; }
-.catalog-chart-legend { display: flex; gap: 18px; padding-top: 3px; color: #b8b8b8; font-size: 14px; }
-.catalog-chart-legend i { display: inline-block; width: 14px; height: 5px; margin-right: 5px; vertical-align: 2px; }
-.price-key { background: #28bf62; border-radius: 3px; }
-.volume-key { background: #e3e3e3; }
-.catalog-chart-controls select { width: 240px; height: 38px; padding: 7px 12px; border: 1px solid #b8b8b8; border-radius: 3px; background: #fff; color: #191919; font: 300 16px "Source Sans Pro", Arial, sans-serif; }
-.catalog-chart-area { display: flex; align-items: center; justify-content: center; height: 105px; margin: 0 10px 0 50px; border-bottom: 1px solid #c5b1df; color: #b8b8b8; font-size: 14px; }
-.catalog-chart-dates { display: flex; justify-content: space-around; margin: 5px 10px 0 50px; font-size: 12px; color: #555; letter-spacing: 1px; }
-.catalog-chart-volume { height: 62px; margin: 0 10px 0 50px; border-bottom: 1px solid #c5b1df; }
-.catalog-chart-summary { display: grid; grid-template-columns: repeat(3,1fr); margin: 14px 0 0; text-align: center; }
-.catalog-chart-summary dt { margin-bottom: 10px; color: #b8b8b8; font-weight: 600; }
-.catalog-chart-summary dd { margin: 0; font-size: 18px; }
-.catalog-resellers-panel p { margin: 18px 0; text-align: center; color: #757575; }
-.catalog-recommendations { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; list-style: none; padding: 3px 5px 0; margin: 0; }
-.catalog-recommended-card { min-width: 0; background: #fff; border-radius: 3px; box-shadow: 0 1px 4px rgba(0,0,0,.3); padding-bottom: 6px; overflow: hidden; }
-.catalog-recommended-card > a { color: #191919; }
-.catalog-recommended-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; }
-.catalog-recommended-name { padding: 2px 6px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 300; font-size: 16px; }
-.catalog-recommended-creator { padding: 3px 6px 0; color: #b8b8b8; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.catalog-recommended-price { padding: 3px 6px 0; color: #00bf56; font-size: 16px; white-space: nowrap; }
-.catalog-recommended-price .catalog-currency { width: 14px; height: 14px; margin-right: 5px; vertical-align: -1px; }
-@media (max-width: 1050px) {
-    .catalog-item-hero { grid-template-columns: minmax(280px, 44.7%) minmax(0, 1fr); }
-    .catalog-item-purchase-row { grid-template-columns: 80px 1fr; }
-    .catalog-item-buy { grid-column: 2; }
-    .catalog-recommendations { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.catalog-item-page .rbx-content {
+    min-height: calc(100vh - 40px);
+    background-color: #fff;
 }
+
+.catalog-item-body {
+    width: 970px;
+    margin: 0 auto;
+    padding: 5px 0 25px;
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 1.428;
+    color: #343434;
+}
+
+.catalog-item-body a:link,
+.catalog-item-body a:visited {
+    color: #5A189A;
+    text-decoration: none;
+}
+
+.catalog-item-body a:hover {
+    text-decoration: underline;
+}
+
+#ItemContainer {
+    margin-top: 10px;
+}
+
+#ItemContainer .clear {
+    clear: both;
+}
+
+#ItemContainer h1 {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-size: 32px;
+    font-weight: bold;
+    letter-spacing: -1px;
+    line-height: 1.2em;
+}
+
+#ItemContainer h3 {
+    display: block;
+    margin: 2px 0 20px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #343434;
+}
+
+#ItemContainer h2 {
+    font-size: 30px;
+    font-weight: normal;
+    letter-spacing: -1px;
+    color: #343434;
+}
+
+#ItemContainer #Item {
+    width: 800px;
+}
+
+#assetContainer {
+    float: left;
+    width: 320px;
+    overflow: hidden;
+}
+
+#ItemContainer #Thumbnail {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: 20px 0;
+    padding: 0;
+}
+
+#ItemContainer .thumbnail-holder {
+    width: 320px;
+    height: 320px;
+}
+
+#ItemContainer .thumbnail-holder img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#ItemContainer .thumbnail-overlay {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    margin-left: -28px;
+    z-index: 1;
+}
+
+#ItemContainer .thumbnail-overlay.bc {
+    margin-left: 0;
+    z-index: 2;
+}
+
+#ItemContainer .thumbnail-overlay.bc ~ .thumbnail-overlay {
+    left: 50px;
+}
+
+#ItemContainer #Summary {
+    float: left;
+    width: 480px;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+#Summary .SummaryDetails {
+    position: relative;
+    float: left;
+    width: 268px;
+    min-height: 249px;
+    margin: 0 20px 5px;
+    padding-bottom: 40px;
+}
+
+#ItemContainer #Summary #Creator {
+    float: left;
+}
+
+#Summary .SummaryDetails .Avatar {
+    padding: 0 0 8px;
+}
+
+#Summary .SummaryDetails .Avatar a {
+    position: relative;
+    display: inline-block;
+    width: 70px;
+    height: 70px;
+}
+
+#Summary .SummaryDetails .Avatar img {
+    width: 70px;
+    height: 70px;
+    border: 0;
+}
+
+#Summary .bcOverlay {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+}
+
+#Summary .item-detail {
+    float: left;
+    padding-left: 5px;
+}
+
+#ItemContainer .stat-label {
+    font-size: 12px;
+    line-height: 1.5em;
+    color: #999;
+}
+
+#ItemContainer .stat,
+#ItemContainer a.stat,
+#ItemContainer a.stat:link,
+#ItemContainer a.stat:visited {
+    font-size: 12px;
+    line-height: 1.5em;
+    color: #000;
+}
+
+#Summary .DescriptionPanel {
+    clear: both;
+}
+
+#Summary .Description {
+    max-height: 200px;
+    margin: 0;
+    overflow-x: hidden;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+#Summary .description-more {
+    cursor: pointer;
+}
+
+#ItemContainer .ReportAbuse {
+    text-align: left;
+    font-size: 11px;
+}
+
+#ItemContainer .ReportAbuse .AbuseButton a {
+    padding-left: 16px;
+    padding-bottom: 2px;
+    color: #F99;
+    background: none;
+}
+
+#ItemContainer .ReportAbuse .AbuseButton a:hover {
+    color: #F00;
+    background: url("/img/catalog/abuse.png") no-repeat 0 2px;
+}
+
+#ItemContainer .GearGenreContainer {
+    margin-top: 5px;
+    padding: 12px 0 15px;
+}
+
+#ItemContainer .divider-top {
+    border-top: 1px solid #ccc;
+}
+
+#ItemContainer .divider-left {
+    border-left: 1px solid #ccc;
+}
+
+.GearGenreContainer #GenresDiv {
+    float: left;
+    width: 135px;
+}
+
+.AssetGenreRepeater_Container {
+    clear: both;
+    padding: 1px 0;
+}
+
+.AssetGenreRepeater_Container div {
+    position: relative;
+    float: left;
+    top: .25em;
+    padding: 1px 0;
+}
+
+.AssetGenreRepeater_Container div.GamesInfoIcon {
+    display: inline-block;
+    width: 16px;
+    height: 14px;
+    margin-right: 3px;
+    padding: 0;
+    top: 0;
+}
+
+.AssetGenreRepeater_Container div.GamesInfoIcon.All {
+    background: url("/img/catalog/genre-icons.png") no-repeat -47px 1px;
+}
+
+#Summary .BuyPriceBoxContainer {
+    float: left;
+    width: 170px;
+    text-align: center;
+}
+
+#Summary .BuyPriceBox {
+    width: 158px;
+    margin-bottom: 5px;
+    padding: 5px;
+    background-color: #e1e1e1;
+    border: 1px solid #a7a7a7;
+}
+
+#Summary .BuyPriceBox .Price,
+#Summary .BuyPriceBox .Remaining,
+#Summary .PrivateSalesPurchasePanel {
+    display: block;
+    margin-bottom: 5px;
+}
+
+#Summary .BuyPriceBox .Remaining {
+    font-size: 12px;
+    font-weight: bold;
+    color: red;
+}
+
+#Summary .BuyPriceBox .robux,
+#UserSalesTab .robux,
+.SellItemModal .robux {
+    padding: 0 0 2px 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #060;
+    background: url("/img/nonebux-green.png") no-repeat 0 1px / 16px 16px;
+}
+
+#Summary .BuyPriceBox .tickets {
+    padding: 0 0 2px 18px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #7b2cbf;
+    background: url("/img/tix-gold.png") no-repeat 0 1px / 14px 14px;
+}
+
+#Summary .BuyPriceBox .footnote {
+    font-size: 12px;
+    color: #666;
+}
+
+#Summary .BuyPriceBox .footnote .stat {
+    font-size: 12px;
+}
+
+#Summary .BuyPriceBox .sellers-link {
+    font-size: 12px;
+}
+
+#Summary .BuyPriceBox .NoSellers {
+    font-size: 12px;
+    color: #666;
+}
+
+#Summary .BuyPriceBox .RobuxAndTicketsPurchasePanel {
+    display: block;
+    width: 147px;
+    height: 8px;
+    margin: 0 0 5px 5px;
+    border-top: 1px solid #a7a7a7;
+}
+
+.catalog-item-page .btn-medium,
+.catalog-item-page .btn-small {
+    display: inline-block;
+    margin: 0;
+    text-align: center;
+    font-family: inherit;
+    font-weight: normal;
+    text-decoration: none;
+    border: 1px solid;
+    cursor: pointer;
+    box-sizing: content-box;
+}
+
+.catalog-item-page .btn-medium {
+    height: 28px;
+    min-width: 62px;
+    padding: 1px 13px 3px;
+    font-size: 20px;
+    line-height: 1.3em;
+}
+
+.catalog-item-page .btn-small {
+    height: 20px;
+    min-width: 40px;
+    padding: 1px 7px 0;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+.catalog-item-page .btn-primary,
+.catalog-item-page .btn-primary:link,
+.catalog-item-page .btn-primary:visited,
+.catalog-item-page .btn-primary:hover {
+    color: #fff;
+    background: #007001 url("/img/catalog/bg-btn-green.png") repeat-x left -96px;
+    border-color: #007001;
+    text-decoration: none;
+}
+
+.catalog-item-page .btn-small.btn-primary {
+    background-position: left -160px;
+}
+
+.catalog-item-page .btn-medium.btn-primary:hover {
+    background-position: left -128px;
+}
+
+.catalog-item-page .btn-small.btn-primary:hover {
+    background-position: left -181px;
+}
+
+.catalog-item-page .btn-neutral,
+.catalog-item-page .btn-neutral:link,
+.catalog-item-page .btn-neutral:visited,
+.catalog-item-page .btn-neutral:hover {
+    color: #fff;
+    background: #7b2cbf linear-gradient(#9d5fd6, #7b2cbf 45%, #6a1fb0);
+    border-color: #5A189A;
+    text-decoration: none;
+}
+
+.catalog-item-page .btn-neutral:hover {
+    background: #6a1fb0 linear-gradient(#8f4fcc, #6a1fb0 45%, #5A189A);
+}
+
+.catalog-item-page .btn-negative,
+.catalog-item-page .btn-negative:link,
+.catalog-item-page .btn-negative:visited,
+.catalog-item-page .btn-negative:hover {
+    color: #fff;
+    background: #565656;
+    border-color: #565656;
+    text-decoration: none;
+}
+
+.catalog-item-page .btn-disabled-primary,
+.catalog-item-page .btn-disabled-primary:hover,
+.catalog-item-page .btn-primary:disabled {
+    color: #fff;
+    background: #99c699 url("/img/catalog/bg-btn-green.png") repeat-x left -202px;
+    border-color: #99c699;
+    cursor: default;
+}
+
+#Summary .BuyPriceBoxContainer .FavoriteStar {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 2px 0 2px 20px;
+    font: inherit;
+    color: #343434;
+    border: 0;
+    background: url("/img/catalog/star.png") no-repeat;
+    cursor: pointer;
+}
+
+#Summary .BuyPriceBoxContainer .FavoriteStar.active {
+    font-weight: bold;
+}
+
+#Summary .BuyPriceBoxContainer .owner-actions {
+    margin-top: 8px;
+}
+
+#Summary .BuyPriceBoxContainer .owner-actions .btn-medium {
+    display: block;
+    margin: 5px 0 0;
+}
+
+#Summary .BuyPriceBoxContainer .item-status {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #666;
+}
+
+#Summary .BuyPriceBoxContainer .item-status.error {
+    color: #c33;
+}
+
+#Summary .BuyPriceBoxContainer .admin-link {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+#ItemContainer .PrivateSales {
+    padding-top: 20px;
+}
+
+#ItemContainer .PrivateSales h2 {
+    display: block;
+    margin: 0 0 15px;
+}
+
+#UserSalesTab {
+    float: left;
+    width: 330px;
+    margin-right: 7px;
+}
+
+#UserSalesTab .empty {
+    padding: 10px 0;
+    color: #666;
+}
+
+.ItemSalesTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#UserSalesTab td {
+    padding: 0 0 10px;
+    vertical-align: middle;
+}
+
+#UserSalesTab .seller-avatar {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+}
+
+#UserSalesTab .seller-avatar img {
+    width: 48px;
+    height: 48px;
+    border: 0;
+}
+
+#UserSalesTab .seller-avatar .bcOverlay {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+}
+
+#UserSalesTab .SellerNameAndSerial {
+    width: 155px;
+    padding-left: 2px;
+}
+
+#UserSalesTab .SellerName,
+#UserSalesTab .SerialNum {
+    margin: 2px 0;
+    padding: 0;
+}
+
+#UserSalesTab .PriceBuyContainer {
+    text-align: center;
+}
+
+#UserSalesTab .UserOwns {
+    font-size: 12px;
+    color: #666;
+}
+
+.pgItemsForResale {
+    text-align: center;
+}
+
+.pgItemsForResale a,
+.pgItemsForResale span {
+    margin: 0 3px;
+}
+
+.pgItemsForResale a[disabled] {
+    color: #999;
+    cursor: default;
+    pointer-events: none;
+}
+
+.pgItemsForResale span {
+    font-weight: bold;
+}
+
+.PriceGraph {
+    overflow: hidden;
+}
+
+.itemprice-container {
+    margin-left: 10px;
+}
+
+.PriceGraph .header {
+    margin: 0;
+}
+
+.PriceGraph .Options,
+.PriceGraph .pricestats {
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+.PriceGraph .Options span {
+    cursor: pointer;
+}
+
+.PriceGraph .selected-text {
+    font-weight: bold;
+}
+
+.PriceGraph .robux-text {
+    font-weight: bold;
+    color: #060;
+}
+
+.PriceGraph .pricestats-wrap {
+    margin-left: 20px;
+}
+
+.PriceGraph .pricestats .up {
+    color: #008000;
+}
+
+.PriceGraph .pricestats .down {
+    color: #c00;
+}
+
+.itemprice-placeholder {
+    width: 370px;
+    height: 300px;
+}
+
+.itemprice-volumegraph {
+    width: 370px;
+    height: 60px;
+}
+
+.itemprice-placeholder svg,
+.itemprice-volumegraph svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    font-family: inherit;
+}
+
+.itemprice-placeholder .grid {
+    stroke: #e5e5e5;
+    stroke-width: 1;
+}
+
+.itemprice-placeholder .frame,
+.itemprice-volumegraph .frame {
+    fill: #fff;
+    stroke: #999;
+    stroke-width: 1;
+}
+
+.itemprice-placeholder .axis {
+    fill: #545454;
+    font-size: 10px;
+}
+
+.itemprice-placeholder .line {
+    fill: none;
+    stroke: #090;
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+
+.itemprice-placeholder .dot {
+    fill: #090;
+}
+
+.itemprice-placeholder .empty-text {
+    fill: #999;
+    font-size: 12px;
+}
+
+.itemprice-placeholder .legend,
+.itemprice-volumegraph .legend {
+    fill: #fff;
+    stroke: #999;
+    stroke-width: 1;
+}
+
+.itemprice-placeholder .swatch.price {
+    fill: #090;
+}
+
+.itemprice-volumegraph .swatch.volume {
+    fill: #9d9fc9;
+}
+
+.itemprice-placeholder .legend-text,
+.itemprice-volumegraph .legend-text {
+    fill: #343434;
+    font-size: 10px;
+}
+
+.itemprice-volumegraph .bar {
+    fill: #9d9fc9;
+}
+
+#Tabs {
+    margin-bottom: 10px;
+}
+
+.WhiteSquareTabsContainer {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin: 0;
+    padding: 0 0 0 5px;
+    background: url("/img/catalog/tab-border.png") bottom repeat-x;
+    box-sizing: border-box;
+}
+
+.SquareTabGray {
+    position: relative;
+    top: 2px;
+    float: left;
+    margin: 4px 2px 0 1px;
+    padding: 7px;
+    list-style: none;
+    font-size: 15px;
+    font-weight: bold;
+    color: #343434;
+    background-color: #D6D6D6;
+    border: 1px solid #9e9e9e;
+    border-bottom-width: 0;
+}
+
+.SquareTabGray a,
+.SquareTabGray a:link,
+.SquareTabGray a:visited {
+    color: #343434;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.SquareTabGray:hover {
+    background-color: #e9e9e9;
+    cursor: pointer;
+}
+
+.SquareTabGray.selected,
+.SquareTabGray.selected:hover {
+    top: 1px;
+    margin-top: 0;
+    padding: 9px 7px 12px;
+    background-color: #fff;
+    border-color: #ccc;
+}
+
+.StandardPanelContainer {
+    position: relative;
+    clear: both;
+    padding-left: 5px;
+}
+
+.StandardPanelContainer .StandardPanelWhite {
+    position: relative;
+    left: -5px;
+    top: -1px;
+    width: 100%;
+    margin-bottom: -6px;
+    padding: 6px;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.TabContent {
+    display: none;
+}
+
+.TabContent.selected {
+    display: block;
+}
+
+.AssetRecommenderContainer {
+    text-align: center;
+}
+
+.AssetRecommenderContainer .recommended-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 14px;
+    min-height: 175px;
+    padding: 10px 0;
+}
+
+.AssetRecommenderContainer .PortraitDiv {
+    width: 140px;
+    overflow: hidden;
+}
+
+.AssetRecommenderContainer .AssetThumbnail a {
+    display: inline-block;
+    width: 110px;
+    height: 110px;
+}
+
+.AssetRecommenderContainer .AssetThumbnail img {
+    width: 110px;
+    height: 110px;
+    border: 0;
+    object-fit: contain;
+}
+
+.AssetRecommenderContainer .AssetName {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.AssetRecommenderContainer .AssetCreator {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#FreeGames .SEOLinksContainer {
+    float: left;
+    margin: 0 60px 0 0;
+    font-size: 11px;
+    color: #666;
+}
+
+#FreeGames ul {
+    margin: 0;
+    padding: 0 0 0 20px;
+    list-style: none;
+}
+
+#FreeGames li {
+    display: inline;
+    margin-right: 8px;
+}
+
+.SellItemModal {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 120px;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.SellItemModal .PurchaseModal {
+    position: relative;
+    width: 435px;
+    padding: 5px;
+    background-color: #E1E1E1;
+    border: 2px solid #272727;
+}
+
+.SellItemModal .titleBar {
+    height: 38px;
+    font-size: 27px;
+    font-weight: bold;
+    letter-spacing: -1px;
+    text-align: center;
+    color: #343434;
+    background-color: #E1E1E1;
+}
+
+.SellItemModal .PurchaseModalBody {
+    background-color: #fff;
+}
+
+.SellItemModal .PurchaseModalMessage {
+    min-height: 110px;
+    padding: 10px;
+}
+
+.SellItemModal .PurchaseModalMessageImage {
+    display: inline-block;
+    width: 110px;
+    height: 110px;
+    vertical-align: top;
+}
+
+.SellItemModal .PurchaseModalMessageImage img {
+    width: 110px;
+    height: 110px;
+    object-fit: contain;
+}
+
+.SellItemModal .PurchaseModalMessageText {
+    display: inline-block;
+    width: 275px;
+    padding-top: 10px;
+    vertical-align: top;
+}
+
+.SellItemModal .PurchaseModalMessageText.centered {
+    padding-top: 28px;
+    text-align: center;
+}
+
+.SellItemModal .text-box {
+    width: 90px;
+    height: 21px;
+    padding: 0 3px;
+    font-size: 12px;
+    line-height: 19px;
+    border: 1px solid #a7a7a7;
+}
+
+.SellItemModal .sell-row {
+    margin: 4px 0;
+}
+
+.SellItemModal .sell-summary {
+    margin: 8px 0 0;
+    border-collapse: collapse;
+}
+
+.SellItemModal .sell-summary td {
+    padding: 1px 8px 1px 0;
+    font-size: 12px;
+}
+
+.SellItemModal .sell-summary td:first-child {
+    color: #666;
+}
+
+.SellItemModal .error-message {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #c00;
+}
+
+.SellItemModal .PurchaseModalButtonContainer {
+    clear: left;
+    padding-top: 10px;
+    text-align: center;
+}
+
+.SellItemModal .PurchaseModalButtonContainer .btn-medium {
+    margin: 0 5px;
+}
+
+.SellItemModal .PurchaseModalFooter {
+    margin: 10px auto 0;
+    padding-bottom: 5px;
+    text-align: center;
+    color: #666;
+}
+
+@media (max-width: 1150px) {
+    .catalog-item-body {
+        width: auto;
+        max-width: 970px;
+        margin: 0 12px;
+    }
+
+    #ItemContainer #Item {
+        width: 100%;
+    }
+
+    #ItemContainer #Summary {
+        width: calc(100% - 320px);
+    }
+
+    #Summary .SummaryDetails {
+        width: calc(100% - 210px);
+        margin: 0 20px 5px 0;
+    }
+}
+
+@media (max-width: 767px) {
+    #assetContainer,
+    #ItemContainer #Summary,
+    #Summary .SummaryDetails,
+    #UserSalesTab {
+        float: none;
+        width: 100%;
+    }
+
+    #ItemContainer #Thumbnail {
+        margin: 12px auto;
+    }
+
+    .PriceGraph.divider-left {
+        float: none;
+        width: 100%;
+        padding-top: 12px;
+        border-top: 1px solid #ccc;
+        border-left: 0;
+    }
+
+    .itemprice-container {
+        margin-left: 0;
+    }
+
+    .itemprice-placeholder {
+        width: 280px;
+        height: 224px;
+        margin: 0 auto;
+    }
+
+    .itemprice-volumegraph {
+        width: 280px;
+        height: 44px;
+        margin: 0 auto;
+    }
+
+    .AssetRecommenderContainer .recommended-row {
+        flex-wrap: wrap;
+    }
+}
+
+.AjaxCommentsContainer {
+    width: 570px;
+    max-width: 100%;
+    margin: 0 10px 10px;
+    padding-bottom: 5px;
+    color: #343434;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.428;
+}
+
+.AjaxCommentsContainer .PostACommentContainer {
+    margin: 15px 0 0;
+    padding-bottom: 15px;
+}
+
+.AjaxCommentsContainer .PostAComment {
+    margin: 10px 0 0;
+}
+
+.AjaxCommentsContainer .CommentText,
+.AjaxCommentsContainer .Post {
+    position: relative;
+    margin-left: 20px;
+    border: 1px solid #d4bbff;
+    border-radius: 3px;
+    background-color: #f4edff;
+}
+
+.AjaxCommentsContainer .CommentText::before,
+.AjaxCommentsContainer .Post::before {
+    content: "";
+    position: absolute;
+    top: 46px;
+    left: -20px;
+    width: 0;
+    height: 0;
+    border-top: 15px solid #d4bbff;
+    border-left: 20px solid transparent;
+}
+
+.AjaxCommentsContainer .CommentText::after,
+.AjaxCommentsContainer .Post::after {
+    content: "";
+    position: absolute;
+    top: 47px;
+    left: -19px;
+    width: 0;
+    height: 0;
+    border-top: 13px solid #f4edff;
+    border-left: 20px solid transparent;
+}
+
+.AjaxCommentsContainer .CommentText {
+    width: 438px;
+}
+
+.AjaxCommentsContainer textarea {
+    display: block;
+    width: 420px;
+    min-height: 0;
+    height: 95px;
+    padding: 5px;
+    border: none;
+    background: transparent;
+    color: #343434;
+    font: inherit;
+    overflow: auto;
+}
+
+.AjaxCommentsContainer textarea:focus {
+    outline: none;
+}
+
+.AjaxCommentsContainer textarea::placeholder {
+    color: #ccc;
+    font-style: italic;
+    opacity: 1;
+}
+
+.AjaxCommentsContainer .Buttons {
+    margin: 10px 0 0;
+    padding: 0 10px 10px;
+}
+
+.AjaxCommentsContainer .Buttons::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.AjaxCommentsContainer .CharsRemaining {
+    float: right;
+    margin: 3px 8px;
+}
+
+.AjaxCommentsContainer .roblox-comment-button {
+    display: inline-block;
+    height: 20px;
+    min-width: 40px;
+    margin: 0;
+    padding: 1px 7px 0;
+    border: 1px solid #7b2cbf;
+    background-color: #7b2cbf;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.AjaxCommentsContainer .roblox-comment-button:hover {
+    border-color: #9d4edd;
+    background-color: #9d4edd;
+}
+
+.AjaxCommentsContainer .roblox-comment-button:disabled {
+    border-color: #caabe5;
+    background-color: #caabe5;
+    cursor: default;
+}
+
+.AjaxCommentsContainer .commentPaneErrorMessage {
+    clear: both;
+    padding-top: 5px;
+    color: #d86868;
+    font-size: 12px;
+}
+
+.AjaxCommentsContainer .Comments {
+    width: 663px;
+    max-width: 100%;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.AjaxCommentsContainer .Comment {
+    margin-bottom: 15px;
+    padding: 0;
+}
+
+.AjaxCommentsContainer .Comment::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.AjaxCommentsContainer .Commenter {
+    float: left;
+    width: 110px;
+}
+
+.AjaxCommentsContainer .Avatar {
+    width: 100px;
+    height: 100px;
+}
+
+.AjaxCommentsContainer .Avatar a {
+    display: block;
+}
+
+.AjaxCommentsContainer .Avatar img {
+    display: block;
+    width: 100px;
+    height: 100px;
+}
+
+.AjaxCommentsContainer .PostContainer {
+    float: left;
+}
+
+.AjaxCommentsContainer .Post {
+    width: 408px;
+    min-height: 48px;
+    padding: 15px 15px 45px;
+    border-color: #ddd;
+    background-color: #f6f6f6;
+}
+
+.AjaxCommentsContainer .Post::before {
+    border-top-color: #ddd;
+}
+
+.AjaxCommentsContainer .Post::after {
+    border-top-color: #f6f6f6;
+}
+
+.AjaxCommentsContainer .Post .Audit {
+    margin-bottom: 5px;
+}
+
+.AjaxCommentsContainer .Post .Audit::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.AjaxCommentsContainer .Post .Audit .ByLine {
+    float: left;
+}
+
+.AjaxCommentsContainer .footnote {
+    color: #666;
+}
+
+.AjaxCommentsContainer .UserOwnsAsset {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 4px;
+    background: url("/img/catalog/comment-user-owns-asset.png");
+    vertical-align: middle;
+}
+
+.AjaxCommentsContainer .ReportAbuse {
+    float: right;
+    font-size: 11px;
+    text-align: left;
+}
+
+.AjaxCommentsContainer .ReportAbuse .AbuseButton a {
+    padding-bottom: 2px;
+    padding-left: 16px;
+    background: none;
+    color: #f99;
+}
+
+.AjaxCommentsContainer .ReportAbuse .AbuseButton a:hover {
+    background: url("/img/catalog/abuse.png") no-repeat scroll 0 2px transparent;
+    color: #f00;
+}
+
+.AjaxCommentsContainer .Content {
+    margin: 10px 0;
+    overflow: hidden;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.AjaxCommentsContainer .DeleteCommentButton {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #7b2cbf;
+    font: inherit;
+    cursor: pointer;
+}
+
+.AjaxCommentsContainer .DeleteCommentButton:hover {
+    text-decoration: underline;
+}
+
+.AjaxCommentsContainer .Comments .empty,
+.AjaxCommentsContainer .Comments .more {
+    text-align: center;
+}
+
+.AjaxCommentsContainer .Comments .loading {
+    width: 100%;
+    height: 100px;
+    background: #fff url("/img/catalog/ProgressIndicator4.gif") no-repeat center;
+}
+
+.AjaxCommentsContainer .btn-control.btn-control-small {
+    display: inline-block;
+    height: 18px;
+    padding: 0 6px;
+    border: 1px solid #777;
+    background: #ccc url("/img/catalog/btn-control-small-tile.png") repeat-x top;
+    color: #000;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.AjaxCommentsContainer .btn-control.btn-control-small:hover {
+    border-color: #888;
+    background-position: bottom;
+}
+
 @media (max-width: 600px) {
-    .catalog-item-shell { padding: 16px 10px 50px; }
-    .catalog-item-hero { grid-template-columns: 1fr; }
-    .catalog-item-preview { max-width: 420px; width: 100%; margin: auto; }
-    .catalog-item-purchase-row { grid-template-columns: 80px 1fr 110px; }
-    .catalog-item-buy { grid-column: auto; }
-    .catalog-chart-controls { flex-wrap: wrap; }
-    .catalog-chart-area, .catalog-chart-volume, .catalog-chart-dates { margin-left: 0; margin-right: 0; }
-    .catalog-chart-dates span:nth-child(even) { display: none; }
-    .catalog-chart-summary { font-size: 14px; gap: 5px; }
+    .AjaxCommentsContainer .CommentText {
+        width: auto;
+    }
+
+    .AjaxCommentsContainer textarea {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .AjaxCommentsContainer .Commenter {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .AjaxCommentsContainer .PostContainer {
+        float: none;
+    }
+
+    .AjaxCommentsContainer .Post {
+        width: auto;
+    }
 }

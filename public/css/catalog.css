@@ -1,4 +1,5 @@
-body {
+.rbx-content.catalog-page {
+    min-height: calc(100vh - 40px);
     background-color: #fff;
 }
 
@@ -529,11 +530,6 @@ div#catalog .item-image-wrapper .limited-overlay {
     left: 0;
     bottom: 5px;
     z-index: 1;
-    margin-left: -18px;
-}
-
-div#catalog .image-small .item-image-wrapper .limited-overlay {
-    margin-left: -13px;
 }
 
 div#catalog .item-image-wrapper img[alt='New'] {
@@ -667,16 +663,256 @@ span.robux::before {
     border: 1px solid #a7a7a7;
 }
 
-#catalog .PagingContainerDivTop .pager-disabled {
-    color: #a7a7a7;
-}
-
 #catalog .no-results {
     clear: both;
     padding: 60px 0;
     text-align: center;
     font-size: 14px;
     color: #666;
+}
+
+#catalog .browseDropdownWrap {
+    position: relative;
+}
+
+div#catalog div#dropdown.browsedropdown {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 40px;
+    z-index: 8;
+}
+
+#catalog .browseDropdownWrap:hover div#dropdown.browsedropdown,
+#catalog .browseDropdownWrap:focus-within div#dropdown.browsedropdown {
+    display: block;
+}
+
+div#catalog div#dropdown ul.slideOut.gearSlideOut {
+    width: auto;
+}
+
+div#catalog div#dropdown ul.slideOut.gearSlideOut li {
+    width: auto;
+    min-width: 134px;
+}
+
+#catalog .filters-header {
+    padding-top: 20px;
+}
+
+#catalog .filters-header h2 {
+    margin: 0 0 5px;
+    font-size: 30px;
+    font-weight: 400;
+    letter-spacing: -1px;
+    line-height: 1.2em;
+    color: #343434;
+}
+
+#catalog .filters {
+    margin-left: 5px;
+}
+
+#catalog .left-nav-menu .filter-title {
+    margin: 5px 0;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+#catalog .left-nav-menu .filters ul {
+    margin: 0 0 10px;
+    padding: 0 0 10px 5px;
+    list-style: none;
+    line-height: 17px;
+    border-bottom: 1px solid #eee;
+}
+
+#catalog .left-nav-menu .filters ul.separatorForLegend {
+    margin-bottom: 0;
+    padding-bottom: 20px;
+    border: 0;
+}
+
+#catalog .left-nav-menu .filters li {
+    margin: 0;
+    padding: 0;
+}
+
+#catalog .left-nav-menu .filters a.selected {
+    font-weight: 600;
+    color: #343434;
+    text-decoration: none;
+}
+
+#catalog .creatorForm {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 2px 0 0;
+}
+
+#catalog .left-nav-menu input#creatorTextbox {
+    width: 90px;
+    height: 18px;
+    padding: 0 0 0 3px;
+    font-size: 11px;
+    line-height: 18px;
+    box-sizing: content-box;
+}
+
+#catalog .left-nav-menu input#creatorTextbox::placeholder {
+    color: #888;
+    font-style: italic;
+}
+
+#catalog .btn-control.btn-control-small {
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 18px;
+    background-image: url("/img/catalog/btn-control-small-tile.png");
+    box-sizing: border-box;
+}
+
+#catalog li.NotForSale {
+    font-size: 11px;
+}
+
+#catalog .left-nav-menu li.NotForSale input {
+    position: relative;
+    top: 3px;
+    margin: 0 3px 0 0;
+    border: 0;
+}
+
+#catalog .left-nav-menu li.NotForSale label {
+    cursor: pointer;
+}
+
+div#catalog #legend details summary {
+    list-style: none;
+}
+
+div#catalog #legend details summary::-webkit-details-marker {
+    display: none;
+}
+
+div#catalog #legend details:not([open]) .header {
+    background-position: top left;
+}
+
+div#catalog #legend.divider-top {
+    margin-top: 10px;
+}
+
+#catalog .breadCrumbFilter {
+    font-size: 14px;
+}
+
+#catalog .bolded {
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+#catalog a.breadCrumbFilter.selected,
+#catalog a.breadCrumbFilter.selected:link,
+#catalog a.breadCrumbFilter.selected:visited {
+    font-weight: 600;
+    color: #343434;
+    text-decoration: none;
+}
+
+#catalog #secondRow .showing {
+    float: left;
+    padding-top: 5px;
+}
+
+#catalog .collectibles-header {
+    clear: both;
+    padding-top: 30px;
+}
+
+div#catalog .item-image-wrapper img.bc-overlay {
+    position: absolute;
+    left: 0;
+    bottom: 5px;
+    z-index: 2;
+}
+
+div#catalog .image-small div img.bc-overlay ~ .limited-overlay {
+    left: 34px;
+}
+
+div#catalog .image-large div img.bc-overlay ~ .limited-overlay {
+    left: 46px;
+}
+
+div#catalog .PrivateSales {
+    width: 100px;
+    height: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+span.NoPrivateSellersText {
+    font-style: italic;
+    font-size: 11px;
+    color: #666;
+}
+
+span.tickets {
+    position: relative;
+    margin-left: 6px;
+    padding: 0 0 2px 18px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #7b2cbf;
+}
+
+span.tickets::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    transform: translateY(-50%);
+    background: url("/img/tix-gold.png") center / contain no-repeat;
+}
+
+#catalog .PagingContainerDivTop .pager {
+    display: inline-block;
+    width: 27px;
+    height: 27px;
+    border: 0;
+    vertical-align: middle;
+}
+
+#catalog .PagingContainerDivTop .pager.previous {
+    background: url("/img/catalog/pager-left.png") no-repeat top left;
+}
+
+#catalog .PagingContainerDivTop .pager.next {
+    background: url("/img/catalog/pager-right.png") no-repeat top left;
+}
+
+#catalog .PagingContainerDivTop a.pager:hover {
+    background-position: bottom left;
+}
+
+#catalog .PagingContainerDivTop .pager.disabled {
+    background-position: 0 -27px;
+    cursor: default;
+}
+
+#catalog .PagingContainerDivTop .page.text {
+    position: relative;
+    top: -2px;
+    padding: 5px;
+    font-weight: normal;
 }
 
 @media (max-width: 1150px) {
@@ -717,170 +953,4 @@ span.robux::before {
         padding-left: 0;
         border-left: 0;
     }
-}
-
-
-#catalog .catalog-grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    row-gap: 16px;
-    margin-top: 18px;
-}
-
-#catalog .catalog-card {
-    grid-column: span 2;
-    min-width: 0;
-    padding: 0 5px;
-    background: transparent;
-}
-
-#catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) {
-    grid-column: span 3;
-}
-
-#catalog .catalog-card-thumb {
-    position: relative;
-    display: flex;
-    width: min(100%, 112px);
-    aspect-ratio: 1 / 1;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 4px;
-    background: #fff;
-    border: 1px solid #eee;
-    box-sizing: border-box;
-    overflow: hidden;
-}
-
-#catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) .catalog-card-thumb {
-    width: min(100%, 152px);
-}
-
-#catalog .catalog-card-image {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-#catalog .catalog-card-limited {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 86px;
-    max-width: 72%;
-    height: auto;
-    z-index: 2;
-}
-
-#catalog .catalog-card-new {
-    position: absolute;
-    right: 0;
-    top: 0;
-    z-index: 2;
-}
-
-#catalog .catalog-card-info {
-    width: min(100%, 112px);
-    margin: 0 auto;
-}
-
-#catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) .catalog-card-info {
-    width: min(100%, 152px);
-}
-
-#catalog .catalog-card-name {
-    display: block;
-    overflow: hidden;
-    color: #5A189A;
-    font-size: 13px;
-    line-height: 18px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-#catalog .catalog-card-name:hover {
-    color: #5A189A;
-}
-
-#catalog .catalog-card-creator {
-    margin-top: 1px;
-    overflow: hidden;
-    color: #999;
-    font-size: 11px;
-    line-height: 15px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-#catalog .catalog-card-creator a {
-    color: #5A189A;
-}
-
-#catalog .catalog-card-price {
-    min-height: 18px;
-    margin-top: 4px;
-    color: #00a651;
-    font-size: 12px;
-    line-height: 16px;
-    font-weight: 600;
-}
-
-#catalog .catalog-card-price .robux {
-    font-size: 12px;
-}
-
-#catalog .catalog-free {
-    color: #078515;
-}
-
-#catalog .catalog-offsale {
-    color: #777;
-}
-
-@media (max-width: 1050px) {
-    #catalog .catalog-card {
-        grid-column: span 3;
-    }
-
-    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) {
-        grid-column: span 3;
-    }
-}
-
-@media (max-width: 850px) {
-    #catalog .catalog-card {
-        grid-column: span 4;
-    }
-
-    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) {
-        grid-column: span 6;
-    }
-}
-
-@media (max-width: 600px) {
-    #catalog .catalog-card {
-        grid-column: span 6;
-    }
-
-    #catalog .catalog-grid.featured .catalog-card:nth-child(-n+4) {
-        grid-column: span 6;
-    }
-}
-
-.catalog-card-price .catalog-tix-label {
-    margin-left: 6px;
-    color: #7b2cbf;
-    font-weight: 600;
-}
-
-.catalog-card-price .catalog-tix-label::before {
-    content: "";
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    margin-right: 3px;
-    vertical-align: -2px;
-    background: url("/img/tix-gold.png") center / contain no-repeat;
 }
