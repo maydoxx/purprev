@@ -9,7 +9,8 @@
         ["/develop/audio", "Audio"],
         ["/develop/shirts", "Shirts"],
         ["/develop/t-shirts", "T-Shirts"],
-        ["/develop/pants", "Pants"]
+        ["/develop/pants", "Pants"],
+        ["/my/sets", "Sets"]
     ];
 </script>
 
