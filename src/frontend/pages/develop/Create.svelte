@@ -1,7 +1,7 @@
 <script lang="ts">
     import { router } from "../../router.svelte";
     import { postForm } from "./develop";
-    import { checkPlaceFile, uploadPlace } from "./upload";
+    import { checkPlaceFile, uploadPlace, placeLimitLabel } from "./upload";
 
     let title = $state("");
     let files = $state<FileList | null>(null);
@@ -68,7 +68,7 @@
             <div class="develop-field">
                 <label class="develop-label" for="place_file">Place File:</label>
                 <input id="place_file" class="develop-file" name="place_file" type="file" accept=".rbxl" bind:files>
-                <span class="develop-help">.rbxl only, up to 50 MB. Large files are uploaded in small chunks.</span>
+                <span class="develop-help">.rbxl only, up to {placeLimitLabel()}. Large files are uploaded in small chunks.</span>
             </div>
         </div>
         <div class="develop-actions">

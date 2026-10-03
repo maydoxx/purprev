@@ -460,15 +460,15 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             const file = hasFile(body.place_file) ? body.place_file! : null;
             if (file) {
                 checkPlaceName(file.name);
-                if (file.size > PLACE_MAX) {
-                    throw new DevelopError("Place files can be up to 50 MB.");
+                if (file.size > placeLimit(user)) {
+                    throw new DevelopError(`Place files can be up to ${placeLimitLabel(user)}.`);
                 }
             }
 
-            const created = await sql`INSERT INTO games (creator_id, title, created_at, updated_at) VALUES (${user.id}, ${title}, ${now()}, ${now()})`;
+            const created = await sql`INSERT INTO games (creator_id, title, description, created_at, updated_at) VALUES (${user.id}, ${title}, '', ${now()}, ${now()})`;
             const id = Number(created.lastInsertRowid);
             if (file) {
-                await savePlace(id, file);
+                await savePlace(id, user.id, file);
                 rcc.render.place(id);
             }
             return {
@@ -652,8 +652,8 @@ export const develop = new Elysia({ prefix: "/api/develop" })
                     throw new DevelopError(`Upload is incomplete. Missing chunk ${i + 1}.`, 409);
                 }
                 size += part.size;
-                if (size > PLACE_MAX) {
-                    throw new DevelopError("Place files can be up to 50 MB.", 413);
+                if (size > placeLimit(user)) {
+                    throw new DevelopError(`Place files can be up to ${placeLimitLabel(user)}.`, 413);
                 }
             }
 

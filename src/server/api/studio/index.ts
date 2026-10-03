@@ -8,10 +8,11 @@ import { PENDING } from "../../paths";
 import { text, studiosig } from "../engine/sign";
 import { studioSetup, placeR15 } from "../engine/game";
 import { html, welcomePage, toolboxPage, publishPage, saveModelPage } from "./pages";
-import { searchFree, searchOwn } from "./toolbox";
+import { searchFree, searchOwn, item as toolboxItem, stamp } from "./toolbox";
+import { setsOf, setItems } from "../sets";
+import { placeLimit, placeLimitLabel } from "../../games";
 
 
-const PLACE_MAX = 50 * 1024 * 1024;
 const ASSET_MAX = 20 * 1024 * 1024;
 const PER_PAGE_MAX = 50;
 const USER_SET = 1000000;
@@ -389,8 +390,8 @@ export const studio = new Elysia()
         if (bytes.byteLength < 16 || !startsWith(bytes, "<roblox")) {
             return status(400, "that is not a place file");
         }
-        if (bytes.byteLength > PLACE_MAX) {
-            return status(413, "place files can be up to 50 MB");
+        if (bytes.byteLength > placeLimit(user)) {
+            return status(413, `place files can be up to ${placeLimitLabel(user)}`);
         }
         await mediaPut("places", placeId, "rbxl", bytes);
         await sql`UPDATE games SET updated_at = ${now()} WHERE id = ${placeId}`;

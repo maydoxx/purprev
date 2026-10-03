@@ -1,11 +1,21 @@
 import { postForm } from "./develop";
+import { session } from "../../session.svelte";
 
 const CHUNK = 768 * 1024;
 const MAX = 50 * 1024 * 1024;
+const MAX_BC = 100 * 1024 * 1024;
+
+export const placeLimit = () => session.me && (session.me.admin || session.me.membership !== "None") ? MAX_BC : MAX;
+
+export const placeLimitLabel = () => `${placeLimit() / 1024 / 1024} MB`;
 
 export const checkPlaceFile = (file: File) => {
-    if (!/\.rbxl$/i.test(file.name)) return "Only .rbxl place files are supported.";
-    if (file.size <= 0 || file.size > MAX) return "Place files can be up to 50 MB.";
+    if (!/\.rbxl$/i.test(file.name)) {
+        return "Only .rbxl place files are supported.";
+    }
+    if (file.size <= 0 || file.size > placeLimit()) {
+        return `Place files can be up to ${placeLimitLabel()}.`;
+    }
     return "";
 };
 

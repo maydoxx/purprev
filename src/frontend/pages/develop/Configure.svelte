@@ -339,12 +339,12 @@
                 </form>
             {:else if tab === "file"}
                 <h3 class="develop-section">{hasFile ? "Replace Place File" : "Upload Place File"}</h3>
-                <div class="develop-hint">{hasFile ? "A place file is currently uploaded. Uploading another .rbxl will safely replace it." : "This place does not have an .rbxl file yet."} Files up to 50 MB are uploaded in chunks.</div>
+                <div class="develop-hint">{hasFile ? "A place file is currently uploaded. Uploading another .rbxl will safely replace it." : "This place does not have an .rbxl file yet."} Files up to {placeLimitLabel()} are uploaded in chunks.</div>
                 <form class="develop-form" onsubmit={upload}>
                     <div class="develop-field">
                         <label class="develop-label" for="place_file">Place File:</label>
                         <input id="place_file" class="develop-file" name="place_file" type="file" accept=".rbxl" bind:files={placeFiles} required>
-                        <span class="develop-help">.rbxl only, up to 50 MB. Your existing place file is kept if the replacement upload fails.</span>
+                        <span class="develop-help">.rbxl only, up to {placeLimitLabel()}. Your existing place file is kept if the replacement upload fails.</span>
                     </div>
                     <div class="develop-actions">
                         <button class="develop-btn" type="submit" disabled={!!uploadLabel}>{uploadLabel || (hasFile ? "Replace File" : "Upload File")}</button>
