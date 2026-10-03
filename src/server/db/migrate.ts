@@ -34,7 +34,18 @@ const columns: [string, string, string][] = [
     ["applications", "password", "varchar(255) NOT NULL DEFAULT ''"],
     ["applications", "decided_by_discord", "varchar(32) NOT NULL DEFAULT ''"],
     ["applications", "user_id", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
-    ["applications", "reason", "varchar(500) NOT NULL DEFAULT ''"]
+    ["applications", "reason", "varchar(500) NOT NULL DEFAULT ''"],
+    ["users", "signing_bonus", "tinyint(1) NOT NULL DEFAULT 0"],
+    ["site_groups", "bc_only", "tinyint(1) NOT NULL DEFAULT 0"],
+    ["site_groups", "shout_by", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
+    ["site_groups", "shout_at", "int(10) UNSIGNED NOT NULL DEFAULT 0"],
+    ["games", "description", "text NOT NULL"],
+    ["games", "genre", "varchar(20) NOT NULL DEFAULT 'All'"],
+    ["games", "max_players", "tinyint(3) UNSIGNED NOT NULL DEFAULT 10"],
+    ["games", "allowed_gear", "varchar(160) NOT NULL DEFAULT ''"],
+    ["games", "copylocked", "tinyint(1) NOT NULL DEFAULT 1"],
+    ["games", "access", "enum('everyone','friends','private') NOT NULL DEFAULT 'everyone'"],
+    ["games", "featured", "tinyint(1) NOT NULL DEFAULT 0"]
 ];
 for (const [table, column, definition] of columns) {
     const [row] = await sql`SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ${table} AND column_name = ${column}`;

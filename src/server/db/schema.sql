@@ -613,3 +613,111 @@ CREATE TABLE IF NOT EXISTS `username_history` (
     KEY `user_id` (`user_id`),
     KEY `old_username` (`old_username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `game_cards` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `code` char(19) NOT NULL,
+    `amount` int(10) UNSIGNED NOT NULL,
+    `created_by` int(10) UNSIGNED NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    `redeemed_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `redeemed_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `code` (`code`),
+    KEY `redeemed_by` (`redeemed_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `sets` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `name` varchar(50) NOT NULL,
+    `description` varchar(500) NOT NULL DEFAULT '',
+    `created_at` int(10) UNSIGNED NOT NULL,
+    `updated_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=1000;
+
+CREATE TABLE IF NOT EXISTS `set_items` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `set_id` int(10) UNSIGNED NOT NULL,
+    `asset_id` bigint(20) UNSIGNED NOT NULL,
+    `position` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `added_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `set_asset` (`set_id`, `asset_id`),
+    KEY `asset_id` (`asset_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_collections` (
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `item_id` int(11) NOT NULL,
+    `position` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`user_id`, `item_id`),
+    KEY `item_id` (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `abuse_reports` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `reporter_id` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `type` varchar(16) NOT NULL,
+    `target_id` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+    `reason` varchar(80) NOT NULL DEFAULT '',
+    `comment` text NOT NULL,
+    `source` enum('site','game') NOT NULL DEFAULT 'site',
+    `place_id` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `job_id` varchar(64) NOT NULL DEFAULT '',
+    `chat_log` mediumtext NOT NULL,
+    `status` enum('open','closed') NOT NULL DEFAULT 'open',
+    `closed_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `status` (`status`, `id`),
+    KEY `reporter_id` (`reporter_id`),
+    KEY `target` (`type`, `target_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `place_versions` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `place_id` int(10) UNSIGNED NOT NULL,
+    `version` int(10) UNSIGNED NOT NULL,
+    `size` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `uploaded_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
+    `uploaded_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `place_version` (`place_id`, `version`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `comments` (
+    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `kind` enum('game','item') NOT NULL,
+    `target_id` int(10) UNSIGNED NOT NULL,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `body` varchar(200) NOT NULL,
+    `created_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `target` (`kind`, `target_id`, `id`),
+    KEY `user_id` (`user_id`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `resale_listings` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` int(10) UNSIGNED NOT NULL,
+    `item_id` int(11) NOT NULL,
+    `price` int(10) UNSIGNED NOT NULL,
+    `listed_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `copy` (`user_id`, `item_id`),
+    KEY `item_price` (`item_id`, `price`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `resale_sales` (
+    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `item_id` int(11) NOT NULL,
+    `seller_id` int(10) UNSIGNED NOT NULL,
+    `buyer_id` int(10) UNSIGNED NOT NULL,
+    `price` int(10) UNSIGNED NOT NULL,
+    `sold_at` int(10) UNSIGNED NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `item_sold` (`item_id`, `sold_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
