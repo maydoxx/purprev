@@ -1,6 +1,7 @@
 <script lang="ts">
     import { api } from "../api";
     import { session } from "../session.svelte";
+    import { router } from "../router.svelte";
 
     type Tab = "account" | "security" | "privacy" | "billing" | "notifications" | "invites";
     const tabs: { id: Tab; label: string }[] = [
@@ -12,7 +13,7 @@
         { id: "invites", label: "Invites" }
     ];
 
-    let tab = $state<Tab>("account");
+    let tab = $state<Tab>(tabs.some(item => item.id === router.query.tab) ? router.query.tab as Tab : "account");
     let editingEmail = $state(false);
     let editingPassword = $state(false);
     let busy = $state(false);
@@ -182,7 +183,7 @@
                     <h2>Builders Club</h2>
                     <div class="settings-card settings-billing-card">
                         {#if session.me?.membership && session.me.membership !== "None"}
-                            <p>You are a <strong>{session.me.membership === "BC" ? "Builders Club" : session.me.membership === "TBC" ? "Turbo Builders Club" : "Outrageous Builders Club"}</strong> member{#if session.me.membership_expires > 0} until {new Date(session.me.membership_expires * 1000).toLocaleDateString("en-US")}{/if}.</p>
+                            <p>You are a <strong>{session.me.membership === "BC" ? "Builders Club" : session.me.membership === "TBC" ? "Turbo Builders Club" : "Outrageous Builders Club"}</strong> member{#if session.me.membership_expires > 0}&nbsp;until {new Date(session.me.membership_expires * 1000).toLocaleDateString("en-US")}{/if}.</p>
                             <p class="settings-help">You get {session.me.membership === "BC" ? 15 : session.me.membership === "TBC" ? 35 : 60} Nonebux every day you visit, and you can buy Builders Club only items.</p>
                         {:else}
                             <p>You are not a Builders Club member.</p>
