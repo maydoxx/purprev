@@ -58,7 +58,14 @@ const routes: [string, string][] = [
     ["/admi/blog", "admin-blog"],
     ["/admi/games", "admin-games"],
     ["/admi/settings", "admin-settings"],
-    ["/admi/applications", "admin-applications"]
+    ["/admi/applications", "admin-applications"],
+    ["/info/privacy", "privacy"],
+    ["/redeem", "redeem"],
+    ["/my/sets", "sets"],
+    ["/admi/gamecards", "admin-gamecards"],
+    ["/abusereport", "abusereport"],
+    ["/admi/reports", "admin-reports"],
+    ["/groups/search", "groups-search"]
 ];
 
 const parse = () => {

@@ -10,6 +10,7 @@
         ["People", [
             ["/admi/users", "Users", ["/admi/users"]],
             ["/admi/moderation", "Moderation", ["/admi/moderation", "/admi/viewmoderation"]],
+            ["/admi/reports", "Reports", ["/admi/reports"]],
             ["/admi/invitekeys", "Invite Keys", ["/admi/invitekeys"]],
             ["/admi/applications", "Applications", ["/admi/applications"]]
         ]],
@@ -17,7 +18,8 @@
             ["/admi/games", "Games", ["/admi/games"]],
             ["/admi/catalog", "Catalog", ["/admi/catalog"]],
             ["/admi/blog", "Blog", ["/admi/blog"]],
-            ["/admi/banners", "Banners", ["/admi/banners"]]
+            ["/admi/banners", "Banners", ["/admi/banners"]],
+            ["/admi/gamecards", "Game Cards", ["/admi/gamecards"]]
         ]],
         ["System", [
             ["/admi/settings", "Settings", ["/admi/settings"]]

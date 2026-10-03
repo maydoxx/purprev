@@ -5,7 +5,8 @@
         ["Download", "/download"],
         ["Discord", "/discord"],
         ["Apply", "/apply"],
-        ["Terms", "/info/tos"]
+        ["Terms", "/info/tos"],
+        ["Privacy", "/info/privacy"]
     ];
 </script>
 

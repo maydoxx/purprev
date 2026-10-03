@@ -66,6 +66,13 @@
     import AdminGames from "./pages/admin/Games.svelte";
     import AdminSettings from "./pages/admin/Settings.svelte";
     import AdminApplications from "./pages/admin/Applications.svelte";
+    import Privacy from "./pages/Privacy.svelte";
+    import Redeem from "./pages/Redeem.svelte";
+    import Sets from "./pages/Sets.svelte";
+    import AdminGameCards from "./pages/admin/GameCards.svelte";
+    import AbuseReport from "./pages/AbuseReport.svelte";
+    import AdminReports from "./pages/admin/Reports.svelte";
+    import GroupsSearch from "./pages/groups/Search.svelte";
 
     session.refresh();
 
@@ -127,6 +134,13 @@
         "admin-games": AdminGames,
         "admin-settings": AdminSettings,
         "admin-applications": AdminApplications,
+        privacy: Privacy,
+        redeem: Redeem,
+        sets: Sets,
+        "admin-gamecards": AdminGameCards,
+        abusereport: AbuseReport,
+        "admin-reports": AdminReports,
+        "groups-search": GroupsSearch,
     };
 
     const landing = ["landing", "login", "signup", "apply"];
@@ -148,7 +162,6 @@
         "forum-reply",
         "forum-my",
         "forum-moderate",
-        "develop",
         "develop-places",
         "develop-create",
         "develop-configure",
@@ -167,6 +180,9 @@
         "admin-games",
         "admin-settings",
         "admin-applications",
+        "sets",
+        "admin-gamecards",
+        "admin-reports",
     ];
 
     const Page = $derived(pages[router.name] ?? NotFound);
@@ -183,7 +199,8 @@
         } else if (
             session.me?.ongoing_action_id &&
             router.name !== "not-approved" &&
-            router.name !== "tos"
+            router.name !== "tos" &&
+            router.name !== "privacy"
         ) {
             router.replace("/not-approved");
         }
