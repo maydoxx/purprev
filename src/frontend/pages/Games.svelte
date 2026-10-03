@@ -4,6 +4,37 @@
     import GameCard, { sortRow } from "../GameCard.svelte";
 
     const sort = $derived(router.query.sort ?? "");
+    const genre = $derived(router.query.genre ?? "All");
+
+    const GENRES = [
+        "All",
+        "Adventure",
+        "Building",
+        "Comedy",
+        "Fighting",
+        "FPS",
+        "Horror",
+        "Medieval",
+        "Military",
+        "Naval",
+        "RPG",
+        "Sci-Fi",
+        "Sports",
+        "Town and City",
+        "Western"
+    ];
+
+    const link = (s: string, g: string) => {
+        const q = new URLSearchParams();
+        if (s) {
+            q.set("sort", s);
+        }
+        if (g && g !== "All") {
+            q.set("genre", g);
+        }
+        const qs = q.toString();
+        return "/games" + (qs ? "?" + qs : "");
+    };
 
     let rows = $state<any[]>([]);
     let sorts = $state<any[]>([]);
@@ -18,7 +49,7 @@
     const load = (p: number) => {
         loading = true;
         error = "";
-        return api(`/games?sort=${encodeURIComponent(sort)}&page=${p}`).then(d => {
+        return api(`/games?sort=${encodeURIComponent(sort)}&genre=${encodeURIComponent(genre)}&page=${p}`).then(d => {
             games = p === 1 ? d.games : [...games, ...d.games];
             page = d.page;
             totalPages = d.totalPages;
@@ -41,7 +72,7 @@
             return;
         }
         title = "";
-        api("/games/sorts").then(d => {
+        api(`/games/sorts?genre=${encodeURIComponent(genre)}`).then(d => {
             rows = d.rows ?? [];
             sorts = d.sorts ?? [];
         }).catch(() => {
@@ -67,24 +98,26 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li>
-                        <a href="/games">Default</a>
+                        <a href={link("", genre)}>Default</a>
                     </li>
                     {#each sorts as s}
                         <li>
-                            <a href="/games?sort={s.id}">{s.title}</a>
+                            <a href={link(s.id, genre)}>{s.title}</a>
                         </li>
                     {/each}
                 </ul>
             </div>
             <div class="rbx-select dropdown">
                 <button type="button" class="rbx-select-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="rbx-select-label">All Genres</span>
+                    <span class="rbx-select-label">{genre === "All" ? "Genre" : genre}</span>
                     <span class="rbx-select-arrow"></span>
                 </button>
                 <ul class="dropdown-menu">
-                    <li>
-                        <a href="/games">All Genres</a>
-                    </li>
+                    {#each GENRES as g}
+                        <li>
+                            <a href={link(sort, g)}>{g}</a>
+                        </li>
+                    {/each}
                 </ul>
             </div>
         </div>
@@ -118,7 +151,7 @@
                 <div class="game-sort" id={row.id}>
                     <div class="game-sort-header">
                         <h3>{row.title}</h3>
-                        <a class="btn-see-all" href="/games?sort={row.id}">See All</a>
+                        <a class="btn-see-all" href={link(row.id, genre)}>See All</a>
                     </div>
                     <div class="game-sort-row" use:sortRow>
                         <div class="game-sort-scroller">

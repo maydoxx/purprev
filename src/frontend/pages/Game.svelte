@@ -248,6 +248,25 @@
     const up = $derived(Number(game?.up_votes) || 0);
     const down = $derived(Number(game?.down_votes) || 0);
     const ratio = $derived(up + down > 0 ? Math.round(up / (up + down) * 100) : 0);
+
+    const GEAR: Record<string, string> = {
+        MeleeWeapon: "Melee Weapons",
+        RangedWeapon: "Ranged Weapons",
+        Explosive: "Explosives",
+        PowerUp: "Power Ups",
+        NavigationEnhancer: "Navigation Enhancers",
+        MusicalInstrument: "Musical Instruments",
+        SocialItem: "Social Items",
+        BuildingTool: "Building Tools",
+        PersonalTransport: "Personal Transport"
+    };
+
+    const gear = $derived((Array.isArray(game?.allowed_gear) ? game.allowed_gear : String(game?.allowed_gear ?? "").split(",")).filter((key: string) => key in GEAR));
+
+    const BADGES_SHOWN = 3;
+    let allBadges = $state(false);
+
+    const rarity = (b: any) => `${(Number(b.rarity) || 0).toFixed(1)}% (${b.rarity_label || "Impossible"})`;
 </script>
 
 <svelte:head>
@@ -363,29 +382,35 @@
                                     </li>
                                     <li>
                                         <p class="game-stat-label">Max Players</p>
-                                        <p class="game-stat-value">{(Number(game.max_players) || 50).toLocaleString()}</p>
+                                        <p class="game-stat-value">{(Number(game.max_players) || 10).toLocaleString()}</p>
                                     </li>
                                     <li>
                                         <p class="game-stat-label">Genre</p>
                                         <p class="game-stat-genre">
-                                            <a href="/games">{game.genre || "All"}</a>
+                                            <a class="text-name" href="/games?genre={encodeURIComponent(game.genre || "All")}">{game.genre || "All"}</a>
                                         </p>
                                     </li>
                                     <li>
-                                        <p class="game-stat-label">Allowed Gear</p>
-                                        <p class="game-stat-value">
-                                            {#if game.allowed_gear}
-                                                {game.allowed_gear}
+                                        <p class="game-stat-label">Allowed Gear types</p>
+                                        <p class="game-stat-value stat-gears">
+                                            {#if gear.length === 0}
+                                                <span class="icon-nogear" title="No Gear Allowed"></span>
                                             {:else}
-                                                <span class="game-icon-nogear" title="No gear allowed"></span>
+                                                {#each gear as key (key)}
+                                                    <span class="icon-{key}" title={GEAR[key]}></span>
+                                                {/each}
                                             {/if}
                                         </p>
                                     </li>
                                 </ul>
 
                                 <div class="game-about-footer">
-                                    <span>This game is copylocked</span>
-                                    <a href="/discord">Report Abuse</a>
+                                    {#if game.copylocked}
+                                        <span class="game-copylocked-footnote">This game is copylocked</span>
+                                    {:else}
+                                        <span class="game-copylocked-footnote"></span>
+                                    {/if}
+                                    <a class="text-report" href="/abusereport?type=game&id={id}">Report Abuse</a>
                                 </div>
                             </div>
                         </div>

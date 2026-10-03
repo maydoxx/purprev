@@ -46,6 +46,20 @@
         busy[g.id] = false;
     };
 
+    const feature = async (g: any) => {
+        busy[g.id] = true;
+        try {
+            const d = await api(`/admin/games/${g.id}/featured`, {
+                featured: !g.featured
+            });
+            g.featured = d.featured;
+            note("success", `${g.title} is ${g.featured ? "now" : "no longer"} featured.`);
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+        busy[g.id] = false;
+    };
+
     const remove = async (g: any) => {
         if (!confirm(`Delete "${g.title}" and its place file? This cannot be undone.`)) return;
         try {
@@ -102,6 +116,9 @@
                             <td style="width:64px"><img class="admin-thumb" src={g.icon || "/img/DefaultPlaceIcon.jpg"} alt=""></td>
                             <td>
                                 <a href="/game?id={g.id}" class="fw-semibold text-decoration-none">{g.title}</a>
+                                {#if g.featured}
+                                    <span class="admin-pill ok">Featured</span>
+                                {/if}
                                 <div class="admin-muted">#{g.id}{#if !g.thumbnail} &middot; no thumbnail yet{/if}</div>
                             </td>
                             <td>{#if g.creator_id}<a href="/user?id={g.creator_id}">{g.creator_name || g.creator_id}</a>{:else}Unknown{/if}</td>
@@ -115,6 +132,7 @@
                             </td>
                             <td>{num(g.playing)}</td>
                             <td class="admin-actions">
+                                <button type="button" class="btn btn-sm" class:btn-outline-secondary={!g.featured} class:btn-outline-success={g.featured} disabled={busy[g.id]} onclick={() => feature(g)}>{g.featured ? "Unfeature" : "Feature"}</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary" disabled={!g.published_at || busy[g.id]} onclick={() => render(g)}>Render</button>
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick={() => remove(g)}>Delete</button>
                             </td>

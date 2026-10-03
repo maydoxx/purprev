@@ -363,8 +363,7 @@
 
 .game-icon-favorite,
 .game-icon-like,
-.game-icon-dislike,
-.game-icon-nogear {
+.game-icon-dislike {
     display: inline-block;
     flex: 0 0 28px;
     width: 28px;
@@ -402,10 +401,6 @@
 .game-vote:hover .game-icon-dislike,
 .game-vote.active .game-icon-dislike {
     background-position: -28px -112px;
-}
-
-.game-icon-nogear {
-    background-position: 0 -336px;
 }
 
 .game-favorite {
@@ -491,7 +486,8 @@
 
 .game-tab-list,
 .game-stats,
-.game-badges,
+.badge-list,
+.badge-stats-container,
 .game-recommended,
 .game-passes,
 .game-leaderboard,
@@ -585,21 +581,89 @@
     font-weight: 400;
 }
 
+.stat-gears {
+    margin: 3px auto;
+}
+
+.icon-nogear,
+.icon-MeleeWeapon,
+.icon-RangedWeapon,
+.icon-PowerUp,
+.icon-Explosive,
+.icon-MusicalInstrument,
+.icon-NavigationEnhancer,
+.icon-BuildingTool,
+.icon-SocialItem,
+.icon-PersonalTransport {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    background-image: url("/img/games/games.svg");
+    background-repeat: no-repeat;
+    vertical-align: middle;
+}
+
+.icon-nogear {
+    background-position: 0 -336px;
+}
+
+.icon-MeleeWeapon {
+    background-position: 0 -364px;
+}
+
+.icon-RangedWeapon {
+    background-position: 0 -392px;
+}
+
+.icon-PowerUp {
+    background-position: 0 -420px;
+}
+
+.icon-Explosive {
+    background-position: 0 -448px;
+}
+
+.icon-MusicalInstrument {
+    background-position: 0 -476px;
+}
+
+.icon-NavigationEnhancer {
+    background-position: 0 -504px;
+}
+
+.icon-BuildingTool {
+    background-position: 0 -532px;
+}
+
+.icon-SocialItem {
+    background-position: 0 -560px;
+}
+
+.icon-PersonalTransport {
+    background-position: 0 -588px;
+}
+
 .game-about-footer {
     display: flex;
     justify-content: space-between;
-    margin-top: 12px;
-    font-size: 12px;
+    padding-top: 12px;
 }
 
-.game-about-footer span {
+.game-copylocked-footnote {
     color: #b8b8b8;
+    font-size: 14px;
     font-weight: 400;
 }
 
-.game-about-footer a {
-    color: #e2231a;
-    font-weight: 300;
+.game-page .text-report {
+    color: #d86868;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.game-page .text-report:hover,
+.game-page .text-report:focus {
+    text-decoration: underline;
 }
 
 .game-banner {
@@ -701,43 +765,107 @@
     outline: 0;
 }
 
-.game-badges li {
+.badge-list .section-row {
+    margin: 0 0 6px;
+    padding: 5px 12px;
+    border-radius: 3px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+}
+
+.badge-row {
     display: flex;
-    gap: 12px;
-    padding: 12px 0;
-    border-top: 1px solid #e3e3e3;
+    height: 160px;
 }
 
-.game-badges li:first-child {
-    padding-top: 0;
-    border-top: 0;
+.badge-row.badge-see-more-row {
+    display: none;
 }
 
-.game-badges li:last-child {
-    padding-bottom: 0;
-}
-
-.game-badges li.disabled {
+.badge-row.badge-disabled {
     opacity: 0.5;
 }
 
-.game-badges img {
-    flex: 0 0 70px;
-    width: 70px;
-    height: 70px;
-    object-fit: contain;
+.badge-row .badge-image {
+    flex: 0 0 150px;
+    width: 150px;
+    text-align: center;
 }
 
-.game-badges strong {
-    display: block;
-    font-size: 18px;
+.badge-row .badge-image img {
+    width: 150px;
+    height: 150px;
+}
+
+.badge-row .badge-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.badge-row .badge-data-container {
+    padding: 0 12px;
+}
+
+.badge-row .badge-name {
     font-weight: 400;
 }
 
-.game-badges span {
+.badge-row .badge-data-container p {
+    height: 48px;
+    margin: 6px 0;
+    overflow-wrap: break-word;
+}
+
+.badge-row .para-overflow {
+    position: relative;
+    overflow: hidden;
+    line-height: 1.5em;
+    white-space: normal;
+}
+
+.badge-row .badge-stats-container {
+    display: flex;
+    margin: 6px 0 0;
+    padding: 0 12px;
+}
+
+.badge-row .badge-stats-container li {
+    flex: 0 0 33.3%;
+    margin: 0 0 6px;
+    text-align: center;
+}
+
+.badge-row .badge-stats-container .text-label {
     color: #b8b8b8;
-    font-size: 12px;
     font-weight: 400;
+}
+
+.badge-row .badge-stats-container .badge-stats-info {
+    margin: 6px 0 0;
+    font-weight: 400;
+}
+
+.badge-list .btn-control-sm {
+    display: inline-block;
+    width: 100%;
+    padding: 7px;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    background-color: #fff;
+    color: #191919;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 100%;
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.badge-list .btn-control-sm:hover,
+.badge-list .btn-control-sm:focus {
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
 }
 
 .game-recommended {
@@ -1002,6 +1130,39 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
+    }
+
+    .badge-row {
+        display: block;
+        height: auto;
+    }
+
+    .badge-row.badge-see-more-row {
+        display: none;
+    }
+
+    .badge-row .badge-image {
+        width: 100%;
+    }
+
+    .badge-row .badge-data-container,
+    .badge-row .badge-stats-container {
+        padding: 0;
+    }
+
+    .badge-row .badge-stats-container {
+        display: block;
+    }
+
+    .badge-row .badge-stats-container li {
+        display: flex;
+        text-align: left;
+    }
+
+    .badge-row .badge-stats-container .text-label,
+    .badge-row .badge-stats-container .badge-stats-info {
+        width: 50%;
+        margin: 0;
     }
 
     .game-passes {

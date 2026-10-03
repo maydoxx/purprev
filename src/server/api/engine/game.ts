@@ -143,12 +143,28 @@ const routes = (prefix: string) => new Elysia({ prefix })
             return status(403, "invalid auth ticket");
         }
 
-        const [game] = placeId > 0 ? await sql`SELECT id FROM games WHERE id = ${placeId}` : [];
+        const [game] = placeId > 0 ? await sql`SELECT id, creator_id, access FROM games WHERE id = ${placeId}` : [];
         if (!game) {
             return {
                 jobId: "",
                 status: 5,
                 message: "no such place"
+            };
+        }
+
+        const owner = Number(game.creator_id) === user.id || user.admin > 0;
+        if (game.access === "private" && !owner) {
+            return {
+                jobId: "",
+                status: 5,
+                message: "this place is private"
+            };
+        }
+        if (game.access === "friends" && !owner && await friendStatus(user.id, Number(game.creator_id)) !== "friends") {
+            return {
+                jobId: "",
+                status: 5,
+                message: "this place is for the owner's friends"
             };
         }
 

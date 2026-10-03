@@ -4,8 +4,25 @@ import { sql, now } from "../../db";
 import { mediaUrl } from "../../paths";
 import { rcc } from "../../rcc";
 import { SITE_URL } from "../../site";
+import { GENRES, gameSettings, isGenre } from "../../games";
 
 const PER_PAGE = 20;
+const DAY = 86400;
+
+// won yesterday over who played yesterday
+const RARITY: [number, string][] = [
+    [1, "Impossible"],
+    [5, "Insane"],
+    [10, "Extreme"],
+    [20, "Hard"],
+    [30, "Challenging"],
+    [50, "Moderate"],
+    [70, "Easy"],
+    [90, "Cake Walk"],
+    [101, "Freebie"]
+];
+
+const rarityLabel = (percent: number) => RARITY.find(([limit]) => percent < limit)?.[1] ?? "Freebie";
 
 const id = t.Object({
     id: t.Numeric()
@@ -29,14 +46,29 @@ const SORTS: Sort[] = [
         order: sql`games.visits DESC, games.id DESC`
     },
     {
-        id: "top-favorited",
-        title: "Top Favorited",
-        order: sql`favorites DESC, games.visits DESC, games.id DESC`
+        id: "top-earning",
+        title: "Top Earning",
+        order: sql`earnings DESC, games.visits DESC, games.id DESC`
     },
     {
         id: "top-rated",
         title: "Top Rated",
         order: sql`(up_votes + 1) / (up_votes + down_votes + 2) DESC, games.visits DESC, games.id DESC`
+    },
+    {
+        id: "recommended",
+        title: "Recommended",
+        order: sql`RAND() * LOG10(games.visits + 10) DESC`
+    },
+    {
+        id: "featured",
+        title: "Featured",
+        order: sql`games.updated_at DESC, games.id DESC`
+    },
+    {
+        id: "top-favorited",
+        title: "Top Favorited",
+        order: sql`favorites DESC, games.visits DESC, games.id DESC`
     },
     {
         id: "recently-updated",
@@ -78,11 +110,13 @@ const publicSorts = (loggedIn: boolean) => SORTS.filter(s => loggedIn || !s.mine
 const byPlaying = (rows: any[], playing: Record<number, number>) =>
     [...rows].sort((a, b) => (playing[Number(b.id)] ?? 0) - (playing[Number(a.id)] ?? 0) || Number(b.visits) - Number(a.visits));
 
-const listGames = async (sort: Sort, userId: number, page: number, limit: number, q = "") => {
+const listGames = async (sort: Sort, userId: number, page: number, limit: number, q = "", genre = "All") => {
     const like = `%${q.trim()}%`;
-    const where = sort.id === "recently-played" ? sql`plays.user_id IS NOT NULL`
+    const scope = sort.id === "recently-played" ? sql`plays.user_id IS NOT NULL`
         : sort.id === "my-favorites" ? sql`fav.user_id IS NOT NULL`
+        : sort.id === "featured" ? sql`games.featured = 1 AND games.title LIKE ${like}`
         : sql`games.title LIKE ${like}`;
+    const where = isGenre(genre) && genre !== "All" ? sql`${scope} AND games.genre = ${genre}` : scope;
     const [count] = await sql`
         SELECT COUNT(*) AS n FROM games
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
@@ -95,7 +129,8 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
         SELECT games.*, users.username AS creator_name,
             (SELECT COUNT(*) FROM game_favorites f WHERE f.game_id = games.id) AS favorites,
             (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
-            (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes
+            (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes,
+            (SELECT COALESCE(SUM(p.price), 0) FROM user_game_passes ugp JOIN game_passes p ON p.id = ugp.pass_id WHERE p.game_id = games.id) AS earnings
         FROM games
         LEFT JOIN users ON users.id = games.creator_id
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
@@ -117,7 +152,7 @@ const ratio = (up: number, down: number) => up + down > 0 ? Math.round(up / (up 
 
 const withMedia = async (game: any, playing = 0) => ({
     ...game,
-    description: game.description ?? "",
+    ...gameSettings(game),
     thumbnail: await mediaUrl("thumbnails", game.id),
     icon: await mediaUrl("icons", game.id),
     playing,
@@ -125,9 +160,8 @@ const withMedia = async (game: any, playing = 0) => ({
     favorites: Number(game.favorites ?? 0),
     up_votes: Number(game.up_votes ?? 0),
     down_votes: Number(game.down_votes ?? 0),
-    like_ratio: ratio(Number(game.up_votes ?? 0), Number(game.down_votes ?? 0)),
-    max_players: 50,
-    genre: "All"
+    earnings: Number(game.earnings ?? 0),
+    like_ratio: ratio(Number(game.up_votes ?? 0), Number(game.down_votes ?? 0))
 });
 
 export const games = new Elysia({ prefix: "/api/games" })
@@ -151,24 +185,27 @@ export const games = new Elysia({ prefix: "/api/games" })
                 title: sort.title
             },
             sorts: publicSorts(!!user),
-            ...await listGames(sort, user?.id ?? 0, query.page ?? 1, PER_PAGE, query.q ?? "")
+            genres: GENRES,
+            genre: isGenre(query.genre) ? query.genre : "All",
+            ...await listGames(sort, user?.id ?? 0, query.page ?? 1, PER_PAGE, query.q ?? "", query.genre ?? "All")
         };
     }, {
         query: t.Object({
             q: t.Optional(t.String()),
             sort: t.Optional(t.String()),
+            genre: t.Optional(t.String()),
             page: t.Optional(t.Numeric())
         })
     })
 
     // the games page, one row per sort, yours only when you have some
-    .get("/sorts", async ({ user }) => {
+    .get("/sorts", async ({ query, user }) => {
         const rows = [];
         for (const sort of SORTS.filter(s => s.id !== "most-visited")) {
             if (sort.mine && !user) {
                 continue;
             }
-            const list = await listGames(sort, user?.id ?? 0, 1, ROW);
+            const list = await listGames(sort, user?.id ?? 0, 1, ROW, "", query.genre ?? "All");
             if (list.games.length > 0) {
                 rows.push({
                     id: sort.id,
@@ -179,8 +216,14 @@ export const games = new Elysia({ prefix: "/api/games" })
         }
         return {
             rows,
-            sorts: publicSorts(!!user)
+            sorts: publicSorts(!!user),
+            genres: GENRES,
+            genre: isGenre(query.genre) ? query.genre : "All"
         };
+    }, {
+        query: t.Object({
+            genre: t.Optional(t.String())
+        })
     })
 
     .get("/:id", async ({ params, user, status }) => {
@@ -435,15 +478,30 @@ export const games = new Elysia({ prefix: "/api/games" })
     })
 
     .get("/:id/badges", async ({ params }) => {
+        const since = now() - DAY;
+        const [visitors] = await sql`SELECT COUNT(*) AS n FROM game_plays WHERE game_id = ${params.id} AND played_at > ${since}`;
         const rows = await sql`
-            SELECT b.*, (SELECT COUNT(*) FROM user_badges ub WHERE ub.badge_id = b.id) AS awarded_count
-            FROM game_badges b WHERE b.game_id = ${params.id} ORDER BY b.id ASC
+            SELECT b.*,
+                (SELECT COUNT(*) FROM user_badges ub WHERE ub.badge_id = b.id) AS awarded_count,
+                (SELECT COUNT(*) FROM user_badges ub WHERE ub.badge_id = b.id AND ub.awarded_at > ${since}) AS won_yesterday
+            FROM game_badges b
+            WHERE b.game_id = ${params.id}
+            ORDER BY b.id ASC
         `;
-        return await Promise.all(rows.map(async (b: any) => ({
-            ...b,
-            awarded_count: Number(b.awarded_count),
-            icon: await mediaUrl("badges", b.id)
-        })));
+        const played = Number(visitors.n);
+        return await Promise.all(rows.map(async (b: any) => {
+            const yesterday = Number(b.won_yesterday);
+            const percent = played > 0 ? Math.min(100, yesterday / played * 100) : 0;
+            return {
+                ...b,
+                id: Number(b.id),
+                awarded_count: Number(b.awarded_count),
+                won_yesterday: yesterday,
+                rarity: Math.round(percent * 10) / 10,
+                rarity_label: rarityLabel(percent),
+                icon: b.icon || await mediaUrl("badges", Number(b.id))
+            };
+        }));
     }, {
         params: id
     })

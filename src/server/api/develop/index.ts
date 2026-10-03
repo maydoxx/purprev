@@ -5,13 +5,15 @@ import { mkdir, rm } from "fs/promises";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { saveImage, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
-import { mediaPut, mediaCopy } from "../../media";
+import { mediaPut, mediaCopy, mediaEntry, mediaKey, contentType } from "../../media";
+import { storage } from "../../storage";
 import { rcc } from "../../rcc";
 import { assetUrl } from "../../site";
+import { GENRES, GEAR, MAX_PLAYERS, MAX_PLAYERS_BC, ACCESS, gearCsv, gameSettings, placeLimit, placeLimitLabel } from "../../games";
+import type { User } from "../../session";
 
-const PLACE_MAX = 50 * 1024 * 1024;
 const CHUNK_MAX = 768 * 1024;
-const CHUNK_COUNT_MAX = 110;
+const CHUNK_COUNT_MAX = 140;
 const IMAGE_MAX = 5 * 1024 * 1024;
 const AUDIO_MAX = 12 * 1024 * 1024;
 const MAX_PRICE = 2000000000;
@@ -98,6 +100,7 @@ const cleanTitle = (title: string) => {
 
 const withMedia = async (game: any) => ({
     ...game,
+    ...gameSettings(game),
     thumbnail: await mediaUrl("thumbnails", game.id),
     icon: await mediaUrl("icons", game.id),
     has_file: await mediaHas("places", game.id)
@@ -109,9 +112,77 @@ const checkPlaceName = (name: string) => {
     }
 };
 
-const savePlace = async (placeId: number, file: Blob) => {
+const versionKey = (placeId: number, version: number) => `places/${placeId}-v${version}.rbxl`;
+
+// the file being replaced becomes the next numbered version
+const keepVersion = async (placeId: number, userId: number) => {
+    const current = await mediaEntry("places", placeId);
+    if (!current) {
+        return;
+    }
+    const [last] = await sql`SELECT COALESCE(MAX(version), 0) AS n FROM place_versions WHERE place_id = ${placeId}`;
+    const version = Number(last.n) + 1;
+    const file = await storage.open(mediaKey("places", placeId, current.ext));
+    if (!file) {
+        return;
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    await storage.put(versionKey(placeId, version), bytes, contentType("rbxl"));
+    await sql`
+        INSERT INTO place_versions (place_id, version, size, uploaded_by, uploaded_at)
+        VALUES (${placeId}, ${version}, ${bytes.byteLength}, ${userId}, ${current.updated_at})
+    `;
+};
+
+const savePlace = async (placeId: number, userId: number, file: Blob | Uint8Array) => {
+    await keepVersion(placeId, userId);
     await mediaPut("places", placeId, "rbxl", file);
     await sql`UPDATE games SET updated_at = ${now()} WHERE id = ${placeId}`;
+};
+
+const placeVersions = async (placeId: number) => {
+    const rows = await sql`
+        SELECT v.version, v.size, v.uploaded_at, v.uploaded_by, u.username AS uploaded_by_name FROM place_versions v
+        LEFT JOIN users u ON u.id = v.uploaded_by
+        WHERE v.place_id = ${placeId}
+        ORDER BY v.version DESC
+    `;
+    return rows.map((v: any) => ({
+        version: Number(v.version),
+        size: Number(v.size),
+        uploaded_at: Number(v.uploaded_at),
+        uploaded_by: Number(v.uploaded_by),
+        uploaded_by_name: v.uploaded_by_name ?? ""
+    }));
+};
+
+const playerLimit = (user: User) => user.admin || user.membership !== "None" ? MAX_PLAYERS_BC : MAX_PLAYERS;
+
+const cleanSettings = (body: any, user: User) => {
+    const description = (body.description ?? "").trim();
+    if (description.length > 2000) {
+        throw new DevelopError("Description cannot be longer than 2000 characters.");
+    }
+    const genre = body.genre ?? "All";
+    if (!GENRES.includes(genre)) {
+        throw new DevelopError("Pick a genre from the list.");
+    }
+    const maxPlayers = body.max_players ?? 10;
+    if (!Number.isInteger(maxPlayers) || maxPlayers < 1 || maxPlayers > playerLimit(user)) {
+        throw new DevelopError(`Max players must be between 1 and ${playerLimit(user)}.`);
+    }
+    const access = body.access ?? "everyone";
+    if (!ACCESS.includes(access)) {
+        throw new DevelopError("Pick who can play from the list.");
+    }
+    return {
+        description,
+        genre,
+        maxPlayers,
+        allowedGear: gearCsv(body.allowed_gear ?? []),
+        copylocked: body.copylocked === undefined ? 1 : body.copylocked ? 1 : 0,
+        access
+    };
 };
 
 const chunkPath = (dir: string, index: number) => join(dir, `${String(index).padStart(4, "0")}.part`);
@@ -417,9 +488,19 @@ export const develop = new Elysia({ prefix: "/api/develop" })
 
     .patch("/places/:id", async ({ params, body, user, status }) => {
         try {
-            await ownedGame(params.id, user.id);
+            const game = await ownedGame(params.id, user.id);
             const title = cleanTitle(body.title);
-            await sql`UPDATE games SET title = ${title}, avatar_type = COALESCE(${body.avatar_type ?? null}, avatar_type), updated_at = ${now()} WHERE id = ${params.id} AND creator_id = ${user.id}`;
+            const settings = cleanSettings({
+                ...gameSettings(game),
+                ...body
+            }, user);
+            await sql`
+                UPDATE games SET title = ${title}, avatar_type = COALESCE(${body.avatar_type ?? null}, avatar_type),
+                    description = ${settings.description}, genre = ${settings.genre}, max_players = ${settings.maxPlayers},
+                    allowed_gear = ${settings.allowedGear}, copylocked = ${settings.copylocked}, access = ${settings.access},
+                    updated_at = ${now()}
+                WHERE id = ${params.id} AND creator_id = ${user.id}
+            `;
             return {
                 ok: true
             };
@@ -434,7 +515,73 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             avatar_type: t.Optional(t.Union([
                 t.Literal("R6"),
                 t.Literal("R15")
-            ]))
+            ])),
+            description: t.Optional(t.String()),
+            genre: t.Optional(t.String()),
+            max_players: t.Optional(t.Integer()),
+            allowed_gear: t.Optional(t.Array(t.String())),
+            copylocked: t.Optional(t.Boolean()),
+            access: t.Optional(t.String())
+        })
+    })
+
+    .get("/places/:id/settings", ({ user }) => ({
+        genres: GENRES,
+        gear: GEAR.map(([key, name]) => ({
+            key,
+            name
+        })),
+        max_players: playerLimit(user),
+        access: ACCESS
+    }), {
+        auth: true,
+        params: id
+    })
+
+    .get("/places/:id/versions", async ({ params, user, status }) => {
+        try {
+            await ownedGame(params.id, user.id);
+            const current = await mediaEntry("places", params.id);
+            return {
+                current: current ? {
+                    size: Number((await sql`SELECT size FROM media WHERE kind = 'places' AND id = ${params.id}`)[0]?.size ?? 0),
+                    uploaded_at: current.updated_at
+                } : null,
+                versions: await placeVersions(params.id)
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: id
+    })
+
+    .post("/places/:id/versions/:version/restore", async ({ params, user, status }) => {
+        try {
+            await ownedGame(params.id, user.id);
+            const [version] = await sql`SELECT size FROM place_versions WHERE place_id = ${params.id} AND version = ${params.version}`;
+            if (!version) {
+                throw new DevelopError("That version does not exist.", 404);
+            }
+            const file = await storage.open(versionKey(params.id, params.version));
+            if (!file) {
+                throw new DevelopError("That version's file is gone.", 404);
+            }
+            await savePlace(params.id, user.id, new Uint8Array(await file.arrayBuffer()));
+            rcc.render.place(params.id);
+            return {
+                ok: true,
+                versions: await placeVersions(params.id)
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric(),
+            version: t.Numeric()
         })
     })
 
@@ -442,6 +589,10 @@ export const develop = new Elysia({ prefix: "/api/develop" })
         try {
             await ownedGame(params.id, user.id);
             await sql`DELETE FROM games WHERE id = ${params.id} AND creator_id = ${user.id}`;
+            for (const v of await placeVersions(params.id)) {
+                await storage.remove(versionKey(params.id, v.version));
+            }
+            await sql`DELETE FROM place_versions WHERE place_id = ${params.id}`;
             await clearMedia("places", params.id);
             await clearMedia("thumbnails", params.id);
             await clearMedia("icons", params.id);
@@ -512,7 +663,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
                 out.write(await Bun.file(chunkPath(dir, i)).bytes());
             }
             await out.end();
-            await savePlace(params.id, Bun.file(assembled));
+            await savePlace(params.id, user.id, Bun.file(assembled));
             await rm(dir, {
                 recursive: true,
                 force: true

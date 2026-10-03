@@ -606,7 +606,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             sql`SELECT COUNT(*) AS n FROM games LEFT JOIN users ON users.id = games.creator_id WHERE ${where}`,
             query.page,
             limit => sql`
-                SELECT games.id, games.title, games.creator_id, users.username AS creator_name, media.updated_at AS published_at, media.size AS file_size
+                SELECT games.id, games.title, games.creator_id, games.featured, users.username AS creator_name, media.updated_at AS published_at, media.size AS file_size
                 FROM games
                 LEFT JOIN users ON users.id = games.creator_id
                 LEFT JOIN media ON media.kind = 'places' AND media.id = games.id
@@ -621,12 +621,33 @@ export const admin = new Elysia({ prefix: "/api/admin" })
                 ...g,
                 icon: await mediaUrl("icons", Number(g.id)),
                 thumbnail: await mediaUrl("thumbnails", Number(g.id)),
-                playing: playing[Number(g.id)] ?? 0
+                playing: playing[Number(g.id)] ?? 0,
+                featured: Number(g.featured) === 1
             })))
         };
     }, {
         admin: true,
         query: list
+    })
+
+    .post("/games/:id/featured", async ({ params, body, status }) => {
+        const [game] = await sql`SELECT id FROM games WHERE id = ${params.id}`;
+        if (!game) {
+            return status(404, {
+                error: "Game not found."
+            });
+        }
+        await sql`UPDATE games SET featured = ${body.featured ? 1 : 0} WHERE id = ${params.id}`;
+        return {
+            ok: true,
+            featured: body.featured
+        };
+    }, {
+        admin: true,
+        params: id,
+        body: t.Object({
+            featured: t.Boolean()
+        })
     })
 
     .post("/games/:id/render", async ({ params, status }) => {
