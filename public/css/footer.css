@@ -20,7 +20,7 @@
 }
 
 .site-footer-links li {
-    flex: 0 0 16.66667%;
+    flex: 1 1 0;
     margin: 0;
     padding: 0;
 }
@@ -57,6 +57,6 @@
 
 @media (max-width: 479px) {
     .site-footer-links li {
-        flex-basis: 33.33333%;
+        flex: 0 0 33.33333%;
     }
 }
