@@ -309,13 +309,24 @@ export const studio = new Elysia()
                 CreatorName: "",
                 ImageAssetId: 0,
                 ImageAssetUrl: ""
-            }] : []);
+            }, ...(await setsOf(userId)).map(set => ({
+                Name: set.name,
+                SetId: set.id,
+                CategoryId: 0,
+                CreatorName: "",
+                ImageAssetId: 0,
+                ImageAssetUrl: set.icon
+            }))] : []);
         }
 
         const sid = num(query.sid);
         if (sid) {
             if (sid === 1 || sid === 2) {
                 return json((await searchFree(sid === 1 ? "Model" : "Decal", "", page, per)).items);
+            }
+            if (sid < USER_SET) {
+                const items = await setItems(sid);
+                return json(items.slice((page - 1) * per, page * per).map(i => toolboxItem(i.asset_id, i.name, i.creator, stamp(i.created_at))));
             }
             const setKind = sid >= USER_SET * 2 ? "Decal" : "Model";
             const userId = sid - (setKind === "Decal" ? USER_SET * 2 : USER_SET);

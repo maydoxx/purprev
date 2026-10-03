@@ -28,11 +28,11 @@ export type ToolboxItem = {
     };
 };
 
-const stamp = (t: number | string) => new Date(Number(t) * 1000).toISOString();
+export const stamp = (t: number | string) => new Date(Number(t) * 1000).toISOString();
 
 export const thumbUrl = (id: number) => `${SITE_URL}/Game/Tools/ThumbnailAsset.ashx?aid=${id}&fmt=png&wd=100&ht=100`;
 
-const item = (id: number, name: string, creator: string, created: string, updated = created): ToolboxItem => ({
+export const item = (id: number, name: string, creator: string, created: string, updated = created): ToolboxItem => ({
     AssetId: id,
     AssetVersionId: id,
     Name: name,
