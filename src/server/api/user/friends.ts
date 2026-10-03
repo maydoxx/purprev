@@ -121,11 +121,11 @@ export const friends = new Elysia({ prefix: "/friends" })
                 error: "That user does not exist"
             });
         }
-        const tab = query.tab ?? "followers";
+        const tab = query.tab ?? "friends";
         return {
             username: owner.username,
             tab,
-            list: await follows(owner.id, tab)
+            list: tab === "friends" ? await friendsOf(owner.id, 200) : await follows(owner.id, tab)
         };
     }, {
         params: t.Object({
@@ -133,6 +133,7 @@ export const friends = new Elysia({ prefix: "/friends" })
         }),
         query: t.Object({
             tab: t.Optional(t.Union([
+                t.Literal("friends"),
                 t.Literal("following"),
                 t.Literal("followers")
             ]))

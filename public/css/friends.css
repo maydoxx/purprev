@@ -87,10 +87,10 @@
 
 .friends-page h1 {
     margin: 0 0 12px;
-    padding-left: 12px;
-    font-size: 48px;
-    line-height: 1.2;
-    font-weight: 300;
+    padding: 5px 0 5px 12px;
+    font-size: 36px;
+    line-height: 1em;
+    font-weight: 400;
 }
 
 .friends-page .friends-tabs {
@@ -102,7 +102,7 @@
 }
 
 .friends-page .friends-tabs.public-view {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .friends-page .friends-tabs a {
@@ -138,9 +138,10 @@
 .friends-page .friends-section-heading h2,
 .friends-page .friends-sent-heading {
     margin: 0;
+    padding: 5px 0;
     font-size: 24px;
-    line-height: 1.4;
-    font-weight: 400;
+    line-height: 1em;
+    font-weight: 300;
 }
 
 .friends-page .friends-info-icon {
@@ -156,7 +157,12 @@
 }
 
 .friends-page .friends-ignore-all {
-    margin-left: auto;
+    width: 100px;
+    padding: 5px 0;
+    font-size: 12px;
+    line-height: 100%;
+    color: #757575;
+    cursor: pointer;
 }
 
 .friends-page .friends-list {
@@ -168,7 +174,7 @@
 }
 
 .friends-page .friends-list-item {
-    padding: 6px;
+    padding: 0 5px 12px;
     min-width: 0;
 }
 
@@ -189,16 +195,17 @@
 .friends-page .friends-list-top {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
-    padding: 12px;
+    gap: 12px;
+    padding: 12px 36px 12px 12px;
 }
 
 .friends-page .friends-list-avatar {
     position: relative;
     display: block;
-    flex: 0 0 100px;
-    width: 100px;
-    height: 100px;
+    flex: 0 0 92px;
+    width: 92px;
+    height: 92px;
+    box-sizing: border-box;
     border: 1px solid #b8b8b8;
     border-radius: 50%;
     overflow: hidden;
@@ -226,7 +233,7 @@
 .friends-page .friends-list-info {
     min-width: 0;
     flex: 1;
-    padding-top: 10px;
+    padding-top: 0;
 }
 
 .friends-page .friends-list-name {
@@ -245,13 +252,10 @@
 
 .friends-page .friends-list-status {
     display: block;
-    margin-top: 2px;
-    color: #757575;
+    padding-top: 3px;
+    color: #b8b8b8;
     font-size: 14px;
-}
-
-.friends-page .friends-list-status.online {
-    color: #02b757;
+    font-weight: 400;
 }
 
 .friends-page .friends-list-actions {
@@ -261,11 +265,11 @@
     gap: 12px;
     padding: 12px;
     border-top: 1px solid #e3e3e3;
+    background: #f2f2f2;
 }
 
 .friends-page .friends-list-actions button,
-.friends-page .friends-ignore-all,
-.friends-page .friends-card-menu button {
+.friends-page .friends-ignore-all {
     border: 1px solid #b8b8b8;
     border-radius: 3px;
     background: #fff;
@@ -281,8 +285,8 @@
 }
 
 .friends-page .friends-list-actions .friends-accept {
-    border-color: #00a2ff;
-    background: #00a2ff;
+    border-color: #7b2cbf;
+    background: #7b2cbf;
     color: #fff;
 }
 
@@ -293,30 +297,63 @@
 
 .friends-page .friends-card-menu {
     position: absolute;
-    right: 8px;
+    right: 12px;
     top: 6px;
 }
 
-.friends-page .friends-card-menu summary {
-    list-style: none;
-    color: #999;
-    font-size: 20px;
-    line-height: 18px;
+.friends-page .friends-card-more {
+    display: block;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: none;
     cursor: pointer;
 }
 
-.friends-page .friends-card-menu summary::-webkit-details-marker {
-    display: none;
+.friends-page .friends-card-more::before {
+    content: "\2026";
+    display: block;
+    color: #757575;
+    font-size: 22px;
+    line-height: 10px;
+    text-align: center;
 }
 
-.friends-page .friends-card-menu button {
+.friends-page .friends-card-more:hover::before {
+    color: #191919;
+}
+
+.friends-page .friends-dropdown {
     position: absolute;
     right: 0;
-    top: 20px;
+    top: 24px;
     z-index: 2;
-    font-size: 13px;
+    min-width: 120px;
+    margin: 0;
+    padding: 5px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+}
+
+.friends-page .friends-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 3px 20px;
+    border: 0;
+    background: none;
+    color: #191919;
+    font-size: 14px;
+    text-align: left;
     white-space: nowrap;
-    box-shadow: 0 1px 3px #0002;
+    cursor: pointer;
+}
+
+.friends-page .friends-dropdown button:hover {
+    background: #f5f5f5;
 }
 
 .friends-page .friends-sent-heading {
@@ -356,21 +393,35 @@
 
 .friends-page .friends-pagination button {
     width: 32px;
-    height: 30px;
+    height: 32px;
+    padding: 0;
     border: 1px solid #b8b8b8;
     background: #fff;
     font-size: 24px;
     line-height: 20px;
-    color: #757575;
+    color: #191919;
     border-radius: 3px;
+    cursor: pointer;
+}
+
+.friends-page .friends-pagination button:hover {
+    background: #f2f2f2;
+}
+
+.friends-page .friends-pagination button:disabled {
+    background: #f2f2f2;
+    border-color: #e3e3e3;
+    color: #b8b8b8;
+    cursor: default;
 }
 
 .friends-page .friends-page-number {
-    min-width: 34px;
-    padding: 4px 8px;
+    min-width: 32px;
+    padding: 5px 0;
     text-align: center;
-    border: 1px solid #ccc;
+    border: 1px solid #b8b8b8;
     background: #fff;
+    border-radius: 3px;
 }
 
 @media (max-width: 991px) {
@@ -381,7 +432,7 @@
 
 @media (max-width: 767px) {
     .friends-page h1 {
-        font-size: 36px;
+        font-size: 30px;
         padding-left: 9px;
     }
 
