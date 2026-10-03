@@ -3,9 +3,10 @@ import { session } from "../../session";
 import { sql, now } from "../../db";
 import { saveImage, UploadError, withThumbnail, mediaUrl } from "../../paths";
 import { notify } from "../../notifications";
+import { membershipOf } from "../../membership";
 
 const PER_PAGE = 20;
-const MEMBERS_PER_PAGE = 9;
+const MEMBERS_PER_PAGE = 12;
 const OWNER_RANK = 255;
 const MEMBER_RANK = 1;
 
@@ -43,9 +44,11 @@ const handle = (err: unknown, status: any) => {
 
 const getGroup = async (groupId: number) => {
     const [group] = await sql`
-        SELECT g.*, u.username AS owner_username,
+        SELECT g.*, u.username AS owner_username, s.username AS shout_username,
             (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
-        FROM site_groups g LEFT JOIN users u ON u.id = g.owner_id
+        FROM site_groups g
+        LEFT JOIN users u ON u.id = g.owner_id
+        LEFT JOIN users s ON s.id = g.shout_by
         WHERE g.id = ${groupId}
     `;
     if (!group) {
@@ -112,14 +115,18 @@ export const groups = new Elysia({ prefix: "/api/groups" })
 
     .get("/", async ({ query }) => {
         const like = "%" + (query.q ?? "").trim() + "%";
-        const [count] = await sql`SELECT COUNT(*) AS n FROM site_groups WHERE name LIKE ${like}`;
+        const [count] = await sql`SELECT COUNT(*) AS n FROM site_groups WHERE name LIKE ${like} OR description LIKE ${like}`;
         const pages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), pages);
 
         return {
             page,
             pages,
-            list: await listGroups(sql`WHERE g.name LIKE ${like} ORDER BY g.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}`)
+            list: await listGroups(sql`
+                WHERE g.name LIKE ${like} OR g.description LIKE ${like}
+                ORDER BY (g.name LIKE ${like}) DESC, member_count DESC, g.id ASC
+                LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
+            `)
         };
     }, {
         query: t.Object({
@@ -135,6 +142,29 @@ export const groups = new Elysia({ prefix: "/api/groups" })
         WHERE gm.user_id = ${user.id} ORDER BY gm.rank DESC, gm.joined_at DESC
     `, {
         auth: true
+    })
+
+    .get("/of/:userId", async ({ params }) => {
+        const rows = await sql`
+            SELECT g.id, g.name, g.description, g.icon, gm.role,
+                (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
+            FROM group_members gm
+            JOIN site_groups g ON g.id = gm.group_id
+            WHERE gm.user_id = ${params.userId}
+            ORDER BY gm.rank DESC, gm.joined_at ASC
+        `;
+        return rows.map((g: any) => ({
+            id: Number(g.id),
+            name: g.name,
+            description: g.description,
+            icon: g.icon,
+            role: g.role,
+            memberCount: Number(g.member_count)
+        }));
+    }, {
+        params: t.Object({
+            userId: t.Numeric()
+        })
     })
 
     .post("/", async ({ body, user, status }) => {
@@ -240,8 +270,13 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             checkDescription(description);
             const approval = body.approval_required ?? !!group.approval_required;
             const wall = body.wall_enabled ?? !!group.wall_enabled;
+            const bcOnly = body.bc_only ?? !!group.bc_only;
 
-            await sql`UPDATE site_groups SET description = ${description}, approval_required = ${approval}, wall_enabled = ${wall}, updated_at = ${now()} WHERE id = ${params.id}`;
+            await sql`
+                UPDATE site_groups
+                SET description = ${description}, approval_required = ${approval}, wall_enabled = ${wall}, bc_only = ${bcOnly}, updated_at = ${now()}
+                WHERE id = ${params.id}
+            `;
             if (body.icon && body.icon.size > 0) {
                 const icon = await saveImage("groups", params.id, body.icon);
                 await sql`UPDATE site_groups SET icon = ${icon} WHERE id = ${params.id}`;
@@ -259,6 +294,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             description: t.Optional(t.String()),
             approval_required: t.Optional(t.BooleanString()),
             wall_enabled: t.Optional(t.BooleanString()),
+            bc_only: t.Optional(t.BooleanString()),
             icon: t.Optional(t.File({ type: "image" }))
         })
     })
@@ -271,6 +307,9 @@ export const groups = new Elysia({ prefix: "/api/groups" })
                     ok: true,
                     status: "joined"
                 };
+            }
+            if (group.bc_only && membershipOf(user) === "None") {
+                throw new GroupError("Only Builders Club members can join this group.");
             }
             if (group.approval_required) {
                 await sql`INSERT IGNORE INTO group_join_requests (group_id, user_id, created_at) VALUES (${params.id}, ${user.id}, ${now()})`;
@@ -322,7 +361,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             if (shout.length > 255) {
                 throw new GroupError("Shout cannot be longer than 255 characters.");
             }
-            await sql`UPDATE site_groups SET shout = ${shout}, updated_at = ${now()} WHERE id = ${params.id}`;
+            await sql`UPDATE site_groups SET shout = ${shout}, shout_by = ${user.id}, shout_at = ${now()}, updated_at = ${now()} WHERE id = ${params.id}`;
             return {
                 ok: true
             };

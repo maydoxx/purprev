@@ -6,6 +6,7 @@ import { withThumbnail, mediaUrl } from "../../paths";
 import { rcc } from "../../rcc";
 import { membershipOf } from "../../membership";
 import { siteBadges } from "../../badges";
+import { collectionOf } from "./collections";
 
 
 const TERMINATED = 6;
@@ -33,7 +34,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             }
         }
 
-        const [games, badges, counts, wearing, friends, earned, favorites, history] = await Promise.all([
+        const [games, badges, counts, wearing, friends, earned, favorites, history, collection, memberships] = await Promise.all([
             sql`SELECT id, title, visits FROM games WHERE creator_id = ${row.id}`,
             sql`
                 SELECT b.id, b.name, b.game_id, b.icon FROM user_badges ub
@@ -61,7 +62,16 @@ export const profile = new Elysia({ prefix: "/profile" })
                 WHERE f.user_id = ${row.id}
                 ORDER BY f.created_at DESC LIMIT 6
             `,
-            sql`SELECT DISTINCT old_username FROM username_history WHERE user_id = ${row.id} AND old_username != ${row.username} ORDER BY old_username`
+            sql`SELECT DISTINCT old_username FROM username_history WHERE user_id = ${row.id} AND old_username != ${row.username} ORDER BY old_username`,
+            collectionOf(row.id),
+            sql`
+                SELECT g.id, g.name, g.description, g.icon, gm.role,
+                    (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
+                FROM group_members gm
+                JOIN site_groups g ON g.id = gm.group_id
+                WHERE gm.user_id = ${row.id}
+                ORDER BY gm.rank DESC, gm.joined_at ASC
+            `
         ]);
 
         const playing = await rcc.players(favorites.map((g: any) => Number(g.id)));
@@ -100,6 +110,15 @@ export const profile = new Elysia({ prefix: "/profile" })
             isFollowing: !!followed,
             friends,
             wearing: await Promise.all(wearing.map(withThumbnail)),
+            collection,
+            groups: memberships.map((g: any) => ({
+                id: Number(g.id),
+                name: g.name,
+                description: g.description,
+                icon: g.icon,
+                role: g.role,
+                memberCount: Number(g.member_count)
+            })),
             games,
             badges,
             siteBadges: earned,

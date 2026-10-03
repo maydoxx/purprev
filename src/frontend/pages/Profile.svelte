@@ -39,6 +39,15 @@
     let aboutEl = $state<HTMLElement | null>(null);
     let view = $state("slide");
     let slide = $state(0);
+    let groupView = $state("slide");
+    let groupSlide = $state(0);
+    let editing = $state(false);
+    let owned = $state<any[]>([]);
+    let picked = $state<number[]>([]);
+    let saving = $state(false);
+    let pickError = $state("");
+
+    const MAX_COLLECTION = 6;
 
     // measured while the text is still clamped to three lines
     $effect(() => {
@@ -51,6 +60,8 @@
         error = "";
         expanded = false;
         slide = 0;
+        groupSlide = 0;
+        editing = false;
         if (!id) {
             error = "unknown user";
             return;
@@ -111,6 +122,48 @@
         slide = (slide + by + profile.games.length) % profile.games.length;
     };
 
+    const stepGroup = (by: number) => {
+        groupSlide = (groupSlide + by + profile.groups.length) % profile.groups.length;
+    };
+
+    const openPicker = async () => {
+        pickError = "";
+        picked = profile.collection.map((item: any) => item.id);
+        editing = true;
+        try {
+            owned = await api("/user/collections/owned");
+        } catch (err: any) {
+            pickError = err.message;
+        }
+    };
+
+    const pick = (itemId: number) => {
+        if (picked.includes(itemId)) {
+            picked = picked.filter(x => x !== itemId);
+            return;
+        }
+        if (picked.length >= MAX_COLLECTION) {
+            return;
+        }
+        picked = [...picked, itemId];
+    };
+
+    const saveCollection = async () => {
+        saving = true;
+        pickError = "";
+        try {
+            await api("/user/collections", {
+                items: picked
+            });
+            profile.collection = picked.map(itemId => owned.find(item => item.id === itemId)).filter(Boolean);
+            editing = false;
+        } catch (err: any) {
+            pickError = err.message;
+        }
+        saving = false;
+    };
+
+    const abbreviate = (n: number) => n >= 1000 ? `${Math.floor(n / 1000)}K+` : String(n);
     const date = (t: number) => t ? new Date(t * 1000).toLocaleDateString("en-US") : "Unknown";
     const pic = (userId: number, type: string) => `/api/user/getProfilePicture?userId=${userId}&type=${type}`;
 </script>
@@ -252,7 +305,7 @@
                                     <span class="profile-pastnames-text">Past usernames</span>
                                 </span>
                             {/if}
-                            <a class="profile-report" href="/discord">Report Abuse</a>
+                            <a class="profile-report" href="/abusereport?type=user&id={id}">Report Abuse</a>
                         </div>
                     </div>
                 </div>
@@ -316,6 +369,93 @@
                         {/if}
                     </div>
                 </div>
+
+                {#if isMe || profile.collection.length > 0}
+                    <div class="profile-section profile-collections">
+                        <div class="profile-heading">
+                            <h3>Collections</h3>
+                            {#if isMe}
+                                <button type="button" class="profile-btn profile-btn-secondary" onclick={openPicker}>Edit</button>
+                            {/if}
+                        </div>
+                        <div class="profile-sheet">
+                            {#if profile.collection.length === 0}
+                                <span class="profile-empty">You haven't added any items to your collection yet.</span>
+                            {:else}
+                                <ul>
+                                    {#each profile.collection as item (item.id)}
+                                        <li>
+                                            <a href="/catalog/item?id={item.id}" title={item.name}>
+                                                <img src={item.thumbnail || "/img/pending.png"} alt={item.name}>
+                                                <span class="profile-item-name">{item.name}</span>
+                                            </a>
+                                        </li>
+                                    {/each}
+                                </ul>
+                            {/if}
+                        </div>
+                    </div>
+                {/if}
+
+                {#if profile.groups.length > 0}
+                    {@const g = profile.groups[groupSlide]}
+                    <div class="profile-section profile-groups">
+                        <div class="profile-heading">
+                            <h3>Groups</h3>
+                            <div class="profile-views">
+                                <button type="button" class="profile-btn {groupView === "slide" ? "profile-btn-secondary" : "profile-btn-control"}" title="Slideshow View" aria-label="Slideshow View" onclick={() => groupView = "slide"}>
+                                    <span class="profile-icon-slideshow" class:selected={groupView === "slide"}></span>
+                                </button>
+                                <button type="button" class="profile-btn {groupView === "grid" ? "profile-btn-secondary" : "profile-btn-control"}" title="Grid View" aria-label="Grid View" onclick={() => groupView = "grid"}>
+                                    <span class="profile-icon-grid" class:selected={groupView === "grid"}></span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="profile-switcher profile-switcher-groups" hidden={groupView !== "slide"}>
+                            <div class="profile-slide-emblem">
+                                <a href="/groups?id={g.id}">
+                                    <img src={g.icon || "/img/pending.png"} alt={g.name}>
+                                </a>
+                            </div>
+                            <div class="profile-slide-info">
+                                <h2>
+                                    <a href="/groups?id={g.id}">{g.name}</a>
+                                </h2>
+                                <p class="profile-slide-description">{g.description ?? ""}</p>
+                                <ul>
+                                    <li>
+                                        <p class="profile-label">Members</p>
+                                        <p class="profile-lead">{abbreviate(g.memberCount)}</p>
+                                    </li>
+                                    <li>
+                                        <p class="profile-label">Rank</p>
+                                        <p class="profile-lead profile-slide-rank">{g.role}</p>
+                                    </li>
+                                </ul>
+                            </div>
+                            {#if profile.groups.length > 1}
+                                <button type="button" class="profile-switcher-control left" aria-label="Previous" onclick={() => stepGroup(-1)}>
+                                    <span class="profile-icon-carousel-left"></span>
+                                </button>
+                                <button type="button" class="profile-switcher-control right" aria-label="Next" onclick={() => stepGroup(1)}>
+                                    <span class="profile-icon-carousel-right"></span>
+                                </button>
+                            {/if}
+                        </div>
+                        <ul class="profile-group-cards" hidden={groupView !== "grid"}>
+                            {#each profile.groups as group (group.id)}
+                                <li>
+                                    <a href="/groups?id={group.id}" title={group.name}>
+                                        <img src={group.icon || "/img/pending.png"} alt={group.name}>
+                                        <span class="profile-card-name">{group.name}</span>
+                                        <span class="profile-card-secondary">{abbreviate(group.memberCount)} Members</span>
+                                        <span class="profile-card-secondary">{group.role}</span>
+                                    </a>
+                                </li>
+                            {/each}
+                        </ul>
+                    </div>
+                {/if}
 
                 <div class="profile-section profile-favorites">
                     <div class="profile-heading">
@@ -482,4 +622,37 @@
             </div>
         {/if}
     </div>
+    {#if editing}
+        <div class="profile-modal-backdrop" role="presentation" onclick={() => editing = false}></div>
+        <div class="profile-modal" role="dialog" aria-modal="true" aria-labelledby="collection-title">
+            <div class="profile-modal-header">
+                <h3 id="collection-title">Edit Collections</h3>
+                <button type="button" class="profile-modal-close" aria-label="Close" onclick={() => editing = false}></button>
+            </div>
+            <div class="profile-modal-body">
+                <p class="profile-modal-hint">Choose up to {MAX_COLLECTION} items you own to show on your profile. ({picked.length}/{MAX_COLLECTION})</p>
+                {#if pickError}
+                    <p class="profile-modal-error">{pickError}</p>
+                {/if}
+                {#if owned.length === 0}
+                    <span class="profile-empty">You don't own any items yet.</span>
+                {:else}
+                    <ul class="profile-picker">
+                        {#each owned as item (item.id)}
+                            <li>
+                                <button type="button" class="profile-picker-item" class:picked={picked.includes(item.id)} title={item.name} onclick={() => pick(item.id)}>
+                                    <img src={item.thumbnail || "/img/pending.png"} alt="">
+                                    <span class="profile-item-name">{item.name}</span>
+                                </button>
+                            </li>
+                        {/each}
+                    </ul>
+                {/if}
+            </div>
+            <div class="profile-modal-footer">
+                <button type="button" class="profile-btn profile-btn-control" onclick={() => editing = false}>Cancel</button>
+                <button type="button" class="profile-btn profile-btn-primary" disabled={saving} onclick={saveCollection}>Save</button>
+            </div>
+        </div>
+    {/if}
 </main>

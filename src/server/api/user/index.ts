@@ -11,6 +11,7 @@ import { inventory } from "./inventory";
 import { moderation } from "./moderation";
 import { favorites } from "./favorites";
 import { chat } from "./chat";
+import { collections } from "./collections";
 
 export const user = new Elysia({ prefix: "/api/user" })
     .use(getProfilePicture)
@@ -24,3 +25,4 @@ export const user = new Elysia({ prefix: "/api/user" })
     .use(moderation)
     .use(favorites)
     .use(chat)
+    .use(collections)
