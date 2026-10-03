@@ -15,6 +15,13 @@ const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
 const BLOG_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const BANNER_STYLES = ["info", "warning", "success"];
 const ITEM_CATEGORIES = ["Hat", "Face", "T-Shirt", "Shirt", "Pants", "Gear", "Package"];
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+const GAME_CARD_CODE = () => {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    const letters = Array.from(bytes, b => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+    return letters.match(/.{4}/g)!.join("-");
+};
 
 
 const MODERATION: Record<string, [number, number]> = {
@@ -763,6 +770,75 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .delete("/invitekeys/:id", async ({ params }) => {
         await sql`DELETE FROM invites WHERE id = ${params.id}`;
+        return {
+            ok: true
+        };
+    }, {
+        admin: true,
+        params: id
+    })
+
+
+    .get("/gamecards", ({ query }) => paginate(
+        query.used
+            ? sql`SELECT COUNT(*) AS n FROM game_cards WHERE redeemed_by > 0`
+            : sql`SELECT COUNT(*) AS n FROM game_cards WHERE redeemed_by = 0`,
+        query.page,
+        limit => query.used
+            ? sql`
+                SELECT game_cards.*, maker.username AS creator_name, owner.username AS user_name FROM game_cards
+                LEFT JOIN users maker ON maker.id = game_cards.created_by
+                LEFT JOIN users owner ON owner.id = game_cards.redeemed_by
+                WHERE game_cards.redeemed_by > 0
+                ORDER BY game_cards.redeemed_at DESC ${limit}
+            `
+            : sql`
+                SELECT game_cards.*, maker.username AS creator_name FROM game_cards
+                LEFT JOIN users maker ON maker.id = game_cards.created_by
+                WHERE game_cards.redeemed_by = 0
+                ORDER BY game_cards.id DESC ${limit}
+            `
+    ), {
+        admin: true,
+        query: t.Object({
+            page: t.Optional(t.Numeric()),
+            used: t.Optional(t.BooleanString())
+        })
+    })
+
+    .post("/gamecards", async ({ body, user, status }) => {
+        try {
+            const amount = body.amount;
+            const count = body.count ?? 1;
+            if (!Number.isInteger(amount) || amount < 1 || amount > 1000000) {
+                throw new AdminError("Amount must be between 1 and 1,000,000 Nonebux.");
+            }
+            if (!Number.isInteger(count) || count < 1 || count > 100) {
+                throw new AdminError("You can make up to 100 cards at once.");
+            }
+            const codes: string[] = [];
+            for (let i = 0; i < count; i++) {
+                const code = GAME_CARD_CODE();
+                await sql`INSERT INTO game_cards (code, amount, created_by, created_at) VALUES (${code}, ${amount}, ${user.id}, ${now()})`;
+                codes.push(code);
+            }
+            return {
+                ok: true,
+                codes
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        admin: true,
+        body: t.Object({
+            amount: t.Integer(),
+            count: t.Optional(t.Integer())
+        })
+    })
+
+    .delete("/gamecards/:id", async ({ params }) => {
+        await sql`DELETE FROM game_cards WHERE id = ${params.id} AND redeemed_by = 0`;
         return {
             ok: true
         };

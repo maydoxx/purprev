@@ -40,6 +40,36 @@ export const PRICES = {
     }
 };
 
+export const LIMITS = {
+    None: {
+        places: 1,
+        joinGroups: 5,
+        createGroups: 0,
+        paidAccess: 10
+    },
+    BC: {
+        places: 10,
+        joinGroups: 10,
+        createGroups: 10,
+        paidAccess: 70
+    },
+    TBC: {
+        places: 25,
+        joinGroups: 20,
+        createGroups: 20,
+        paidAccess: 70
+    },
+    OBC: {
+        places: 100,
+        joinGroups: 100,
+        createGroups: 100,
+        paidAccess: 70
+    }
+};
+
+export const SIGNING_BONUS = 100;
+export const FREE_STIPEND = 5;
+
 export const isTier = (s: unknown): s is Tier => typeof s === "string" && s in TIERS;
 
 export const membershipOf = (row: { membership?: string | null, membership_expires?: number | string | null }): Tier => {
