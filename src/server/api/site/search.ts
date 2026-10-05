@@ -2,9 +2,10 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql } from "../../db";
 import { mediaUrl, withThumbnail } from "../../paths";
-import { isOnline } from "../../friends";
+import { isOnline, presenceOf } from "../../friends";
 
 const PER_PAGE = 10;
+const GAMES_PER_PAGE = 40;
 
 const SUGGESTIONS = [
     ["games", "Games"],
@@ -29,9 +30,9 @@ const withMedia = async (game: any) => ({
     genre: "All"
 });
 
-const paginate = async (from: any, page: number) => {
+const paginate = async (from: any, page: number, perPage = PER_PAGE) => {
     const [count] = await sql`SELECT COUNT(*)::int AS n FROM ${from}`;
-    const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
+    const totalPages = Math.max(1, Math.ceil(Number(count.n) / perPage));
     return {
         page: Math.min(Math.max(1, page), totalPages),
         totalPages
@@ -42,17 +43,17 @@ export const search = new Elysia({ prefix: "/search" })
     .use(session)
 
 
-    .get("/", async ({ query }) => {
+    .get("/", async ({ query, user }) => {
         const like = "%" + query.q.trim() + "%";
         const type = query.type ?? "games";
 
         if (type === "games") {
-            const { page, totalPages } = await paginate(sql`games WHERE title ILIKE ${like}`, query.page ?? 1);
+            const { page, totalPages } = await paginate(sql`games WHERE title ILIKE ${like}`, query.page ?? 1, GAMES_PER_PAGE);
             const rows = await sql`
                 SELECT games.*, users.username AS creator_name FROM games
                 LEFT JOIN users ON users.id = games.creator_id
                 WHERE games.title ILIKE ${like}
-                ORDER BY games.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
+                ORDER BY games.id DESC LIMIT ${GAMES_PER_PAGE} OFFSET ${(page - 1) * GAMES_PER_PAGE}
             `;
             return {
                 type,
@@ -117,10 +118,11 @@ export const search = new Elysia({ prefix: "/search" })
 
         const { page, totalPages } = await paginate(sql`users WHERE username ILIKE ${like}`, query.page ?? 1);
         const rows = await sql`
-            SELECT id, username, "lastOnlineSite" FROM users
+            SELECT id, username, about, "lastOnlineSite" FROM users
             WHERE username ILIKE ${like}
-            ORDER BY id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
+            ORDER BY lower(username) = lower(${query.q.trim()}) DESC, id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
         `;
+        const presence = await presenceOf(rows, user?.id ?? 0);
         return {
             type: "user",
             page,
@@ -128,7 +130,10 @@ export const search = new Elysia({ prefix: "/search" })
             results: rows.map((u: any) => ({
                 id: u.id,
                 username: u.username,
-                online: isOnline(u.lastOnlineSite)
+                online: isOnline(u.lastOnlineSite),
+                about: u.about ?? "",
+                last_online: Number(u.lastOnlineSite ?? 0),
+                presence: presence(u)
             }))
         };
     }, {
