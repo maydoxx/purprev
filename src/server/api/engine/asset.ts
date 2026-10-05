@@ -4,8 +4,10 @@ import { mkdir, stat, utimes, writeFile } from "fs/promises";
 import { characterMesh, characterMeshXml } from "../../rbxm";
 import { sql } from "../../db";
 import { UPLOADS } from "../../paths";
-import { mediaStream } from "../../media";
+import { mediaHas, mediaStream } from "../../media";
 import { SITE_URL, assetUrl } from "../../site";
+import { session, type User } from "../../session";
+import { isInternal } from "./internal";
 import { text } from "./sign";
 
 
@@ -141,6 +143,31 @@ const bodyColorsXml = async (userId: number) => {
 `;
 };
 
+// everyone else gets teto
+const mayLoadPlace = async (id: number, user: User | null, request: Request, server: any) => {
+    if (isInternal(request, server)) {
+        return true;
+    }
+    const [game] = await sql`SELECT creator_id, copylocked FROM games WHERE id = ${id}`;
+    if (!game) {
+        return false;
+    }
+    if (Number(game.copylocked) === 0) {
+        return true;
+    }
+    return !!user && (user.admin > 0 || user.id === Number(game.creator_id));
+};
+
+const TETO = join(import.meta.dir, "../../static/teto.mp4");
+
+const teto = () =>
+    new Response(Bun.file(TETO), {
+        headers: {
+            "Content-Type": "video/mp4",
+            "Cache-Control": "private, max-age=3600"
+        }
+    });
+
 const itemUrls = (item: any) => {
     if (item.category === "Package") {
         return String(item.package_parts ?? "").split(";").map(Number).filter(n => n > 0).map(assetUrl);
@@ -149,15 +176,21 @@ const itemUrls = (item: any) => {
 };
 
 const routes = (prefix: string) => new Elysia({ prefix })
+    .use(session)
 
-    .get("/", async ({ query, status }) => {
+    .get("/", async ({ query, status, user, request, server }) => {
         const id = query.id ?? query.ID;
         if (id === undefined) {
             return status(400, "id missing");
         }
-        const place = await mediaStream("places", id);
-        if (place) {
-            return place;
+        if (await mediaHas("places", id)) {
+            if (!await mayLoadPlace(id, user, request, server)) {
+                return teto();
+            }
+            const place = await mediaStream("places", id);
+            if (place) {
+                return place;
+            }
         }
 
         const local = await mediaStream("assets", id, "public, max-age=86400");
