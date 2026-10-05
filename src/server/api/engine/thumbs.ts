@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { sql } from "../../db";
 import { mediaStream } from "../../media";
 import { PENDING } from "../../paths";
 import { thumbnail } from "../studio/toolbox";
@@ -22,7 +23,8 @@ const num = (...values: unknown[]) => {
 };
 
 const asset = ({ query, status }: any) => {
-    const id = num(query.assetId, query.AssetID, query.assetid, query.AssetId, query.aid, query.id);
+    const id = num(query.assetId, query.AssetID, query.assetid, query.AssetId, query.aid, query.id)
+        || num(query.assetversionid, query.assetVersionId, query.AssetVersionId, query.AssetVersionID);
     if (!id) {
         return status(400, "assetId missing");
     }
@@ -30,7 +32,15 @@ const asset = ({ query, status }: any) => {
 };
 
 const person = (kind: "avatars" | "headshots") => async ({ query, status }: any) => {
-    const id = num(query.userId, query.UserID, query.userid, query.UserId);
+    let id = num(query.userId, query.UserID, query.userid, query.UserId);
+    const name = query.username ?? query.userName ?? query.UserName ?? query.Username;
+    if (!id && name) {
+        const [user] = await sql`SELECT id FROM users WHERE username = ${name}`;
+        if (!user) {
+            return pending();
+        }
+        id = Number(user.id);
+    }
     if (!id) {
         return status(400, "userId missing");
     }

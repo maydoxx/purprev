@@ -5,6 +5,7 @@ import { mediaUrl } from "../../paths";
 import { rcc } from "../../rcc";
 import { SITE_URL } from "../../site";
 import { GENRES, gameSettings, isGenre } from "../../games";
+import { PurchaseError, buyPass } from "../../purchase";
 import { byVipId, canJoin, jobOf } from "../../privateservers";
 
 const PER_PAGE = 20;
@@ -28,8 +29,6 @@ const rarityLabel = (percent: number) => RARITY.find(([limit]) => percent < limi
 const id = t.Object({
     id: t.Numeric()
 });
-
-class PurchaseError extends Error {}
 
 const ROW = 10;
 
@@ -596,36 +595,7 @@ export const games = new Elysia({ prefix: "/api/games" })
 
     .post("/passes/:id/purchase", async ({ params, user, status }) => {
         try {
-            const balance = await sql.begin(async tx => {
-                const [pass] = await tx`SELECT * FROM game_passes WHERE id = ${params.id} FOR UPDATE`;
-                if (!pass) {
-                    throw new PurchaseError("This game pass does not exist.");
-                }
-                if (pass.price === null) {
-                    throw new PurchaseError("This game pass is off sale.");
-                }
-
-                const [owned] = await tx`SELECT 1 FROM user_game_passes WHERE user_id = ${user.id} AND pass_id = ${params.id} FOR UPDATE`;
-                if (owned) {
-                    throw new PurchaseError("You already own this game pass.");
-                }
-
-                const [me] = await tx`SELECT currency FROM users WHERE id = ${user.id} FOR UPDATE`;
-                const price = Number(pass.price);
-                if (Number(me.currency) < price) {
-                    throw new PurchaseError("You do not have enough Nonebux.");
-                }
-
-                if (price > 0) {
-                    await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id}`;
-                    if (pass.creator_id && Number(pass.creator_id) !== user.id) {
-                        await tx`UPDATE users SET currency = LEAST(currency::bigint + ${price}, 2147483647) WHERE id = ${pass.creator_id}`;
-                    }
-                }
-                await tx`INSERT INTO user_game_passes (user_id, pass_id, purchased_at) VALUES (${user.id}, ${params.id}, ${now()})`;
-
-                return Number(me.currency) - price;
-            });
+            const balance = await buyPass(user.id, params.id);
 
             return {
                 ok: true,

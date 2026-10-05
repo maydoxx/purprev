@@ -970,7 +970,7 @@
     "DFFlagCloudEditByPassCheckForServer": "True",
     "DFFlagDraggerUsesNewPartOnDuplicate": "True",
     "DFFlagRestoreTransparencyOnToolChange": "False",
-    "FFlagEnableLuaFollowers": "False",
+    "FFlagEnableLuaFollowers": "True",
     "DFFlagUserServerFollowers": "True",
     "FFlagNetworkReplicateTerrainProperties": "True",
     "FFlagAllowInsertFreeModels": "False",

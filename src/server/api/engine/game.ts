@@ -6,11 +6,13 @@ import { SITE_URL, SITE_INTERNAL_URL, appearanceUrl } from "../../site";
 import { friendStatus } from "../../friends";
 import { sign, rbxsig, studiosig, text } from "./sign";
 import { isInternal } from "./internal";
-import { bool, xmlBool, xml } from "./respond";
+import { xmlBool, xml } from "./respond";
 import { TIERS, membershipOf } from "../../membership";
 import { report } from "../../counters";
+import { byAccessCode, byKey, canJoin, start } from "../../privateservers";
 
-const ADMIN_GROUP = 1200769;
+// admin scripts look for these, they are not site groups
+const ADMIN_GROUPS = [1, 1200769];
 
 export const placeR15 = async (placeId: number) => {
     const [game] = await sql`SELECT avatar_type FROM games WHERE id = ${placeId}`;
@@ -25,7 +27,7 @@ const creatorOf = async (placeId: number) => {
 
 const userFromToken = async (token: string) => {
     const [row] = await sql`
-        SELECT users.id, users.username, users.membership, users.membership_expires FROM tokens
+        SELECT users.id, users.username, users.admin, users.membership, users.membership_expires FROM tokens
         JOIN users ON users.id = tokens.user_id
         WHERE token = ${token} AND expires > ${now()}
     `;
@@ -54,10 +56,22 @@ export const studioSetup = (site: string) => {
         `pcall(function() game:GetService("BadgeService"):SetAwardBadgeUrl("${site}/Game/Badges/AwardBadge.ashx?UserID=%d&BadgeID=%d&PlaceID=%d") end)`,
         `pcall(function() game:GetService("BadgeService"):SetHasBadgeUrl("${site}/Game/Badges/HasBadge.ashx?UserID=%d&BadgeID=%d") end)`,
         `pcall(function() game:GetService("BadgeService"):SetIsBadgeDisabledUrl("${site}/Game/Badges/IsBadgeDisabled.ashx?BadgeID=%d") end)`,
-        `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
-        `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasAsset?userId=%d&assetId=%d") end)`,
+        `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d&placeId=" .. game.PlaceId) end)`,
+        `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasAsset?userId=%d&assetId=%d&placeId=" .. game.PlaceId) end)`,
         `game:GetService("ScriptContext"):AddStarterScript(37801172)`
     ];
+};
+
+// grantaccess bodies: playerIds=1&playerIds=2, playerIds=1,2, [1,2] or {"playerIds":[1,2]}
+const playerIds = (body: string): string[] => {
+    if (!body.startsWith("[") && !body.startsWith("{")) {
+        return new URLSearchParams(body).getAll("playerIds");
+    }
+    try {
+        return [JSON.parse(body)].flat().flatMap((v: any) => typeof v === "object" && v !== null ? [v.playerIds ?? []].flat() : [v]).map(String);
+    } catch {
+        return [];
+    }
 };
 
 
@@ -76,9 +90,16 @@ const routes = (prefix: string) => new Elysia({ prefix })
         if (!server) {
             return status(410, "that game server is gone");
         }
+        if (server.key) {
+            const ps = await byKey(server.key);
+            if (!ps || !await canJoin(ps, who)) {
+                return status(403, "that server is private");
+            }
+        }
 
         const placeId = server.placeId;
         const appearance = appearanceUrl(who.id);
+        const [account] = await sql`SELECT created_at FROM users WHERE id = ${who.id}`;
         await sql`UPDATE games SET visits = visits + 1 WHERE id = ${placeId}`;
         await sql`INSERT INTO game_plays (user_id, game_id, played_at) VALUES (${who.id}, ${placeId}, ${now()}) ON CONFLICT (user_id, game_id) DO UPDATE SET played_at = ${now()}`;
         const time = String(now());
@@ -112,7 +133,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
             CreatorId: await creatorOf(placeId),
             CreatorTypeEnum: "User",
             MembershipType: TIERS[membershipOf(who)].enum,
-            AccountAge: 100,
+            AccountAge: Math.floor((now() - Number(account.created_at)) / 86400),
             CookieStoreFirstTimePlayKey: "rbx_evt_ftp",
             CookieStoreFiveMinutePlayKey: "rbx_evt_fmp",
             CookieStoreEnabled: true,
@@ -138,7 +159,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
     .all("/PlaceLauncher.ashx", async ({ query, user, token, status, request }) => {
         const placeId = query.placeId ?? query.placeid ?? query.PlaceId ?? 0;
-        console.log(`PlaceLauncher: place ${placeId} for ${user ? user.username : "nobody"} via ${request.headers.get("user-agent") ?? "?"}`);
+        const jobId = query.request === "RequestGameJob" ? query.gameId : query.jobId;
+        console.log(`PlaceLauncher: ${query.request ?? "?"} place ${placeId}${jobId ? ` job ${jobId}` : ""} for ${user ? user.username : "nobody"} via ${request.headers.get("user-agent") ?? "?"}`);
         if (!user || !token) {
             return status(403, "invalid auth ticket");
         }
@@ -168,9 +190,19 @@ const routes = (prefix: string) => new Elysia({ prefix })
             };
         }
 
+        const vip = query.request === "RequestPrivateGame";
+        const ps = vip ? await byAccessCode(query.accessCode ?? "") : null;
+        if (vip && (!ps || ps.gameId !== Number(placeId) || !await canJoin(ps, user))) {
+            return {
+                jobId: "",
+                status: 5,
+                message: "you can't join that private server"
+            };
+        }
+
         let server;
         try {
-            server = query.jobId ? await rcc.server(query.jobId) : await rcc.findOrCreate(placeId);
+            server = ps ? await start(ps) : jobId ? await rcc.server(jobId) : await rcc.findOrCreate(placeId);
         } catch (err) {
             console.error(`PlaceLauncher: could not start a server for place ${placeId}:`, err instanceof RccError ? err.message : err);
             return {
@@ -181,12 +213,23 @@ const routes = (prefix: string) => new Elysia({ prefix })
         }
 
         // findOrCreate answers without a placeId, only a jobId join can point at the wrong place
-        if (!server || (query.jobId && Number(server.placeId) !== Number(placeId))) {
+        if (!server || (jobId && Number(server.placeId) !== Number(placeId))) {
             return {
                 jobId: "",
                 status: 5,
                 message: "server not found"
             };
+        }
+        // a private job's id must not let in anyone its access code wouldn't
+        if (!ps && server.key) {
+            const target = await byKey(server.key);
+            if (!target || !await canJoin(target, user)) {
+                return {
+                    jobId: "",
+                    status: 5,
+                    message: "server not found"
+                };
+            }
         }
 
         if (!server.ready) {
@@ -215,7 +258,10 @@ const routes = (prefix: string) => new Elysia({ prefix })
             placeId: t.Optional(t.Numeric()),
             placeid: t.Optional(t.Numeric()),
             PlaceId: t.Optional(t.Numeric()),
-            jobId: t.Optional(t.String({ maxLength: 64 }))
+            request: t.Optional(t.String()),
+            jobId: t.Optional(t.String({ maxLength: 64 })),
+            gameId: t.Optional(t.String({ maxLength: 64 })),
+            accessCode: t.Optional(t.String({ maxLength: 64 }))
         })
     })
 
@@ -241,9 +287,9 @@ const routes = (prefix: string) => new Elysia({ prefix })
             `pcall(function() game:GetService("BadgeService"):SetAwardBadgeUrl("${site}/Game/Badges/AwardBadge.ashx?UserID=%d&BadgeID=%d&PlaceID=%d") end)`,
             `pcall(function() game:GetService("BadgeService"):SetHasBadgeUrl("${site}/Game/Badges/HasBadge.ashx?UserID=%d&BadgeID=%d") end)`,
             `pcall(function() game:GetService("BadgeService"):SetIsBadgeDisabledUrl("${site}/Game/Badges/IsBadgeDisabled.ashx?BadgeID=%d") end)`,
-            `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d") end)`,
+            `pcall(function() game:GetService("MarketplaceService"):SetProductInfoUrl("${site}/marketplace/productinfo?assetId=%d&placeId=${query.PlaceId}") end)`,
             `pcall(function() game:GetService("MarketplaceService"):SetDevProductInfoUrl("${site}/marketplace/productDetails?productId=%d") end)`,
-            `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasAsset?userId=%d&assetId=%d") end)`,
+            `pcall(function() game:GetService("MarketplaceService"):SetPlayerOwnsAssetUrl("${site}/ownership/hasAsset?userId=%d&assetId=%d&placeId=${query.PlaceId}") end)`,
             `pcall(function() game:SetUniverseId(${query.PlaceId}) end)`,
             `pcall(function() game.ForceR15 = ${await placeR15(query.PlaceId)} end)`,
             `pcall(function() game:SetPlaceVersion(1) end)`,
@@ -306,20 +352,28 @@ const routes = (prefix: string) => new Elysia({ prefix })
     })
 
 
+    // anything but "0" counts as awarded and is shown to the player as is
     .all("/Badges/AwardBadge.ashx", async ({ query, request, server }) => {
         if (!isInternal(request, server)) {
-            return bool(false);
+            return "0";
         }
-        const [badge] = await sql`SELECT game_id, enabled FROM game_badges WHERE id = ${query.BadgeID}`;
+        const [badge] = await sql`
+            SELECT b.name, b.game_id, b.enabled, u.username AS creator FROM game_badges b
+            JOIN users u ON u.id = b.creator_id
+            WHERE b.id = ${query.BadgeID}
+        `;
         if (!badge || !badge.enabled || Number(badge.game_id) !== query.PlaceID) {
-            return bool(false);
+            return "0";
         }
-        const [exists] = await sql`SELECT id FROM users WHERE id = ${query.UserID}`;
-        if (!exists) {
-            return bool(false);
+        const [player] = await sql`SELECT username FROM users WHERE id = ${query.UserID}`;
+        if (!player) {
+            return "0";
         }
-        await sql`INSERT INTO user_badges (user_id, badge_id, awarded_at) VALUES (${query.UserID}, ${query.BadgeID}, ${now()}) ON CONFLICT DO NOTHING`;
-        return bool(true);
+        const added = await sql`INSERT INTO user_badges (user_id, badge_id, awarded_at) VALUES (${query.UserID}, ${query.BadgeID}, ${now()}) ON CONFLICT DO NOTHING`;
+        if (!added.count) {
+            return "0";
+        }
+        return `${player.username} won ${badge.creator}'s "${badge.name}" award!`;
     }, {
         query: t.Object({
             UserID: t.Numeric(),
@@ -330,7 +384,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
     .get("/Badges/HasBadge.ashx", async ({ query }) => {
         const [row] = await sql`SELECT 1 FROM user_badges WHERE user_id = ${query.UserID} AND badge_id = ${query.BadgeID}`;
-        return bool(!!row);
+        return row ? "Success" : "Failure";
     }, {
         query: t.Object({
             UserID: t.Numeric(),
@@ -341,7 +395,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
     .get("/Badges/IsBadgeDisabled.ashx", async ({ query }) => {
         const [badge] = await sql`SELECT enabled FROM game_badges WHERE id = ${query.BadgeID}`;
-        return bool(!badge || !badge.enabled);
+        return badge?.enabled ? "0" : "1";
     }, {
         query: t.Object({
             BadgeID: t.Numeric()
@@ -366,20 +420,38 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
 
     .get("/LuaWebService/HandleSocialRequest.ashx", async ({ query }) => {
-        const isAdmin = async () => {
-            const [row] = await sql`SELECT admin FROM users WHERE id = ${query.playerid}`;
-            return !!row && Number(row.admin) > 0;
+        const member = async () => {
+            const groupId = query.groupid ?? 0;
+            const [group] = await sql`
+                SELECT m.rank, m.role FROM site_groups g
+                LEFT JOIN group_members m ON m.group_id = g.id AND m.user_id = ${query.playerid}
+                WHERE g.id = ${groupId}
+            `;
+            if (group) {
+                return group.rank === null ? null : group;
+            }
+            if (!ADMIN_GROUPS.includes(groupId)) {
+                return null;
+            }
+            const [player] = await sql`SELECT admin FROM users WHERE id = ${query.playerid}`;
+            if (!player || Number(player.admin) <= 0) {
+                return null;
+            }
+            return {
+                rank: 255,
+                role: "Admin"
+            };
         };
 
         switch (query.method) {
             case "IsFriendsWith":
                 return xmlBool(query.userid !== undefined && await friendStatus(query.playerid, query.userid) === "friends");
             case "IsInGroup":
-                return xmlBool(query.groupid === ADMIN_GROUP && await isAdmin());
+                return xmlBool(!!await member());
             case "GetGroupRank":
-                return xml("integer", query.groupid === 1 && await isAdmin() ? 255 : 0);
+                return xml("integer", (await member())?.rank ?? 0);
             case "GetGroupRole":
-                return xml("string", query.groupid === 1 && await isAdmin() ? "Admin" : "Guest");
+                return xml("string", Bun.escapeHTML((await member())?.role ?? "Guest"));
             default:
                 return xmlBool(false);
         }
@@ -423,6 +495,71 @@ export const game = new Elysia()
         params: t.Object({
             userId: t.Numeric(),
             placeId: t.Numeric()
+        })
+    })
+
+    // the game server kicks players who teleported in unless this is exactly true
+    .get("/universes/validate-place-join", () => text("true"))
+
+    // TeleportService:ReserveServer on the game server
+    .all("/reservedservers/create", async ({ query, request, server, status }) => {
+        if (!isInternal(request, server)) {
+            return status(403, {
+                error: "game servers only"
+            });
+        }
+        const [place] = await sql`SELECT id FROM games WHERE id = ${query.placeId}`;
+        if (!place) {
+            return status(404, {
+                error: "no such place"
+            });
+        }
+        const code = crypto.randomUUID();
+        await sql`
+            INSERT INTO reserved_servers (game_id, access_code, created_job, created_at)
+            VALUES (${query.placeId}, ${code}, ${(request.headers.get("roblox-game-id") ?? "").slice(0, 64)}, ${now()})
+        `;
+        return {
+            ReservedServerAccessCode: code
+        };
+    }, {
+        parse: "none",
+        query: t.Object({
+            placeId: t.Numeric()
+        })
+    })
+
+    // TeleportToPrivateServer lets these players in before it teleports them, the list format is not known so take any
+    .all("/reservedservers/grantaccess", async ({ query, request, server, status }) => {
+        if (!isInternal(request, server)) {
+            return status(403, {
+                error: "game servers only"
+            });
+        }
+        const [reserved] = await sql`SELECT id FROM reserved_servers WHERE access_code = ${query.reservedServerAccessCode}`;
+        if (!reserved) {
+            return status(404, {
+                error: "no such reserved server"
+            });
+        }
+        const ids = new Set([...playerIds((await request.text()).trim()), query.playerIds ?? ""]
+            .flatMap(s => s.split(","))
+            .map(Number)
+            .filter(n => Number.isInteger(n) && n > 0));
+        for (const id of ids) {
+            await sql`
+                INSERT INTO reserved_server_access (reserved_id, user_id, granted_at) VALUES (${reserved.id}, ${id}, ${now()})
+                ON CONFLICT (reserved_id, user_id) DO UPDATE SET granted_at = EXCLUDED.granted_at
+            `;
+        }
+        return {
+            success: true
+        };
+    }, {
+        parse: "none",
+        query: t.Object({
+            reservedServerAccessCode: t.String({ maxLength: 64 }),
+            playerIds: t.Optional(t.String())
         })
     })
 

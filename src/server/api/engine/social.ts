@@ -5,10 +5,15 @@ import { friendStatus, friendCount } from "../../friends";
 import { isInternal } from "./internal";
 import { white, black } from "./chatfilter";
 import { text } from "./sign";
+import { notify } from "../../notifications";
 
 const pair = t.Object({
     firstUserId: t.Numeric(),
     secondUserId: t.Numeric()
+});
+
+const followBody = t.Object({
+    followedUserId: t.Numeric()
 });
 
 const request = (from: number, to: number) =>
@@ -87,17 +92,50 @@ const user = new Elysia({ prefix: "/user" })
 
 
     .get("/following-exists", async ({ query, user }) => {
-        const other = query.UserID ?? query.userId ?? 0;
+        const followed = query.UserID ?? query.userId ?? 0;
+        const follower = query.followerUserId ?? user?.id ?? 0;
+        const [row] = await sql`SELECT 1 FROM user_follows WHERE follower_id = ${follower} AND followed_id = ${followed}`;
         return {
             success: true,
             message: "Success",
-            isFollowing: !!user && other > 0 && await friendStatus(user.id, other) === "friends"
+            isFollowing: !!row
         };
     }, {
         query: t.Object({
             UserID: t.Optional(t.Numeric()),
-            userId: t.Optional(t.Numeric())
+            userId: t.Optional(t.Numeric()),
+            followerUserId: t.Optional(t.Numeric())
         })
+    })
+
+    .post("/follow", async ({ body, user }) => {
+        const [target] = await sql`SELECT id FROM users WHERE id = ${body.followedUserId}`;
+        if (!target || body.followedUserId === user.id) {
+            return {
+                success: false,
+                message: "cannot follow that user"
+            };
+        }
+        const inserted = await sql`INSERT INTO user_follows (follower_id, followed_id, created_at) VALUES (${user.id}, ${body.followedUserId}, ${now()}) ON CONFLICT DO NOTHING`;
+        if (inserted.count) {
+            await notify(body.followedUserId, user.id, "follow", user.id);
+        }
+        return {
+            success: true
+        };
+    }, {
+        auth: true,
+        body: followBody
+    })
+
+    .post("/unfollow", async ({ body, user }) => {
+        await sql`DELETE FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${body.followedUserId}`;
+        return {
+            success: true
+        };
+    }, {
+        auth: true,
+        body: followBody
     })
 
 
@@ -131,10 +169,6 @@ export const social = new Elysia()
     .use(user)
 
 
-    // the server posts to //moderation/filtertext/, two slashes
     .post("/moderation/filtertext", filtered, {
-        body: filterBody
-    })
-    .post("//moderation/filtertext", filtered, {
         body: filterBody
     })

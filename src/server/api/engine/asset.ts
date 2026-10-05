@@ -65,6 +65,14 @@ const unavailable = () =>
         }
     });
 
+const failed = () =>
+    new Response("Upstream request failed\n", {
+        status: 502,
+        headers: {
+            "Content-Type": "text/plain; charset=utf-8"
+        }
+    });
+
 
 const proxy = async (id: number) => {
     const cookie = process.env.ROBLOX_COOKIE ?? "";
@@ -85,7 +93,12 @@ const proxy = async (id: number) => {
             redirect: "follow",
             signal: AbortSignal.timeout(30000)
         });
-        if ([401, 403, 404, 409].includes(res.status)) {
+        // a 401 is our cookie expiring, not the asset going away
+        if (res.status === 401) {
+            console.warn(`asset ${id} upstream: 401, check ROBLOX_COOKIE`);
+            return failed();
+        }
+        if ([403, 404, 409].includes(res.status)) {
             if (cacheable(id)) {
                 await rememberMissing(id);
             }
@@ -94,12 +107,7 @@ const proxy = async (id: number) => {
         bytes = new Uint8Array(await res.arrayBuffer());
     } catch (err) {
         console.warn(`asset ${id} upstream: ${err instanceof Error ? err.message : err}`);
-        return new Response("Upstream request failed\n", {
-            status: 502,
-            headers: {
-                "Content-Type": "text/plain; charset=utf-8"
-            }
-        });
+        return failed();
     }
 
     if (!res.ok) {
@@ -179,7 +187,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
     .use(session)
 
     .get("/", async ({ query, status, user, request, server }) => {
-        const id = query.id ?? query.ID;
+        // no asset versions here, the toolbox hands out AssetVersionId = AssetId
+        const id = query.id ?? query.ID ?? query.assetversionid;
         if (id === undefined) {
             return status(400, "id missing");
         }
@@ -210,7 +219,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
     }, {
         query: t.Object({
             id: t.Optional(t.Numeric()),
-            ID: t.Optional(t.Numeric())
+            ID: t.Optional(t.Numeric()),
+            assetversionid: t.Optional(t.Numeric())
         })
     })
 

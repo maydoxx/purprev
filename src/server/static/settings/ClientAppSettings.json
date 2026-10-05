@@ -26,7 +26,7 @@
     "FFlagDebugCrashEnabled": "False",
     "FFlagDirectX11Enable": "True",
     "FFlagDontSwallowInputForStudioShortcuts": "True",
-    "FFlagEnableLuaFollowers": "False",
+    "FFlagEnableLuaFollowers": "True",
     "FFlagEnableSetCoreTopbarEnabled": "True",
     "FFlagGameExplorerCopyPath": "True",
     "FFlagGameExplorerUseV2AliasEndpoint": "True",
