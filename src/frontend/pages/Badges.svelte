@@ -28,9 +28,20 @@
 
     $effect(() => {
         const id = location.hash.slice(1);
-        if (id) {
-            document.getElementById(id)?.scrollIntoView();
-        }
+        const row = id ? document.getElementById(id) : null;
+        const content = row?.querySelector(".BadgeContent");
+        if (!row || !content) return;
+
+        content.classList.add("badge-flash");
+        let timer = 0;
+
+        // the rows move once the web font is in
+        document.fonts.ready.then(() => {
+            row.scrollIntoView();
+            timer = setTimeout(() => content.classList.add("badge-flash-out"));
+        });
+
+        return () => clearTimeout(timer);
     });
 </script>
 
@@ -39,7 +50,7 @@
     <link rel="stylesheet" href="/css/badges.css">
 </svelte:head>
 
-<main class="rbx-content">
+<main class="badges-page">
     <div id="BadgesContainer" class="text">
         <h1>Badges</h1>
         {#each categories as [title, badges]}

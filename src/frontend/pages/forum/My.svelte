@@ -1,44 +1,69 @@
 <script lang="ts">
     import { api } from "../../api";
-    import { list, num, activityTime, threadUrl } from "./common";
+    import { list, num, replies, activityTime, threadUrl, threadIcon, seenThreads } from "./common";
     import { top } from "./Bits.svelte";
 
     let mine = $state<any[]>([]);
     let tracked = $state<any[]>([]);
+    let names = $state(new Map<number, string>());
     let loaded = $state(false);
+
+    const seen = seenThreads();
 
     api("/forum/my").then(d => {
         mine = list(d.mine);
         tracked = list(d.tracked);
     }).catch(() => {}).finally(() => loaded = true);
+
+    api("/forum").then(d => {
+        names = new Map(list(d.groups).flatMap(g => list(g.forums)).map(f => [Number(f.id), f.name]));
+    }).catch(() => {});
+
+    const forumName = (row: any) => row.forum_name ?? row.forum?.name ?? names.get(Number(row.forum_id)) ?? "";
 </script>
 
 {#snippet section(title: string, rows: any[])}
-    <section class="forum-threads forum-mine">
-        <div class="forum-head">
-            <div>{title}</div>
-            <div class="forum-col-forum">Forum</div>
-            <div class="forum-col-replies">Replies</div>
-            <div class="forum-col-last">Last Post</div>
-        </div>
-        {#if loaded && rows.length === 0}
-            <div class="forum-empty">No threads here yet.</div>
-        {/if}
-        {#each rows as row}
-            <div class="forum-row">
-                <div class="forum-subject">
-                    <img src="/img/forum/thread-read.png" alt="">
-                    <a href={threadUrl(row.id)}>{row.subject}</a>
-                </div>
-                <div class="forum-cell forum-col-forum">{row.forum_name ?? row.forum?.name ?? "Unknown"}</div>
-                <div class="forum-cell forum-col-replies">{num(Math.max(0, Number(row.post_count || 0) - 1))}</div>
-                <div class="forum-cell forum-col-last forum-last">
-                    <strong>{activityTime(row.updated_at)}</strong>
-                </div>
-            </div>
-        {/each}
-        <div class="forum-foot"></div>
-    </section>
+    <table class="forum-table forum-threads forum-mine">
+        <colgroup>
+            <col class="forum-col-icon">
+            <col>
+            <col class="forum-col-forum">
+            <col class="forum-col-replies">
+            <col class="forum-col-last">
+        </colgroup>
+        <tbody>
+            <tr class="forum-head">
+                <th colspan="2">&nbsp;{title}&nbsp;</th>
+                <th>&nbsp;Forum&nbsp;</th>
+                <th class="forum-center">&nbsp;Replies&nbsp;</th>
+                <th class="forum-center">&nbsp;Last Post&nbsp;</th>
+            </tr>
+            {#if loaded && rows.length === 0}
+                <tr class="forum-row">
+                    <td class="forum-empty" colspan="5">No threads here yet.</td>
+                </tr>
+            {/if}
+            {#each rows as row}
+                {@const icon = threadIcon(row, seen.has(Number(row.id)))}
+                {@const count = replies(row)}
+                <tr class="forum-row">
+                    <td class="forum-icon"><img src={icon.src} title={icon.title} alt={icon.title}></td>
+                    <td><a class="forum-subject" href={threadUrl(row.id)}>{row.subject}</a></td>
+                    <td><span class="forum-small">{forumName(row)}</span></td>
+                    <td class="forum-center"><span class="forum-small">{count > 0 ? num(count) : "-"}</span></td>
+                    <td>
+                        <a class="forum-last" href={threadUrl(row.id)}>
+                            <b>{activityTime(row.last_post_at ?? row.updated_at)}</b>
+                            <span>{row.last_post_username || row.author_username || "Unknown"}</span>
+                        </a>
+                    </td>
+                </tr>
+            {/each}
+            <tr class="forum-foot">
+                <td colspan="5">&nbsp;</td>
+            </tr>
+        </tbody>
+    </table>
 {/snippet}
 
 <svelte:head>
@@ -49,8 +74,8 @@
 <main class="forum-page">
     <div class="forum-container">
         {@render top(null, "MyForums")}
-        <h1 class="forum-title">My Forums</h1>
-        {@render section("My Threads", mine)}
+        <h2 class="forum-title">My Forums</h2>
         {@render section("Tracked Threads", tracked)}
+        {@render section("My Threads", mine)}
     </div>
 </main>

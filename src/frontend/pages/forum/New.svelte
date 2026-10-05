@@ -58,45 +58,57 @@
         {@render top(forum)}
         {#if notFound}
             <div class="forum-empty">That forum does not exist.</div>
-        {:else}
-            <h1 class="forum-title">New Post</h1>
-            {#if preview}
-                <div class="forum-bar forum-original-bar">
-                    <span class="forum-bar-title">Preview</span>
-                </div>
-                <div class="forum-original">
-                    <span class="forum-original-title">{subject}</span>
-                    <div class="forum-original-body">{@render bodyText(body)}</div>
-                </div>
-                <div class="forum-bar forum-bar-form">
-                    <span class="forum-bar-title">New Post</span>
-                </div>
-            {/if}
-            <form class="forum-form" onsubmit={post}>
-                <div class="forum-field">
-                    <label for="forum-subject">Subject:</label>
-                    <input id="forum-subject" class="forum-text" type="text" name="subject" maxlength="120" bind:value={subject}>
-                </div>
-                <div class="forum-field">
-                    <label for="forum-body">Message:</label>
-                    <textarea id="forum-body" class="forum-text" name="body" maxlength="10000" cols="80" rows="15" bind:value={body}></textarea>
-                </div>
-                <div class="forum-submit">
-                    <label class="forum-lock">
-                        <input type="checkbox" name="locked" value="1" bind:checked={locked}>
-                        Do not allow replies to this post
-                    </label>
-                    <div class="forum-submit-buttons">
-                        <a class="forum-btn forum-btn-wide" href={forumUrl(forumId)}>Cancel</a>
-                        <button class="forum-btn forum-btn-wide" type="button" onclick={() => preview = true}>Preview</button>
-                        <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>Post</button>
-                    </div>
+        {:else if preview}
+            <h2 class="forum-title">Preview Message</h2>
+            <form class="forum-preview" onsubmit={post}>
+                <div class="forum-preview-subject">{subject}</div>
+                <div class="forum-preview-body">{@render bodyText(body)}</div>
+                <div class="forum-preview-buttons">
+                    <button class="forum-button forum-button-form" type="button" onclick={() => preview = false}>Edit</button>
+                    <button class="forum-button forum-button-form" type="submit" disabled={busy}>Post</button>
                 </div>
             </form>
             {#if error}
                 <div class="forum-error">{error}</div>
             {/if}
-            {@render breadcrumb(forum)}
+            <div class="forum-bottom">
+                {@render breadcrumb(forum)}
+            </div>
+        {:else}
+            <h2 class="forum-title">New Post</h2>
+            <form onsubmit={post}>
+                <table class="forum-form">
+                    <tbody>
+                        <tr>
+                            <td class="forum-form-label"><label for="forum-subject">Subject:</label></td>
+                            <td><input id="forum-subject" class="forum-input" type="text" name="subject" maxlength="120" bind:value={subject}></td>
+                        </tr>
+                        <tr>
+                            <td class="forum-form-label forum-form-top"><label for="forum-body">Message:</label></td>
+                            <td><textarea id="forum-body" class="forum-textarea" name="body" maxlength="10000" cols="80" rows="20" bind:value={body}></textarea></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td class="forum-submit-cell">
+                                <div class="forum-submit">
+                                    <label class="forum-check"><input type="checkbox" name="locked" value="1" bind:checked={locked}>Do not allow replies to this post.</label>
+                                    <div class="forum-submit-buttons">
+                                        <a class="forum-button forum-button-form" href={forumUrl(forumId)}>Cancel</a>
+                                        <button class="forum-button forum-button-form" type="button" onclick={() => preview = true}>Preview</button>
+                                        <button class="forum-button forum-button-form" type="submit" disabled={busy}>Post</button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+            {#if error}
+                <div class="forum-error">{error}</div>
+            {/if}
+            <div class="forum-bottom">
+                {@render breadcrumb(forum)}
+            </div>
         {/if}
     </div>
 </main>

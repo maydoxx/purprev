@@ -137,7 +137,7 @@
             <div class="chat-tab" role="button" tabindex="0" onclick={() => w.open = !w.open} onkeydown={e => e.key === "Enter" && (w.open = !w.open)}>
                 <span class="chat-tab-name">{w.person.username}</span>
                 {#if !w.open && unreadFor(w.person.id) > 0}
-                    <span class="chat-badge">{unreadFor(w.person.id)}</span>
+                    <span class="chat-count">{unreadFor(w.person.id)}</span>
                 {/if}
                 <button type="button" class="chat-tab-close" aria-label="Close" onclick={e => { e.stopPropagation(); close(w); }}>&times;</button>
             </div>
@@ -167,7 +167,7 @@
         <div class="chat-tab" role="button" tabindex="0" onclick={() => listOpen = !listOpen} onkeydown={e => e.key === "Enter" && (listOpen = !listOpen)}>
             <span class="chat-tab-name">Chat &amp; Party</span>
             {#if unread > 0}
-                <span class="chat-badge">{unread}</span>
+                <span class="chat-count">{unread}</span>
             {/if}
         </div>
         {#if listOpen}
@@ -179,7 +179,7 @@
                             <img src={headshot(c.id)} alt="">
                             <span class="chat-person-name">{c.username}</span>
                             {#if c.unread > 0}
-                                <span class="chat-badge">{c.unread}</span>
+                                <span class="chat-count">{c.unread}</span>
                             {:else}
                                 <span class="chat-person-dot" class:online={c.online}></span>
                             {/if}

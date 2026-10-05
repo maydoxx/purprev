@@ -1,5 +1,6 @@
 <script lang="ts">
     import { api } from "../../api";
+    import UserAd from "../../UserAd.svelte";
     import { router } from "../../router.svelte";
     import { list, num, activityTime, currentTime, forumUrl } from "./common";
     import { top } from "./Bits.svelte";
@@ -24,48 +25,63 @@
 </svelte:head>
 
 <main class="forum-page">
+    <UserAd size="banner" class="user-ad-top" />
+    <UserAd size="skyscraper" class="user-ad-side" />
     <div class="forum-container">
         {@render top()}
         <div class="forum-tools">
-            <div class="forum-time">
-                <strong>Current time:</strong>
+            <div>
+                <b>Current time:</b>
                 {currentTime()}
             </div>
             <form class="forum-search" onsubmit={search}>
-                <label for="forum-q">Search None Forums:</label>
-                <input id="forum-q" type="text" name="q" maxlength="120" bind:value={q}>
-                <button class="forum-btn forum-btn-go" type="submit">Go</button>
+                <b>Search None Forums:</b>
+                <input class="forum-input" type="text" name="q" maxlength="50" bind:value={q}>
+                <button class="forum-button" type="submit">Go</button>
             </form>
         </div>
 
         {#if loaded && groups.length === 0}
             <div class="forum-empty">No forums yet.</div>
+        {:else}
+            <table class="forum-table forum-groups">
+                <colgroup>
+                    <col class="forum-col-name">
+                    <col class="forum-col-threads">
+                    <col class="forum-col-posts">
+                    <col class="forum-col-latest">
+                </colgroup>
+                <tbody>
+                    {#each groups as group}
+                        <tr class="forum-head">
+                            <th id={encodeURIComponent(group.section)}><a href="/forum#{encodeURIComponent(group.section)}">{group.section}</a></th>
+                            <th>&nbsp;&nbsp;Threads&nbsp;&nbsp;</th>
+                            <th>&nbsp;&nbsp;Posts&nbsp;&nbsp;</th>
+                            <th>&nbsp;Last Post&nbsp;</th>
+                        </tr>
+                        {#each list(group.forums) as forum}
+                            <tr class="forum-row">
+                                <td>
+                                    <a class="forum-summary" href={forumUrl(forum.id)}>
+                                        <b>{forum.name}</b>
+                                        <span>{forum.description}</span>
+                                    </a>
+                                </td>
+                                <td class="forum-center"><span class="forum-small">{num(forum.threads)}</span></td>
+                                <td class="forum-center"><span class="forum-small">{num(forum.posts)}</span></td>
+                                <td>
+                                    {#if forum.last}
+                                        <a class="forum-last" href={forumUrl(forum.id)}>
+                                            <b>{activityTime(forum.last.created_at)}</b>
+                                            <span>{forum.last.username || "Unknown"}</span>
+                                        </a>
+                                    {/if}
+                                </td>
+                            </tr>
+                        {/each}
+                    {/each}
+                </tbody>
+            </table>
         {/if}
-        {#each groups as group}
-            <section class="forum-section" id={encodeURIComponent(group.section)}>
-                <div class="forum-head">
-                    <div>{group.section}</div>
-                    <div class="forum-col-threads">Threads</div>
-                    <div class="forum-col-posts">Posts</div>
-                    <div class="forum-col-latest">Last Post</div>
-                </div>
-                {#each list(group.forums) as forum}
-                    <div class="forum-row">
-                        <a class="forum-info" href={forumUrl(forum.id)}>
-                            <strong>{forum.name}</strong>
-                            <span>{forum.description}</span>
-                        </a>
-                        <div class="forum-cell forum-col-threads">{num(forum.threads)}</div>
-                        <div class="forum-cell forum-col-posts">{num(forum.posts)}</div>
-                        <div class="forum-cell forum-col-latest forum-last">
-                            {#if forum.last}
-                                <strong>{activityTime(forum.last.created_at)}</strong>
-                                <span>{forum.last.username || "Unknown"}</span>
-                            {/if}
-                        </div>
-                    </div>
-                {/each}
-            </section>
-        {/each}
     </div>
 </main>

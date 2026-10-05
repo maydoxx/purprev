@@ -43,7 +43,7 @@
 </script>
 
 <svelte:head>
-    <title>Buy Nonebux - NoneRev</title>
+    <title>NONEBUX - NoneRev</title>
     <link rel="stylesheet" href="/css/nonebux.css">
 </svelte:head>
 
@@ -61,7 +61,7 @@
                     </div>
                     <p class="nonebux-header-desc">
                         <span>NONEBUX is the virtual currency used in many of our online games.</span>
-                        <span>You can also use NONEBUX for finding a great look for your character.</span>
+                        <span>You can also use NONEBUX for finding a great look for your avatar.</span>
                         <span>Get cool gear to take into multiplayer battles.</span>
                         <span>Buy Limited items to sell and trade. You’ll need NONEBUX to make it all happen. What are you waiting for?</span>
                     </p>

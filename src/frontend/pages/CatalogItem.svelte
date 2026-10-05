@@ -1,8 +1,9 @@
 <script lang="ts">
     import { api } from "../api";
+    import UserAd from "../UserAd.svelte";
     import { router } from "../router.svelte";
     import { session } from "../session.svelte";
-    import { n, ago, shortDate, itemUrl, thumb, isLimited, remaining, soldOut, onSale } from "../catalog";
+    import { n, ago, shortDate, itemUrl, thumb, isLimited, remaining, soldOut, onSale, scene3d } from "../catalog";
     import NotFound from "./NotFound.svelte";
     import Comments from "../Comments.svelte";
 
@@ -25,6 +26,8 @@
     let range = $state(30);
     let resellersPage = $state(1);
     let modal = $state<"" | "sell" | "unsell" | "buy">("");
+    let gearOpen = $state(false);
+    let threeD = $state<"off" | "loading" | "on">("off");
     let sellPrice = $state("");
     let buying = $state<any>(null);
 
@@ -62,6 +65,8 @@
         tab = "recommendations";
         resellersPage = 1;
         modal = "";
+        gearOpen = false;
+        threeD = "off";
         if (currentId <= 0) {
             missing = true;
             return;
@@ -79,21 +84,32 @@
     const canWear = $derived(item && wearable.includes(item.category) && !!item.asset_id);
     const left = $derived(item ? remaining(item) : null);
     const bcLocked = $derived(item && item.bc_only && (!session.me || session.me.membership === "None"));
-    const typeLine = $derived(item ? `NoneRev ${item.category}${limited ? " / Collectible Item / Limited Edition" : ""}` : "");
+    const typeLine = $derived(item ? `NoneRev ${item.category}${limited ? " / Collectible Item" : ""}${limitedUnique ? " / Limited Edition" : ""}` : "");
     const longDescription = $derived(item ? String(item.description ?? "").length > 150 : false);
     const description = $derived(item ? (longDescription && !descExpanded ? String(item.description).slice(0, 147) : item.description || "No description available.") : "");
     const listings = $derived<any[]>(resale?.listings ?? []);
     const resellerPages = $derived(Math.max(1, Math.ceil(listings.length / RESELLERS_PER_PAGE)));
     const pageListings = $derived(listings.slice((resellersPage - 1) * RESELLERS_PER_PAGE, resellersPage * RESELLERS_PER_PAGE));
+    const pageBlock = $derived(Math.floor((resellersPage - 1) / 5) * 5);
+    const pageNumbers = $derived(Array.from({ length: Math.min(5, resellerPages - pageBlock) }, (_, i) => pageBlock + i + 1));
     const best = $derived<any>(listings.find((l: any) => !l.mine) ?? listings[0] ?? null);
-    const period = $derived(resale ? resale.periods.find((p: any) => p.days === range) : null);
     const fee = $derived(resale?.fee ?? 0.3);
     const sellValue = $derived(/^\d+$/.test(sellPrice.trim()) ? Number(sellPrice.trim()) : NaN);
     const sellFee = $derived(Number.isFinite(sellValue) && sellValue > 0 ? Math.max(1, Math.round(sellValue * fee)) : 0);
     const sellError = $derived(sellPrice.trim() !== "" && (!Number.isFinite(sellValue) || sellValue <= 0) ? "Price must be a positive integer." : "");
+    const admin = $derived(!!session.me && session.me.admin > 0);
+    const gear = $derived(!!item && (admin || (item.owned && (canWear || limited))));
     const serialLabel = (serial: number) => `Serial #${n(serial)}${item.limited_stock !== null ? ` of ${n(item.limited_stock)}` : ""}`;
     const headshot = (userId: number) => `/api/user/getProfilePicture?userId=${userId}&type=headshot`;
     const bcOverlay = (membership: string) => membership === "TBC" ? "/img/catalog/overlay-tbc-small.png" : membership === "BC" || membership === "OBC" ? "/img/catalog/overlay-bc-small.png" : "";
+    const bcBadge = (membership: string) => membership === "TBC" ? "/img/catalog/overlay-tbc.png" : membership === "OBC" ? "/img/catalog/overlay-obc.png" : membership === "BC" ? "/img/catalog/overlay-bc.png" : "";
+    const buyLabel = (currency: "nonebux" | "tix") => currency === "tix" ? "Buy with Tix" : Number(item.price) === 0 ? "Take One" : "Buy with N$";
+
+    const closeGear = (e: MouseEvent) => {
+        if (gearOpen && !(e.target as Element).closest?.(".item-options")) {
+            gearOpen = false;
+        }
+    };
 
     const post = async (path: string, body: unknown, working: string) => {
         busy = true;
@@ -166,10 +182,6 @@
     };
 
     const favorite = async () => {
-        if (!session.me) {
-            router.go("/login");
-            return;
-        }
         favoriting = true;
         try {
             const d = await api(`/catalog/${id}/favorite`, {});
@@ -193,16 +205,103 @@
         count: number;
     };
 
+    const periodStats = (days: number) => {
+        const p = resale?.periods.find((p: any) => p.days === days);
+        if (!p) {
+            return undefined;
+        }
+        const change = p.change !== null ? ` (${p.change >= 0 ? "+" : ""}${p.change}%)` : "";
+        return `${days} Day Avg Price: ${n(p.average ?? 0)} N$${change}, Volume: ${n(p.volume)}`;
+    };
+
+    const tickLabel = (v: number, decimals: number) => v.toLocaleString("en-US", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+
+    const priceAxis = (values: number[], height: number) => {
+        const low = Math.min(...values);
+        const high = Math.max(...values);
+        let min = low - (high - low) * 0.02;
+        let max = high + (high - low) * 0.02;
+        if (low === high) {
+            min = low - 1;
+            max = high + 1;
+        }
+        if (min < 0 && low >= 0) {
+            min = 0;
+        }
+        const delta = (max - min) / (0.3 * Math.sqrt(height));
+        let decimals = -Math.floor(Math.log10(delta));
+        const magnitude = 10 ** -decimals;
+        const norm = delta / magnitude;
+        let step = 10;
+        if (norm < 1.5) {
+            step = 1;
+        } else if (norm < 3) {
+            step = 2;
+            if (norm > 2.25) {
+                step = 2.5;
+                decimals += 1;
+            }
+        } else if (norm < 7.5) {
+            step = 5;
+        }
+        step *= magnitude;
+        const first = Math.floor(min / step) * step;
+        const ticks: number[] = [];
+        do {
+            ticks.push(first + ticks.length * step);
+        } while (ticks[ticks.length - 1] < max);
+        return {
+            min: Math.min(min, ticks[0]),
+            max: Math.max(max, ticks[ticks.length - 1]),
+            ticks,
+            decimals: Math.max(0, decimals)
+        };
+    };
+
+    const dateTicks = (min: number, max: number, width: number) => {
+        const day = DAY * 1000;
+        const steps = [1, 2, 3, 7.5, 15, 30];
+        const delta = (max - min) / day / (0.3 * Math.sqrt(width));
+        let i = 0;
+        while (i < steps.length - 1 && delta >= (steps[i] + steps[i + 1]) / 2) {
+            i++;
+        }
+        const step = steps[i];
+        const d = new Date(min);
+        d.setUTCHours(0, 0, 0, 0);
+        if (step >= 4) {
+            d.setUTCDate(1);
+        }
+        const ticks: number[] = [];
+        let carry = 0;
+        do {
+            const v = d.getTime();
+            ticks.push(v);
+            if (step < 4) {
+                d.setTime(v + step * day);
+            } else if (step === 30) {
+                d.setUTCMonth(d.getUTCMonth() + 1);
+            } else {
+                // half and quarter months follow the length of the month they start in
+                d.setUTCDate(1);
+                const monthStart = d.getTime();
+                d.setUTCMonth(d.getUTCMonth() + 1);
+                d.setTime(v + carry * 3600000 + (d.getTime() - monthStart) * step / 30);
+                carry = d.getUTCHours();
+                d.setUTCHours(0);
+            }
+        } while (ticks[ticks.length - 1] < max);
+        return ticks.filter(t => t >= min && t <= max);
+    };
+
     const chart = $derived.by(() => {
         const sales: any[] = resale?.sales ?? [];
-        const end = Math.floor(Date.now() / 1000 / DAY);
-        const start = end - range + 1;
         const byDay = new Map<number, DayTotal>();
         for (const s of sales) {
             const day = Math.floor(s.sold_at / DAY);
-            if (day < start) {
-                continue;
-            }
             const d = byDay.get(day) ?? {
                 total: 0,
                 count: 0
@@ -218,62 +317,77 @@
         }));
         const width = 370;
         const height = 300;
-        const pad = {
-            left: 44,
-            right: 8,
-            top: 6,
-            bottom: 22
+        const plot = {
+            left: 47,
+            top: 9,
+            width: 309,
+            height: 267
         };
-        const plotW = width - pad.left - pad.right;
-        const plotH = height - pad.top - pad.bottom;
-        const maxPrice = Math.max(1, ...days.map(d => d.average));
-        const maxVolume = Math.max(1, ...days.map(d => d.volume));
-        const x = (day: number) => pad.left + (day - start) / Math.max(1, range - 1) * plotW;
-        const y = (price: number) => pad.top + plotH - price / maxPrice * plotH;
-        const points = days.map(d => ({
+        const volume = {
+            left: 47,
+            top: 8,
+            width: 315,
+            height: 44
+        };
+        const ms = (day: number) => day * DAY * 1000;
+        const now = Date.now();
+        const min = now - ms(range);
+        const last = days.length ? ms(days[days.length - 1].day) : 0;
+        const max = last > min ? last : now;
+        const at = (time: number) => (time - min) / (max - min);
+        const shown = days.filter(d => ms(d.day) >= min);
+        const earlier = days.filter(d => ms(d.day) < min);
+        const traced = earlier.length ? [earlier[earlier.length - 1], ...shown] : shown;
+        const axis = days.length ? priceAxis(days.map(d => d.average), height) : null;
+        const x = (day: number) => plot.left + at(ms(day)) * plot.width;
+        const y = (price: number) => axis ? plot.top + (axis.max - price) / (axis.max - axis.min) * plot.height : plot.top + plot.height;
+        const points = shown.map(d => ({
             ...d,
             x: x(d.day),
             y: y(d.average)
         }));
-        const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-        const yTicks = (points.length ? [0.25, 0.5, 0.75, 1] : []).map(f => ({
-            y: pad.top + plotH - f * plotH,
-            label: n(Math.round(maxPrice * f))
+        const line = traced.map((d, i) => `${i === 0 ? "M" : "L"}${x(d.day).toFixed(1)},${y(d.average).toFixed(1)}`).join(" ");
+        const yTicks = (axis ? axis.ticks : []).map(price => ({
+            y: y(price),
+            label: `${tickLabel(price, axis?.decimals ?? 0)} N$`
         }));
-        const xTicks = [0, 1, 2, 3].map(i => {
-            const day = start + Math.round(i * (range - 1) / 3);
-            const d = new Date(day * DAY * 1000);
+        const xTicks = dateTicks(min, max, width).map(time => {
+            const d = new Date(time);
             return {
-                x: x(day),
-                label: `${d.getMonth() + 1}/${d.getDate()}`
+                x: plot.left + at(time) * plot.width,
+                label: `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}`
             };
         });
-        const volumeH = 60;
-        const barW = Math.max(2, Math.min(10, plotW / range - 1));
-        const bars = days.map(d => ({
-            x: x(d.day) - barW / 2,
-            h: Math.max(2, d.volume / maxVolume * (volumeH - 24)),
+        // whole pixels, and none on the frame
+        const grid = (v: number, from: number, size: number) => v > from && v < from + size ? [from + Math.floor(v - from) + 0.5] : [];
+        const gridX = xTicks.flatMap(t => grid(t.x, plot.left, plot.width));
+        const gridY = yTicks.flatMap(t => grid(t.y, plot.top, plot.height));
+        const maxVolume = Math.max(1, ...days.map(d => d.volume)) * 1.02;
+        const bars = shown.map(d => ({
+            x: volume.left + at(ms(d.day)) * volume.width - 1,
+            h: Math.max(2, d.volume / maxVolume * volume.height),
             volume: d.volume,
             day: d.day
         }));
         return {
             width,
             height,
-            pad,
-            plotW,
-            plotH,
+            plot,
+            volume,
             points,
             line,
             yTicks,
             xTicks,
-            volumeH,
-            barW,
+            gridX,
+            gridY,
             bars
         };
     });
 
-    const dayLabel = (day: number) => new Date(day * DAY * 1000).toLocaleDateString("en-US");
+    const dayLabel = (day: number) => new Date(day * DAY * 1000).toLocaleDateString("en-US", { timeZone: "UTC" });
 </script>
+
+<svelte:window onclick={closeGear} />
 
 <svelte:head>
     <title>{item ? item.name : "Catalog"} - NoneRev</title>
@@ -282,11 +396,33 @@
 
 {#snippet buyNow(listing: any, small: boolean)}
     {#if listing.mine}
-        <div class="UserOwns">You own this item.</div>
+        <button type="button" class="btn-negative" class:btn-medium={!small} class:btn-small={small} disabled={busy} onclick={() => modal = "unsell"}>Take Off Sale</button>
     {:else if item.owned}
         <span class="btn-primary btn-disabled-primary" class:btn-medium={!small} class:btn-small={small} title="You already own this item.">Buy Now</span>
     {:else}
         <button type="button" class="btn-primary PurchaseButton" class:btn-medium={!small} class:btn-small={small} disabled={busy} onclick={() => openBuy(listing)}>Buy Now</button>
+    {/if}
+{/snippet}
+
+{#snippet buyButton(currency: "nonebux" | "tix")}
+    <div class="buy-button" class:free={currency === "nonebux" && Number(item.price) === 0}>
+        {#if item.owned}
+            <span class="btn-primary btn-medium btn-disabled-primary" title="You already own this item.">{buyLabel(currency)}</span>
+        {:else if !session.me}
+            <a class="btn-primary btn-medium" href="/login">{buyLabel(currency)}</a>
+        {:else if bcLocked}
+            <span class="btn-primary btn-medium btn-disabled-primary" title="Builders Club members only">{buyLabel(currency)}</span>
+        {:else}
+            <button type="button" class="btn-primary btn-medium PurchaseButton" disabled={busy} onclick={() => buy(currency)}>{buyLabel(currency)}</button>
+        {/if}
+    </div>
+{/snippet}
+
+{#snippet pageLink(page: number, label: string)}
+    {#if page === resellersPage || page < 1 || page > resellerPages}
+        <span>{label}</span>
+    {:else}
+        <a href="#UserSalesTab" onclick={e => { e.preventDefault(); resellersPage = page; }}>{label}</a>
     {/if}
 {/snippet}
 
@@ -295,10 +431,39 @@
 {:else}
     <div class="catalog-item-page">
     <main class="rbx-content">
+        <UserAd size="banner" class="user-ad-top" />
+        <UserAd size="skyscraper" class="user-ad-side" />
         <div class="catalog-item-body">
             {#if item}
                 <div id="ItemContainer" class="text">
                     <div class="item-heading">
+                        {#if gear}
+                            <div class="item-options">
+                                <button type="button" class="gear-button" class:open={gearOpen} aria-label="Item options" aria-expanded={gearOpen} onclick={() => gearOpen = !gearOpen}>
+                                    <img src="/img/catalog/gear.png" alt="">
+                                </button>
+                                {#if gearOpen}
+                                    <div class="gear-menu">
+                                        {#if item.owned && canWear}
+                                            <button type="button" disabled={busy} onclick={() => { gearOpen = false; wear(); }}>{item.wearing ? "Remove" : "Wear Item"}</button>
+                                        {/if}
+                                        {#if item.owned && limited}
+                                            {#if resale?.listing}
+                                                <button type="button" disabled={busy} onclick={() => { gearOpen = false; modal = "unsell"; }}>Take Off Sale</button>
+                                            {:else}
+                                                <button type="button" disabled={busy} onclick={() => { gearOpen = false; openSell(); }}>Sell</button>
+                                            {/if}
+                                        {/if}
+                                        {#if admin}
+                                            {#if item.owned && (canWear || limited)}
+                                                <p class="hr"></p>
+                                            {/if}
+                                            <a href="/admi/catalog?edit={item.id}">Edit item</a>
+                                        {/if}
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
                         <h1>{item.name}</h1>
                         <h3>{typeLine}</h3>
                     </div>
@@ -307,7 +472,12 @@
                             <div id="assetContainer">
                                 <div id="Thumbnail">
                                     <div class="thumbnail-holder">
-                                        <img src={thumb(item)} alt={item.name}>
+                                        {#if threeD !== "off"}
+                                            <canvas width="320" height="320" hidden={threeD !== "on"} {@attach scene3d(`/api/catalog/${item.id}/3d`, ok => threeD = ok ? "on" : "off")}></canvas>
+                                        {/if}
+                                        {#if threeD !== "on"}
+                                            <img src={thumb(item)} alt={item.name}>
+                                        {/if}
                                     </div>
                                     {#if item.bc_only}
                                         <img src="/img/catalog/legend-bc.png" class="thumbnail-overlay bc" alt="Builders Club">
@@ -317,18 +487,16 @@
                                     {:else if limited}
                                         <img src="/img/catalog/overlay-limited-large.png" class="thumbnail-overlay" alt="Limited">
                                     {/if}
+                                    {#if item.has3d}
+                                        <button type="button" class="thumb-3d" onclick={() => threeD = threeD === "off" ? "loading" : "off"}>{threeD === "off" ? "3D" : "2D"}</button>
+                                    {/if}
                                 </div>
                             </div>
                             <div id="Summary">
                                 <div class="SummaryDetails">
                                     <div id="Creator" class="Creator">
                                         <div class="Avatar">
-                                            <a href="/user?id={item.creator_id}" title={item.creator_name}>
-                                                <img src={headshot(item.creator_id)} alt={item.creator_name}>
-                                                {#if bcOverlay(item.creator_membership)}
-                                                    <img src={bcOverlay(item.creator_membership)} class="bcOverlay" alt="Builders Club">
-                                                {/if}
-                                            </a>
+                                            <a href="/user?id={item.creator_id}" title={item.creator_name}><img src={headshot(item.creator_id)} alt={item.creator_name}>{#if bcBadge(item.creator_membership)}<img src={bcBadge(item.creator_membership)} class="bcOverlay" alt="Builders Club">{/if}</a>
                                         </div>
                                     </div>
                                     <div class="item-detail">
@@ -361,6 +529,7 @@
                                                         <a href="/catalog?category=all">All</a>
                                                     </div>
                                                 </div>
+                                                <div class="clear"></div>
                                             </div>
                                         </div>
                                         <div class="clear"></div>
@@ -369,37 +538,37 @@
                                 <div class="BuyPriceBoxContainer">
                                     <div class="BuyPriceBox">
                                         {#if onSale(item)}
-                                            <span class="Price">
-                                                Price:
-                                                {#if item.price !== null}
-                                                    <span class="robux">{Number(item.price) === 0 ? "Free" : n(item.price)}</span>
+                                            {#if item.price !== null}
+                                                {#if Number(item.price) === 0}
+                                                    <div class="price-line free">
+                                                        Price: <span class="robux-text">FREE</span>
+                                                    </div>
+                                                {:else}
+                                                    <div class="price-line">
+                                                        Price: <span class="robux">{n(item.price)}</span>
+                                                    </div>
                                                 {/if}
-                                                {#if item.tix_price !== null}
-                                                    <span class="tickets">{n(item.tix_price)}</span>
+                                                {#if limitedUnique && left !== null}
+                                                    <span class="Remaining">{n(left)} Remaining</span>
                                                 {/if}
-                                            </span>
-                                            {#if limitedUnique && left !== null}
-                                                <span class="Remaining">{n(left)} Remaining</span>
+                                                {@render buyButton("nonebux")}
                                             {/if}
-                                            {#if item.owned}
-                                                <span class="btn-primary btn-medium btn-disabled-primary" title="You already own this item.">Buy Now</span>
-                                            {:else if !session.me}
-                                                <a class="btn-primary btn-medium" href="/login">Buy Now</a>
-                                            {:else if bcLocked}
-                                                <span class="btn-primary btn-medium btn-disabled-primary" title="Builders Club members only">Buy Now</span>
-                                            {:else}
-                                                {#if item.price !== null}
-                                                    <button type="button" class="btn-primary btn-medium PurchaseButton" disabled={busy} onclick={() => buy("nonebux")}>Buy Now</button>
+                                            {#if item.price !== null && item.tix_price !== null}
+                                                <span class="RobuxAndTicketsPurchasePanel"></span>
+                                            {/if}
+                                            {#if item.tix_price !== null}
+                                                <div class="price-line">
+                                                    Price: <span class="tickets">{n(item.tix_price)}</span>
+                                                </div>
+                                                {#if limitedUnique && left !== null && item.price === null}
+                                                    <span class="Remaining">{n(left)} Remaining</span>
                                                 {/if}
-                                                {#if item.tix_price !== null}
-                                                    {#if item.price !== null}
-                                                        <span class="RobuxAndTicketsPurchasePanel"></span>
-                                                    {/if}
-                                                    <button type="button" class="btn-primary btn-medium PurchaseButton" disabled={busy} onclick={() => buy("tix")}>Buy with Tix</button>
-                                                {/if}
+                                                {@render buyButton("tix")}
                                             {/if}
                                         {:else if !limited}
-                                            <span class="btn-primary btn-medium btn-disabled-primary" title={soldOut(item) ? "This item is sold out." : "This item is no longer for sale."}>Buy Now</span>
+                                            <div class="buy-button">
+                                                <span class="btn-primary btn-medium btn-disabled-primary" title={soldOut(item) ? "This item is sold out." : "This item is no longer for sale."}>Buy with N$</span>
+                                            </div>
                                         {/if}
                                         {#if limited}
                                             <div class="PrivateSalesPurchasePanel">
@@ -417,35 +586,22 @@
                                         {/if}
                                         <div class="clear"></div>
                                         <div class="footnote">
-                                            <div>(<span class="stat">{n(item.sales)}</span> Sold)</div>
+                                            {#if limited}
+                                                <div>( <span class="stat">{Number(item.sales ?? 0)}</span> Sold)</div>
+                                            {:else}
+                                                <div>(<span>{Number(item.sales ?? 0)}</span> Sold)</div>
+                                            {/if}
                                         </div>
                                     </div>
                                     <div class="clear"></div>
                                     <span>
-                                        <button type="button" class="FavoriteStar" class:active={item.favorited} disabled={favoriting} aria-pressed={!!item.favorited} title={item.favorited ? "Remove from favorites" : "Add to favorites"} onclick={favorite}>{n(item.favorites)}</button>
+                                        <span class="FavoriteStar">{n(item.favorites)}</span>{#if session.me}<button type="button" class="favorite-toggle" disabled={favoriting} onclick={favorite}>{item.favorited ? "Unfavorite" : "Favorite"}</button>{/if}
                                     </span>
-                                    {#if item.owned}
-                                        <div class="owner-actions">
-                                            {#if canWear}
-                                                <button type="button" class="btn-neutral btn-medium" disabled={busy} onclick={wear}>{item.wearing ? "Remove" : "Wear Item"}</button>
-                                            {/if}
-                                            {#if limited}
-                                                {#if resale?.listing}
-                                                    <button type="button" class="btn-negative btn-medium" id="TakeOffSale" disabled={busy} onclick={() => modal = "unsell"}>Take Off Sale</button>
-                                                {:else}
-                                                    <button type="button" class="btn-neutral btn-medium PutItemUpForSaleBtn" disabled={busy} onclick={openSell}>Sell</button>
-                                                {/if}
-                                            {/if}
-                                            {#if item.serial_number !== null}
-                                                <div class="item-status">{serialLabel(item.serial_number)}</div>
-                                            {/if}
-                                        </div>
+                                    {#if item.owned && item.serial_number !== null}
+                                        <div class="item-status">{serialLabel(item.serial_number)}</div>
                                     {/if}
                                     {#if status}
                                         <p class="item-status" class:error={statusError} role="status">{status}</p>
-                                    {/if}
-                                    {#if session.me && session.me.admin > 0}
-                                        <a class="admin-link" href="/admi/catalog?edit={item.id}">Edit item</a>
                                     {/if}
                                 </div>
                                 <div class="clear"></div>
@@ -466,21 +622,14 @@
                                                 {#each pageListings as listing (listing.id)}
                                                     <tr>
                                                         <td>
-                                                            <a class="seller-avatar" href="/user?id={listing.user_id}" title={listing.username}>
-                                                                <img src={headshot(listing.user_id)} alt={listing.username}>
-                                                                {#if bcOverlay(listing.membership)}
-                                                                    <img src={bcOverlay(listing.membership)} class="bcOverlay" alt="Builders Club">
-                                                                {/if}
-                                                            </a>
+                                                            <a class="seller-avatar" href="/user?id={listing.user_id}" title={listing.username}><img src={headshot(listing.user_id)} alt={listing.username}>{#if bcOverlay(listing.membership)}<img src={bcOverlay(listing.membership)} class="bcOverlay" alt="Builders Club">{/if}</a>
                                                         </td>
                                                         <td class="SellerNameAndSerial">
                                                             <p class="SellerName">
                                                                 <a href="/user?id={listing.user_id}">{listing.username}</a>
                                                             </p>
                                                             <span class="robux" title="{n(listing.price)} N$">{n(listing.price)}</span>
-                                                            {#if listing.serial_number !== null}
-                                                                <p class="SerialNum">{serialLabel(listing.serial_number)}</p>
-                                                            {/if}
+                                                            <p class="SerialNum">{listing.serial_number !== null ? serialLabel(listing.serial_number) : "Serial N/A"}</p>
                                                         </td>
                                                         <td class="PriceBuyContainer">
                                                             {@render buyNow(listing, true)}
@@ -492,11 +641,7 @@
                                     {/if}
                                     {#if resellerPages > 1}
                                         <div class="pgItemsForResale">
-                                            <a href="#UserSalesTab" disabled={resellersPage === 1 || undefined} onclick={e => { e.preventDefault(); resellersPage = 1; }}>First</a>
-                                            <a href="#UserSalesTab" disabled={resellersPage === 1 || undefined} onclick={e => { e.preventDefault(); resellersPage -= 1; }}>Previous</a>
-                                            <span>{resellersPage}</span>
-                                            <a href="#UserSalesTab" disabled={resellersPage === resellerPages || undefined} onclick={e => { e.preventDefault(); resellersPage += 1; }}>Next</a>
-                                            <a href="#UserSalesTab" disabled={resellersPage === resellerPages || undefined} onclick={e => { e.preventDefault(); resellersPage = resellerPages; }}>Last</a>
+                                            {@render pageLink(resellersPage === 1 ? 0 : 1, "First")}&nbsp;{@render pageLink(resellersPage - 1, "Previous")}&nbsp;{#if pageBlock > 0}{@render pageLink(pageBlock, "...")}&nbsp;{/if}{#each pageNumbers as page}{@render pageLink(page, String(page))}&nbsp;{/each}{#if pageBlock + 5 < resellerPages}&nbsp;{@render pageLink(pageBlock + 6, "...")}&nbsp;{/if}{@render pageLink(resellersPage + 1, "Next")}&nbsp;{@render pageLink(resellersPage === resellerPages ? 0 : resellerPages, "Last")}&nbsp;
                                         </div>
                                     {/if}
                                 </div>
@@ -508,64 +653,62 @@
                                         <p class="Options">
                                             {#each [30, 90, 180] as days, i}
                                                 {#if i > 0}&nbsp;|&nbsp;{/if}
-                                                <span id="days{days}" class:selected-text={range === days} role="button" tabindex="0" onclick={() => range = days}>{days} Days</span>
+                                                <span id="days{days}" class:selected-text={range === days} role="button" tabindex="0" title={periodStats(days)} onclick={() => range = days}>{days} Days</span>
                                             {/each}
                                         </p>
                                         <div class="itemprice-placeholder">
                                             <svg viewBox="0 0 {chart.width} {chart.height}" role="img" aria-label="Price chart">
-                                                <rect class="frame" x={chart.pad.left} y={chart.pad.top} width={chart.plotW} height={chart.plotH}></rect>
+                                                <rect class="plot" x={chart.plot.left} y={chart.plot.top} width={chart.plot.width} height={chart.plot.height}></rect>
+                                                {#each chart.gridY as y}
+                                                    <line class="grid" x1={chart.plot.left} x2={chart.plot.left + chart.plot.width} y1={y} y2={y}></line>
+                                                {/each}
+                                                {#each chart.gridX as x}
+                                                    <line class="grid" x1={x} x2={x} y1={chart.plot.top} y2={chart.plot.top + chart.plot.height}></line>
+                                                {/each}
                                                 {#each chart.yTicks as tick}
-                                                    <line class="grid" x1={chart.pad.left} x2={chart.width - chart.pad.right} y1={tick.y} y2={tick.y}></line>
-                                                    <text class="axis" x={chart.pad.left - 5} y={tick.y + 3} text-anchor="end">{tick.label}</text>
-                                                    <text class="axis" x={chart.pad.left - 5} y={tick.y + 14} text-anchor="end">N$</text>
+                                                    <text class="axis" x={chart.plot.left - 5} y={tick.y + 4} text-anchor="end">{tick.label}</text>
                                                 {/each}
                                                 {#each chart.xTicks as tick}
-                                                    <line class="grid" x1={tick.x} x2={tick.x} y1={chart.pad.top} y2={chart.pad.top + chart.plotH}></line>
-                                                    <text class="axis" x={tick.x} y={chart.height - 6} text-anchor="middle">{tick.label}</text>
+                                                    <text class="axis" x={tick.x} y={chart.height - 7} text-anchor="middle">{tick.label}</text>
                                                 {/each}
+                                                <clipPath id="price-plot">
+                                                    <rect x={chart.plot.left} y={chart.plot.top} width={chart.plot.width} height={chart.plot.height}></rect>
+                                                </clipPath>
                                                 {#if chart.points.length}
-                                                    <path class="line" d={chart.line}></path>
+                                                    <g clip-path="url(#price-plot)">
+                                                        <path class="line-shadow" d={chart.line} transform="translate(0.52 2.95)"></path>
+                                                        <path class="line-shadow thin" d={chart.line} transform="translate(0.39 2.22)"></path>
+                                                        <path class="line" d={chart.line}></path>
+                                                    </g>
                                                     {#each chart.points as p}
                                                         <circle class="dot" cx={p.x} cy={p.y} r="3">
                                                             <title>{dayLabel(p.day)}: N$ {n(p.average)} ({p.volume} sold)</title>
                                                         </circle>
                                                     {/each}
                                                 {:else}
-                                                    <text class="empty-text" x={chart.pad.left + chart.plotW / 2} y={chart.pad.top + chart.plotH / 2} text-anchor="middle">No sales in the last {range} days</text>
+                                                    <text class="empty-text" x={chart.plot.left + chart.plot.width / 2} y={chart.plot.top + chart.plot.height / 2} text-anchor="middle">No sales in the last {range} days</text>
                                                 {/if}
-                                                <rect class="legend" x={chart.pad.left + 6} y={chart.pad.top + 6} width="124" height="16"></rect>
-                                                <rect class="swatch price" x={chart.pad.left + 10} y={chart.pad.top + 10} width="8" height="8"></rect>
-                                                <text class="legend-text" x={chart.pad.left + 22} y={chart.pad.top + 18}>Avg Sales Price (N$)</text>
+                                                <rect class="frame" x={chart.plot.left - 1} y={chart.plot.top - 1} width={chart.plot.width + 2} height={chart.plot.height + 2}></rect>
+                                                <rect class="legend" x={chart.plot.left + 5} y={chart.plot.top + 5} width="123" height="23"></rect>
+                                                <rect class="swatch-box" x={chart.plot.left + 8.5} y={chart.plot.top + 9.5} width="17" height="13"></rect>
+                                                <rect class="swatch price" x={chart.plot.left + 10} y={chart.plot.top + 11} width="14" height="10"></rect>
+                                                <text class="legend-text" x={chart.plot.left + 30} y={chart.plot.top + 20}>Avg Sales Price (N$)</text>
                                             </svg>
                                         </div>
                                         <div class="itemprice-volumegraph">
-                                            <svg viewBox="0 0 {chart.width} {chart.volumeH}" role="img" aria-label="Volume chart">
-                                                <rect class="frame" x={chart.pad.left} y="1" width={chart.plotW} height={chart.volumeH - 2}></rect>
+                                            <svg viewBox="0 0 {chart.width} 60" role="img" aria-label="Volume chart">
+                                                <rect class="plot" x={chart.volume.left} y={chart.volume.top} width={chart.volume.width} height={chart.volume.height}></rect>
                                                 {#each chart.bars as bar}
-                                                    <rect class="bar" x={bar.x} y={chart.volumeH - 2 - bar.h} width={chart.barW} height={bar.h}>
+                                                    <rect class="bar" x={bar.x} y={chart.volume.top + chart.volume.height - bar.h} width="2" height={bar.h}>
                                                         <title>{dayLabel(bar.day)}: {bar.volume} sold</title>
                                                     </rect>
                                                 {/each}
-                                                <rect class="legend" x={chart.pad.left + 6} y="5" width="52" height="16"></rect>
-                                                <rect class="swatch volume" x={chart.pad.left + 10} y="9" width="8" height="8"></rect>
-                                                <text class="legend-text" x={chart.pad.left + 22} y="17">Volume</text>
+                                                <rect class="frame" x={chart.volume.left - 1} y={chart.volume.top - 1} width={chart.volume.width + 2} height={chart.volume.height + 2}></rect>
+                                                <rect class="legend" x={chart.volume.left + 5} y={chart.volume.top + 5} width="65" height="23"></rect>
+                                                <rect class="swatch-box" x={chart.volume.left + 8.5} y={chart.volume.top + 9.5} width="17" height="13"></rect>
+                                                <rect class="swatch volume" x={chart.volume.left + 10} y={chart.volume.top + 11} width="14" height="10"></rect>
+                                                <text class="legend-text" x={chart.volume.left + 30} y={chart.volume.top + 20}>Volume</text>
                                             </svg>
-                                        </div>
-                                        <div class="pricestats-wrap">
-                                            <p class="pricestats">
-                                                {#if period}
-                                                    <span class="selected-text">
-                                                        {range} Day Avg Price:
-                                                        <span class="robux-text">
-                                                            {period.average !== null ? `${n(period.average)} N$` : "0 N$"}
-                                                            {#if period.change !== null}
-                                                                (<span class:up={period.change >= 0} class:down={period.change < 0}>{period.change >= 0 ? "+" : ""}{period.change}%</span>)
-                                                            {/if}
-                                                        </span>
-                                                        &nbsp;&nbsp; Volume: <b>{n(period.volume)}</b>
-                                                    </span>
-                                                {/if}
-                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -588,7 +731,7 @@
                             <div class="StandardPanelContainer">
                                 <div id="RecommendationsTab" class="StandardPanelWhite TabContent" class:selected={tab === "recommendations"}>
                                     <div class="AssetRecommenderContainer">
-                                        <div class="recommended-row">
+                                        <div class="recommended-grid">
                                             {#each recommended?.items ?? [] as rec (rec.id)}
                                                 <div class="PortraitDiv">
                                                     <div class="AssetThumbnail">

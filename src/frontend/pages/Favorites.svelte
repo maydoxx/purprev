@@ -1,34 +1,44 @@
 <script lang="ts">
     import { api } from "../api";
+    import { n } from "../catalog";
     import { router } from "../router.svelte";
+    import { session } from "../session.svelte";
 
     const categories: [string, string, string | null][] = [
-        ["animations", "Animations", null],
-        ["audio", "Audio", null],
-        ["badges", "Badges", null],
-        ["decals", "Decals", null],
+        ["heads", "Heads", null],
         ["faces", "Faces", "faces"],
-        ["game-passes", "Game Passes", null],
         ["gear", "Gear", "gear"],
         ["hats", "Hats", "hats"],
-        ["heads", "Heads", null],
-        ["models", "Models", null],
-        ["packages", "Packages", "packages"],
-        ["pants", "Pants", "pants"],
-        ["places", "Places", null],
-        ["plugins", "Plugins", null],
+        ["t-shirts", "T-Shirts", "t-shirts"],
         ["shirts", "Shirts", "shirts"],
-        ["t-shirts", "T-Shirts", "t-shirts"]
+        ["pants", "Pants", "pants"],
+        ["decals", "Decals", null],
+        ["models", "Models", null],
+        ["plugins", "Plugins", null],
+        ["animations", "Animations", null],
+        ["places", "Places", null],
+        ["game-passes", "Game Passes", null],
+        ["audio", "Audio", null],
+        ["badges", "Badges", null],
+        ["packages", "Packages", "packages"]
     ];
+    const tabs = [...categories].sort((a, b) => a[0].localeCompare(b[0]));
+    const library = ["animations", "audio", "decals", "models", "plugins"];
     const PER_PAGE = 30;
 
     const id = $derived(Number(router.query.id) || 0);
     const category = $derived(categories.some(c => c[0] === router.query.category) ? router.query.category! : "hats");
     const page = $derived(Math.max(1, Number(router.query.page) || 1));
     const info = $derived(categories.find(c => c[0] === category)!);
+    const special = $derived(category === "badges" || category === "game-passes" || category === "places");
+    const label = $derived(category.replace(/-/g, " "));
+    const mine = $derived(session.me?.id === id);
+    const section = $derived(library.includes(category) ? "library" : "catalog");
+    const moreUrl = $derived(section === "library" ? "/search?type=library" : info[2] ? `/catalog?category=${info[2]}` : "/catalog");
 
     let data = $state<any>(null);
     let missing = $state(false);
+    let open = $state(false);
 
     $effect(() => {
         data = null;
@@ -40,12 +50,37 @@
         api(`/user/favorites/${id}?category=${category}&page=${page}`).then(d => data = d).catch(() => missing = true);
     });
 
+    const items = $derived<any[]>(data?.items ?? []);
+    const total = $derived(Number(data?.total ?? 0));
+    const offset = $derived(((data?.page ?? page) - 1) * PER_PAGE);
+
+    const outside = (e: MouseEvent) => {
+        if (open && !(e.target as Element).closest(".inventory-dropdown")) {
+            open = false;
+        }
+    };
+
     const url = (cat: string, p: number) => `/favorites?id=${id}&category=${cat}${p > 1 ? `&page=${p}` : ""}`;
     const itemUrl = (item: any) => category === "places" ? `/game?id=${item.id}` : `/catalog/item?id=${item.id}`;
     const thumb = (item: any) => item.thumbnail || item.icon || "/img/pending.png";
-    const overlay = (item: any) => item.is_limited_unique ? "/img/catalog/overlay-limited-unique.png" : item.is_limited ? "/img/catalog/overlay-limited.png" : "";
-    const limited = (item: any) => item.is_limited || item.is_limited_unique;
-    const n = (v: any) => Number(v).toLocaleString();
+
+    const price = (item: any) => {
+        const value = item.is_limited || item.is_limited_unique ? item.best_price : item.price;
+        return value == null || Number(value) <= 0 ? null : Number(value);
+    };
+
+    const short = (v: number | null) => {
+        if (v === null) {
+            return "";
+        }
+        if (v >= 1e9) {
+            return `${n(Math.round(v / 1e9))}B+`;
+        }
+        if (v >= 1e6) {
+            return `${n(Math.round(v / 1e6))}M+`;
+        }
+        return n(v);
+    };
 </script>
 
 <svelte:head>
@@ -53,111 +88,114 @@
     <link rel="stylesheet" href="/css/inventory.css">
 </svelte:head>
 
+<svelte:window onclick={outside} />
+
 <main class="inventory-page">
-    <div class="inventory-shell">
-        {#if missing}
-            <div class="inventory-empty">That user does not exist.</div>
-        {:else}
-            <h1>{data ? `${data.username}'s Favorites` : "Favorites"}</h1>
+    {#if missing}
+        <div class="inventory-empty">That user does not exist.</div>
+    {:else}
+        <h1 class="inventory-title">{data ? `${data.username}'s Favorites` : "Favorites"}</h1>
 
-            <div class="inventory-layout">
-                <aside class="inventory-categories">
-                    <h2>Category</h2>
-                    <nav>
-                        {#each categories as [key, label]}
-                            <a href={url(key, 1)} class:active={key === category}>{label}</a>
+        <div class="inventory-explorer">
+            <div class="inventory-category-select">
+                <h3>Category</h3>
+                <div class="inventory-dropdown" class:open>
+                    <button type="button" class="inventory-dropdown-btn" onclick={() => open = !open}>
+                        <span class="inventory-dropdown-label">{label}</span>
+                        <span class="inventory-dropdown-arrow"></span>
+                    </button>
+                    <ul class="inventory-dropdown-menu">
+                        {#each categories as [key, name]}
+                            <li><a href={url(key, 1)} onclick={() => open = false}>{name}</a></li>
                         {/each}
-                    </nav>
-                </aside>
+                    </ul>
+                </div>
+            </div>
 
-                <section class="inventory-content">
-                    <div class="inventory-heading-row">
-                        <div>
-                            <h2>{info[1]}</h2>
-                            <p>
-                                {#if data && data.items.length > 0}
-                                    Showing {(page - 1) * PER_PAGE + 1} - {(page - 1) * PER_PAGE + data.items.length} of {n(data.total)} results
-                                {:else}
-                                    Showing 0 results
-                                {/if}
-                            </p>
+            <div class="inventory-categories">
+                <h3>Category</h3>
+                <ul class="inventory-tabs">
+                    {#each tabs as [key, name]}
+                        <li class:active={key === category}>
+                            <a href={url(key, 1)}><span>{name}</span></a>
+                        </li>
+                    {/each}
+                </ul>
+            </div>
+
+            <div class="inventory-content">
+                <div class="inventory-items" class:loading={!data}>
+                    <div class="inventory-header">
+                        <div class="inventory-heading">
+                            <h3>{label}</h3>
+                            <span class="inventory-count">Showing {total === 0 ? 0 : n(offset + 1)} - {n(offset + items.length)} of {n(total)} results</span>
                         </div>
 
-                        <div class="inventory-get-more">
-                            {#if category === "places"}
-                                <span>Explore games to<br>find more places!</span>
-                                <a href="/games">Get More</a>
-                            {:else}
-                                <span>Explore the catalog to<br>find more {info[1].toLowerCase()}!</span>
-                                <a href={info[2] ? `/catalog?category=${info[2]}` : "/catalog"}>Get More</a>
-                            {/if}
-                        </div>
-                    </div>
-
-                    {#if !data}
-                        <div class="inventory-empty">Loading...</div>
-                    {:else if data.items.length === 0}
-                        <div class="inventory-empty">{data.username} has no favorite {info[1].toLowerCase()} yet.</div>
-                    {:else}
-                        <div class="inventory-grid">
-                            {#each data.items as item}
-                                <article class="inventory-item">
-                                    <a class="inventory-thumb" href={itemUrl(item)}>
-                                        <img src={thumb(item)} alt={item.name}>
-                                        {#if overlay(item)}
-                                            <img class="inventory-limited-overlay" src={overlay(item)} alt={item.is_limited_unique ? "Limited U" : "Limited"}>
-                                        {/if}
-                                    </a>
-                                    <div class="inventory-item-info">
-                                        <a class="inventory-item-name" href={itemUrl(item)} title={item.name}>{item.name}</a>
-                                        <div class="inventory-creator">
-                                            By
-                                            {#if item.creator_id}
-                                                <a href="/user?id={item.creator_id}">{item.creator_name}</a>
-                                            {:else}
-                                                <span>NoneRev</span>
-                                            {/if}
-                                        </div>
-                                        {#if category !== "places"}
-                                            <div class="inventory-price">
-                                                {#if limited(item) && item.best_price !== null}
-                                                    <span class="inventory-robux">{n(item.best_price)}</span>
-                                                {:else if limited(item)}
-                                                    <span class="inventory-not-a-price">No Resellers</span>
-                                                {:else if item.price === null && item.tix_price === null}
-                                                    <span class="inventory-not-a-price">Off Sale</span>
-                                                {:else if item.price !== null && Number(item.price) === 0}
-                                                    <span class="inventory-not-a-price">Free</span>
-                                                {:else if item.price !== null}
-                                                    <span class="inventory-robux">{n(item.price)}</span>
-                                                {:else}
-                                                    <span class="inventory-tickets">{n(item.tix_price)}</span>
-                                                {/if}
-                                            </div>
-                                        {/if}
-                                    </div>
-                                </article>
-                            {/each}
-                        </div>
-
-                        {#if data.totalPages > 1}
-                            <div class="inventory-pagination">
-                                {#if page > 1}
-                                    <a href={url(category, page - 1)}>Previous</a>
-                                {:else}
-                                    <span class="disabled">Previous</span>
-                                {/if}
-                                <span class="page-number">Page {page} of {data.totalPages}</span>
-                                {#if page < data.totalPages}
-                                    <a href={url(category, page + 1)}>Next</a>
-                                {:else}
-                                    <span class="disabled">Next</span>
-                                {/if}
+                        {#if !special}
+                            <div class="inventory-more">
+                                <a class="inventory-more-btn" href={moreUrl}>Get More</a>
+                                <div class="inventory-more-text">Explore the {section} to find more {label}!</div>
                             </div>
                         {/if}
+                    </div>
+
+                    {#if items.length === 0}
+                        <div class="inventory-cards">
+                            <div class="inventory-empty">{mine ? "You have" : "This user has"} not favorited any {label}.</div>
+                        </div>
                     {/if}
-                </section>
+
+                    <ul class="inventory-cards">
+                        {#each items as item}
+                            <li class="inventory-card">
+                                <div class="inventory-card-box">
+                                    <a class="inventory-card-link" href={itemUrl(item)}>
+                                        <div class="inventory-card-thumb">
+                                            <img src={thumb(item)} alt={item.name}>
+                                            {#if item.is_limited_unique}
+                                                <span class="inventory-label unique"></span>
+                                            {:else if item.is_limited}
+                                                <span class="inventory-label"></span>
+                                            {/if}
+                                        </div>
+                                        <div class="inventory-card-name" title={item.name}>{item.name}</div>
+                                    </a>
+                                    <div class="inventory-card-creator">
+                                        <span class="inventory-by">By</span>
+                                        {#if item.creator_id}
+                                            <a class="inventory-creator-link" href="/user?id={item.creator_id}">{item.creator_name}</a>
+                                        {:else}
+                                            <span class="inventory-creator-link">NoneRev</span>
+                                        {/if}
+                                    </div>
+                                    <div class="inventory-card-price" class:off={price(item) === null}>
+                                        <span class="inventory-nonebux"></span> <span class="inventory-robux">{short(price(item))}</span>
+                                    </div>
+                                </div>
+                            </li>
+                        {/each}
+                    </ul>
+
+                    {#if data?.totalPages > 1}
+                        <div class="inventory-pager">
+                            <ul>
+                                <li class="inventory-pager-prev" class:disabled={data.page <= 1}>
+                                    <a href={data.page > 1 ? url(category, data.page - 1) : undefined}><span></span></a>
+                                </li>
+                                <li>
+                                    <span>{data.page}</span>
+                                </li>
+                                <li>
+                                    <span>of</span> <span>{n(data.totalPages)}</span>
+                                </li>
+                                <li class="inventory-pager-next" class:disabled={data.page >= data.totalPages}>
+                                    <a href={data.page < data.totalPages ? url(category, data.page + 1) : undefined}><span></span></a>
+                                </li>
+                            </ul>
+                        </div>
+                    {/if}
+                </div>
             </div>
-        {/if}
-    </div>
+        </div>
+    {/if}
 </main>

@@ -6,13 +6,12 @@
     const type = $derived(String(router.query.type ?? ""));
     const id = $derived(Number(router.query.id) || 0);
 
-    const LABELS: Record<string, string> = {
-        game: "game",
-        user: "user",
-        item: "item",
-        comment: "comment",
-        group: "group"
-    };
+    const rules = [
+        "No swear words",
+        "No account sharing or trading",
+        "No dating - no asking for boyfriends or girlfriends",
+        "No asking real life info about each other - no asking for phone numbers or email addresses"
+    ];
 
     let target = $state<any>(null);
     let missing = $state(false);
@@ -21,6 +20,12 @@
     let error = $state("");
     let sent = $state(false);
     let busy = $state(false);
+
+    $effect(() => {
+        if (!session.me) {
+            router.replace("/login");
+        }
+    });
 
     $effect(() => {
         target = null;
@@ -71,63 +76,65 @@
     <link rel="stylesheet" href="/css/abusereport.css">
 </svelte:head>
 
-<main class="rbx-content">
-    <div class="abuse-report-page">
-        <div class="container-header">
-            <h2>Report Abuse</h2>
+<main class="abuse-report-page">
+    <h1>Report Abuse</h1>
+    {#if missing}
+        <div class="abuse-report-column">
+            <p class="abuse-report-text">There is nothing to report here.</p>
         </div>
-        {#if missing}
-            <div class="section-content-off">There is nothing to report here.</div>
-        {:else if !target}
-            <div class="section-content">
-                <p class="text-label">Loading...</p>
+    {:else if !target}
+        <div class="abuse-report-column">
+            <p class="abuse-report-text">Loading...</p>
+        </div>
+    {:else if sent}
+        <div class="abuse-report-column">
+            <div class="abuse-report-header">
+                <h2>Thank you for your report.</h2>
             </div>
-        {:else if sent}
-            <div class="section-content abuse-report-done">
-                <p class="text-lead">Thank you for your report.</p>
-                <p>Our moderators will review it shortly. We will take action if it breaks the rules.</p>
-                <a class="rbx-btn-secondary-xs" href={back}>Continue</a>
+            <p class="abuse-report-text">Our moderators will review it shortly. We will take action if it breaks the rules.</p>
+            <div class="abuse-report-row">
+                <a class="abuse-report-btn" href={back}>Continue</a>
             </div>
-        {:else if !session.me}
-            <div class="section-content abuse-report-done">
-                <p>You must be logged in to report abuse.</p>
-                <a class="rbx-btn-secondary-xs" href="/login">Log In</a>
+        </div>
+    {:else}
+        <form class="abuse-report-column" onsubmit={submit}>
+            <div class="abuse-report-header">
+                <h2>Tell us how you think {target.name} is breaking the rules of NoneRev.</h2>
             </div>
-        {:else}
-            <div class="section-content">
-                <form class="abuse-report-form" onsubmit={submit}>
-                    <div class="abuse-report-target">
-                        <span class="text-label">You are reporting this {LABELS[type] ?? "item"}:</span>
-                        {#if target.url}
-                            <a class="text-name" href={target.url}>{target.name}</a>
-                        {:else}
-                            <span class="text-lead">{target.name}</span>
-                        {/if}
-                    </div>
-                    <div class="abuse-report-field">
-                        <label class="text-label" for="abuse-reason">Please select the reason for reporting:</label>
-                        <select id="abuse-reason" class="abuse-report-select" bind:value={reason}>
-                            <option value="">Please select a reason</option>
-                            {#each target.reasons as r}
-                                <option value={r}>{r}</option>
-                            {/each}
-                        </select>
-                    </div>
-                    <div class="abuse-report-field">
-                        <label class="text-label" for="abuse-comment">Please provide a short comment on the abuse:</label>
-                        <textarea id="abuse-comment" class="abuse-report-comment" rows="6" maxlength="2000" bind:value={comment}></textarea>
-                        <span class="abuse-report-count">{comment.length}/2000</span>
-                    </div>
-                    {#if error}
-                        <p class="text-error">{error}</p>
-                    {/if}
-                    <div class="abuse-report-actions">
-                        <button class="rbx-btn-secondary-xs" type="submit" disabled={busy}>Submit</button>
-                        <a class="rbx-btn-control-xs" href={back}>Cancel</a>
-                    </div>
-                    <p class="abuse-report-note">Abusing the report system wastes moderator time and can get your own account moderated.</p>
-                </form>
+            <div class="abuse-report-row abuse-report-subject">
+                <label for="abuse-reason">Subject:</label>
+                <select id="abuse-reason" bind:value={reason}>
+                    <option value="">Please select a category</option>
+                    {#each target.reasons as r}
+                        <option value={r}>{r}</option>
+                    {/each}
+                </select>
             </div>
-        {/if}
-    </div>
+            <div class="abuse-report-row abuse-report-comment">
+                <label for="abuse-comment">Comment:</label>
+                <textarea id="abuse-comment" maxlength="2000" bind:value={comment}></textarea>
+            </div>
+            {#if error}
+                <p class="abuse-report-error">{error}</p>
+            {/if}
+            <div class="abuse-report-row abuse-report-submit">
+                <button class="abuse-report-btn" type="submit" disabled={busy}>Report Abuse</button>
+            </div>
+            <div class="abuse-report-rules">
+                <div class="abuse-report-preface">Not sure if the thing you are trying to report is really against the rules?</div>
+                <div class="abuse-report-preface">Some of the basic rules of NoneRev include the following:</div>
+                <div class="abuse-report-list">
+                    <ul>
+                        {#each rules as rule}
+                            <li>{rule}</li>
+                        {/each}
+                    </ul>
+                </div>
+                <div class="abuse-report-link">
+                    <a href="/info/tos">See all rules.</a>
+                </div>
+                <div class="abuse-report-closing">Users who don't follow the rules will get a warning at first but if they keep it up we may ask them to not come to NoneRev anymore. That way we can keep NoneRev fun and safe!</div>
+            </div>
+        </form>
+    {/if}
 </main>

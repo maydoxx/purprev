@@ -5,10 +5,13 @@
     import { session } from "../session.svelte";
     import { router } from "../router.svelte";
 
+    let { landing = false }: { landing?: boolean } = $props();
+
     let username = $state("");
     let password = $state("");
     let confirmpassword = $state("");
     let invitekey = $state("");
+    let errors = $state<Record<string, string>>({});
     let error = $state("");
     let busy = $state(false);
     let closed = $state(false);
@@ -21,8 +24,17 @@
         siteKey = d.turnstile_site_key ?? "";
     }).catch(() => {});
 
+    const fieldOf = (message: string) => {
+        if (/invite/i.test(message)) return "invitekey";
+        if (/match/i.test(message)) return "confirmpassword";
+        if (/password/i.test(message)) return "password";
+        if (/username/i.test(message)) return "username";
+        return "";
+    };
+
     const submit = async (e: Event) => {
         e.preventDefault();
+        errors = {};
         error = "";
         busy = true;
         try {
@@ -36,7 +48,14 @@
             session.set(res.user);
             router.go("/home");
         } catch (err: any) {
-            error = err.message;
+            const field = fieldOf(err.message);
+            if (field) {
+                errors = {
+                    [field]: err.message
+                };
+            } else {
+                error = err.message;
+            }
             captcha?.reset();
         } finally {
             busy = false;
@@ -45,43 +64,35 @@
 </script>
 
 <svelte:head>
-    <title>Sign Up - None.</title>
+    <title>{landing ? "None." : "Sign Up - None."}</title>
     <link rel="stylesheet" href="/css/landing-2016.css">
 </svelte:head>
 
-<AuthBackground />
-<main class="none-auth-main">
-    <div class="none-auth-container">
-        <a href="/" class="none-auth-logo-link"><img src="/img/nonelogo.png" alt="None."></a>
-        <div class="none-auth-panel">
-            <h1>Sign Up</h1>
-            {#if error}<div class="none-auth-error" role="alert">{error}</div>{/if}
+<AuthBackground>
+    <div class="auth-panel">
+        <h3>Sign up and start having fun!</h3>
+        <div class="auth-panel-body">
             {#if closed}
-                <div class="none-auth-error" role="alert">Registration is closed right now. <a href="/apply">Apply for an invite</a> instead.</div>
+                <div class="auth-alert" role="alert">Registration is closed right now. <a href="/apply">Apply for an invite</a> instead.</div>
             {:else}
-            <form onsubmit={submit}>
-                    <div class="none-auth-field">
-                        <label for="username">Username</label>
-                        <input id="username" name="username" type="text" required autocomplete="username" bind:value={username} maxlength="20" placeholder="Username">
-                    </div>
-                    <div class="none-auth-field">
-                        <label for="password">Password</label>
-                        <input id="password" name="password" type="password" required autocomplete="new-password" bind:value={password} placeholder="Password">
-                    </div>
-                    <div class="none-auth-field">
-                        <label for="confirm-password">Confirm Password</label>
-                        <input id="confirm-password" name="password_confirmation" type="password" required autocomplete="new-password" bind:value={confirmpassword} placeholder="Confirm Password">
-                    </div>
-                    <div class="none-auth-field">
-                        <label for="invite-key">Invite Key</label>
-                        <input id="invite-key" name="invitekey" required autocomplete="off" bind:value={invitekey} placeholder="Invite Key">
-                    </div>
-                <Turnstile bind:this={captcha} {siteKey} bind:token={turnstile} />
-                <button type="submit" class="none-auth-button" disabled={busy || (!!siteKey && !turnstile)}>{busy ? "Please wait…" : "Sign Up"}</button>
-            </form>
+                <form onsubmit={submit}>
+                    <input class="auth-input" class:auth-input-error={errors.username} name="username" type="text" required autocomplete="username" maxlength="20" aria-label="Username" placeholder="Username (length 3-20, letters and numbers)" bind:value={username}>
+                    <p class="auth-input-message">{errors.username ?? ""}</p>
+                    <input class="auth-input" class:auth-input-error={errors.password} name="password" type="password" required autocomplete="new-password" aria-label="Password" placeholder="Password (minimum length 8)" bind:value={password}>
+                    <p class="auth-input-message">{errors.password ?? ""}</p>
+                    <input class="auth-input" class:auth-input-error={errors.confirmpassword} name="password_confirmation" type="password" required autocomplete="new-password" aria-label="Confirm Password" placeholder="Confirm Password" bind:value={confirmpassword}>
+                    <p class="auth-input-message">{errors.confirmpassword ?? ""}</p>
+                    <input class="auth-input" class:auth-input-error={errors.invitekey} name="invitekey" required autocomplete="off" aria-label="Invite Key" placeholder="Invite Key" bind:value={invitekey}>
+                    <p class="auth-input-message">{errors.invitekey ?? ""}</p>
+                    <p class="auth-legal">By signing up you agree to our <a href="/info/tos" target="_blank">Terms</a> and <a href="/info/privacy" target="_blank">Privacy Policy</a></p>
+                    <Turnstile bind:this={captcha} {siteKey} bind:token={turnstile} />
+                    <button type="submit" class="auth-button" disabled={busy || (!!siteKey && !turnstile)}>Sign Up</button>
+                    {#if error}
+                        <div class="auth-alert" role="alert">{error}</div>
+                    {/if}
+                </form>
             {/if}
-            <p class="none-auth-note">Already have an account? <a href="/login">Log In</a></p>
-            <p class="none-auth-note">No invite key? <a href="/apply">Apply for one</a></p>
+            <p class="auth-note">No invite key? <a href="/apply">Apply for one</a></p>
         </div>
     </div>
-</main>
+</AuthBackground>

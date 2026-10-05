@@ -51,6 +51,12 @@
                 <div class="vote-track">
                     <div class="vote-background"></div>
                     <div class="vote-fill" style="width: {ratio}%;"></div>
+                    <div class="vote-mask">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
                 </div>
                 <span class="vote-thumb down"></span>
             </div>
@@ -64,7 +70,7 @@
         {#if game.creator_name}
             <div class="game-card-footer">
                 <span class="game-card-creator">
-                    By
+                    <span class="game-card-by">By</span>
                     <a href="/user?id={game.creator_id}">{game.creator_name}</a>
                 </span>
             </div>

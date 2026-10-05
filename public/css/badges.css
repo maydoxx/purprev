@@ -1,37 +1,69 @@
-#BadgesContainer {
-    box-sizing: border-box;
-    width: 970px;
-    max-width: 100%;
+body:has(.badges-page) {
+    background-color: #fff !important;
+}
+
+body:has(.badges-page) .site-main {
+    flex: none;
+}
+
+body:has(.badges-page) .site-footer {
+    margin-top: 0;
+}
+
+.badges-page {
+    box-sizing: content-box;
+    max-width: 970px;
     min-height: 550px;
-    margin: 10px auto 0;
-    padding: 15px 20px 25px;
-    background: #fff;
+    margin: 0 auto;
+    padding: 5px 0 25px;
+    background-color: #fff;
     color: #343434;
     font-size: 14px;
-    line-height: 1.4;
+    font-weight: 400;
+    line-height: 1.428;
+}
+
+.badges-page div {
+    line-height: inherit;
+}
+
+#BadgesContainer {
+    margin-top: 10px;
+}
+
+#BadgesContainer h1,
+#BadgesContainer h2,
+#BadgesContainer h3 {
+    display: inline-block;
+    color: #343434;
 }
 
 #BadgesContainer h1 {
-    margin: 0 0 12px;
-    font-size: 30px;
-    font-weight: 400;
+    margin: 0 12px 12px;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.3em;
     letter-spacing: -1px;
 }
 
 #BadgesContainer h2 {
-    margin: 0 0 4px;
-    font-size: 20px;
+    margin: 0;
+    font-size: 30px;
     font-weight: 400;
+    line-height: 1.3em;
+    letter-spacing: -1px;
 }
 
 #BadgesContainer h3 {
-    margin: 0 0 6px;
-    font-size: 16px;
-    font-weight: bold;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3em;
 }
 
 #BadgesContainer p {
-    margin: 0 0 8px;
+    margin: 12px;
+    line-height: 1.5em;
 }
 
 #BadgesContainer .BadgeCategory {
@@ -65,6 +97,7 @@
 }
 
 #BadgesContainer .BadgeImage {
+    box-sizing: content-box;
     float: left;
     width: 75px;
     height: 75px;
@@ -74,9 +107,19 @@
 
 #BadgesContainer .BadgeImage img {
     height: 75px;
+    vertical-align: top;
 }
 
 #BadgesContainer .BadgeDescription {
     margin-left: 85px;
     min-height: 75px;
+}
+
+#BadgesContainer .badge-flash {
+    background-color: #caabe5;
+}
+
+#BadgesContainer .badge-flash.badge-flash-out {
+    background-color: #eee3f7 !important;
+    transition: background-color 1.5s ease-in;
 }

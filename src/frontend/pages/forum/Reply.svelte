@@ -2,7 +2,7 @@
     import { api } from "../../api";
     import { router } from "../../router.svelte";
     import { session } from "../../session.svelte";
-    import { list, fullDate, threadUrl } from "./common";
+    import { list, postDate, threadUrl } from "./common";
     import { top, breadcrumb, body as bodyText } from "./Bits.svelte";
 
     const threadId = $derived(Number(router.query.PostID) || 0);
@@ -39,6 +39,7 @@
 
     const isLocked = $derived(!!thread?.is_locked && !admin);
     const canLock = $derived(admin || (session.me != null && thread?.author_id === session.me.id));
+    const subject = $derived(`Re: ${thread?.subject ?? ""}`);
 
     const post = async (e: Event) => {
         e.preventDefault();
@@ -68,56 +69,62 @@
         {@render top(forum)}
         {#if notFound}
             <div class="forum-empty">That thread does not exist.</div>
-        {:else}
-            <h1 class="forum-title">Reply to Post</h1>
-            <div class="forum-bar forum-original-bar">
-                <span class="forum-bar-title">Original Post</span>
+        {:else if preview}
+            <h2 class="forum-title">Preview Message</h2>
+            <form class="forum-preview" onsubmit={post}>
+                <div class="forum-preview-subject">{subject}</div>
+                <div class="forum-preview-body">{@render bodyText(body)}</div>
+                <div class="forum-preview-buttons">
+                    <button class="forum-button forum-button-form" type="button" onclick={() => preview = false}>Edit</button>
+                    <button class="forum-button forum-button-form" type="submit" disabled={busy || isLocked}>Post</button>
+                </div>
+            </form>
+            {#if error}
+                <div class="forum-error">{error}</div>
+            {/if}
+            <div class="forum-bottom">
+                {@render breadcrumb(forum)}
             </div>
+        {:else}
+            <h2 class="forum-title">Reply to Post</h2>
+            <div class="forum-bar forum-bar-title">Original Post</div>
             <div class="forum-original">
-                <a class="forum-original-title" href={threadUrl(threadId)}>{thread?.subject ?? ""}</a>
+                <a href={threadUrl(threadId)}><b>{thread?.subject ?? ""}</b></a>
                 {#if original}
-                    <span class="forum-original-meta">
-                        Posted by
-                        <a href="/user?id={original.author_id}">{original.username || "Unknown"}</a>
-                        on {fullDate(original.created_at)}
-                    </span>
+                    <span class="forum-original-meta">Posted by <a href="/user?id={original.author_id}">{original.username || "Unknown"}</a> on {postDate(original.created_at, !!session.me)}</span>
                     <div class="forum-original-body">{@render bodyText(original.body)}</div>
                 {/if}
             </div>
-            {#if preview}
-                <div class="forum-bar forum-original-bar">
-                    <span class="forum-bar-title">Preview</span>
-                </div>
-                <div class="forum-original">
-                    <div class="forum-original-body">{@render bodyText(body)}</div>
-                </div>
-            {/if}
             {#if !isLocked}
-                <div class="forum-bar forum-bar-form">
-                    <span class="forum-bar-title">New Post</span>
-                </div>
-                <form class="forum-form" onsubmit={post}>
-                    <div class="forum-field">
-                        <span class="forum-field-name">Subject:</span>
-                        <span class="forum-field-text">Re: {thread?.subject ?? ""}</span>
-                    </div>
-                    <div class="forum-field">
-                        <label for="forum-body">Message:</label>
-                        <textarea id="forum-body" class="forum-text" name="body" maxlength="10000" cols="80" rows="15" bind:value={body}></textarea>
-                    </div>
-                    <div class="forum-submit">
-                        {#if canLock}
-                            <label class="forum-lock">
-                                <input type="checkbox" name="locked" value="1" bind:checked={locked}>
-                                Do not allow replies to this post
-                            </label>
-                        {/if}
-                        <div class="forum-submit-buttons">
-                            <a class="forum-btn forum-btn-wide" href={threadUrl(threadId)}>Cancel</a>
-                            <button class="forum-btn forum-btn-wide" type="button" onclick={() => preview = true}>Preview</button>
-                            <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>Post</button>
-                        </div>
-                    </div>
+                <div class="forum-bar forum-bar-title">New Post</div>
+                <form onsubmit={post}>
+                    <table class="forum-form">
+                        <tbody>
+                            <tr>
+                                <td class="forum-form-label">Subject:</td>
+                                <td>{subject}</td>
+                            </tr>
+                            <tr>
+                                <td class="forum-form-label forum-form-top"><label for="forum-body">Message:</label></td>
+                                <td><textarea id="forum-body" class="forum-textarea" name="body" maxlength="10000" cols="80" rows="20" bind:value={body}></textarea></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td class="forum-submit-cell">
+                                    <div class="forum-submit">
+                                        {#if canLock}
+                                            <label class="forum-check"><input type="checkbox" name="locked" value="1" bind:checked={locked}>Do not allow replies to this post.</label>
+                                        {/if}
+                                        <div class="forum-submit-buttons">
+                                            <a class="forum-button forum-button-form" href={threadUrl(threadId)}>Cancel</a>
+                                            <button class="forum-button forum-button-form" type="button" onclick={() => preview = true}>Preview</button>
+                                            <button class="forum-button forum-button-form" type="submit" disabled={busy}>Post</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </form>
             {/if}
             {#if isLocked}
@@ -125,7 +132,9 @@
             {:else if error}
                 <div class="forum-error">{error}</div>
             {/if}
-            {@render breadcrumb(forum)}
+            <div class="forum-bottom">
+                {@render breadcrumb(forum)}
+            </div>
         {/if}
     </div>
 </main>

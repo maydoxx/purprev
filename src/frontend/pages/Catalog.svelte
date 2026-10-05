@@ -1,5 +1,6 @@
 <script lang="ts">
     import { api } from "../api";
+    import UserAd from "../UserAd.svelte";
     import { router } from "../router.svelte";
     import { n, ago, itemUrl, thumb, isLimited, isNew, soldOut } from "../catalog";
 
@@ -57,6 +58,7 @@
         ["gear", "Gear"]
     ];
     const gearTypes = ["All Gear", "Melee Weapon", "Ranged Weapon", "Explosive", "Power Up", "Navigation Enhancer", "Musical Instrument", "Social Item", "Building Tool", "Personal Transport"];
+    const genres = ["Building", "Horror", "Town and City", "Military", "Comedy", "Medieval", "Adventure", "Sci-Fi", "Naval", "FPS", "RPG", "Sports", "Fighting", "Western"];
 
     type Filters = {
         category: string;
@@ -66,9 +68,10 @@
         creator: string;
         currency: string;
         unavailable: boolean;
+        genres: string[];
     };
 
-    const landing = $derived(!router.query.category && !router.query.q && !router.query.sort && !router.query.page && !router.query.creator && !router.query.currency);
+    const landing = $derived(!router.query.category && !router.query.q && !router.query.sort && !router.query.page && !router.query.creator && !router.query.currency && !router.query.genre);
     const filters = $derived<Filters>({
         category: router.query.category! in titles ? router.query.category! : "all",
         sort: sorts.some(([s]) => s === router.query.sort) ? router.query.sort! : "relevance",
@@ -76,10 +79,14 @@
         page: Math.max(1, Number(router.query.page) || 1),
         creator: (router.query.creator ?? "").trim(),
         currency: currencies.some(([c]) => c === router.query.currency) ? router.query.currency! : "all",
-        unavailable: router.query.unavailable === "1"
+        unavailable: router.query.unavailable === "1",
+        genres: genres.filter(g => (router.query.genre ?? "").split(",").includes(g))
     });
     const topOf = (c: string) => parents[c] ?? (c.startsWith("featured") ? "featured" : c.startsWith("collectible") ? "collectibles" : c);
     const topCategory = $derived(topOf(filters.category));
+
+    // reassigned when the legend is toggled
+    let legendOpen = $derived(router.query.legend !== "0");
 
     let data = $state<any>(null);
     let home = $state<any>(null);
@@ -104,7 +111,8 @@
             page: String(filters.page),
             creator: filters.creator,
             currency: filters.currency,
-            unavailable: filters.unavailable ? "1" : "0"
+            unavailable: filters.unavailable ? "1" : "0",
+            genre: filters.genres.join(",")
         });
         api("/catalog?" + params).then(d => {
             data = Array.isArray(d.items) ? d : {
@@ -131,6 +139,7 @@
             creator: "",
             currency: "all",
             unavailable: false,
+            genres: [],
             ...changes
         };
         const params = new URLSearchParams({
@@ -151,11 +160,21 @@
         if (f.unavailable) {
             params.set("unavailable", "1");
         }
+        if (f.genres.length > 0) {
+            params.set("genre", f.genres.join(","));
+        }
         if (f.page > 1) {
             params.set("page", String(f.page));
         }
+        if (!legendOpen) {
+            params.set("legend", "0");
+        }
         return "/catalog?" + params;
     };
+
+    const pickGenre = (genre: string, on: boolean) => router.go(url({
+        genres: genres.filter(g => g === genre ? on : filters.genres.includes(g))
+    }));
 
     const search = (e: SubmitEvent) => {
         e.preventDefault();
@@ -209,14 +228,14 @@
                     <div class="item-image-wrapper">
                         <a href={itemUrl(item)}>
                             <img title={item.name} alt={item.name} class="original-image" src={thumb(item)}>
-                            {#if overlay(item, big)}
-                                <img src={overlay(item, big)} alt={item.is_limited_unique ? "Limited Unique" : "Limited"} class="limited-overlay">
-                            {/if}
                             {#if item.bc_only}
                                 <img src="/img/catalog/legend-bc.png" alt="Builders Club" class="bc-overlay">
                             {/if}
+                            {#if overlay(item, big)}
+                                <img src={overlay(item, big)} alt={item.is_limited_unique ? "Limited Unique" : "Limited"} class="limited-overlay">
+                            {/if}
                             {#if isNew(item)}
-                                <img src="/img/catalog/overlay-new.png" alt="New">
+                                <img src="/img/catalog/overlay-new.png" alt="New" class="new-overlay">
                             {/if}
                         </a>
                     </div>
@@ -289,7 +308,7 @@
 {#snippet dropdown()}
     <ul id="dropdownUl" class="clearfix">
         <li class="subcategories">
-            <a href={url({ category: "featured" }, false)} class="assetTypeFilter" class:selectedAssetTypeFilter={!landing && topCategory === "featured"}>Featured</a>
+            <a href={url({ category: "featured" }, false)} class="assetTypeFilter">Featured</a>
             <ul class="slideOut">
                 <li class="slideHeader"><span>Featured Types</span></li>
                 <li><a href={url({ category: "featured" }, false)} class="assetTypeFilter">All Featured Items</a></li>
@@ -300,7 +319,7 @@
             </ul>
         </li>
         <li class="subcategories">
-            <a href={url({ category: "collectibles" }, false)} class="assetTypeFilter collectiblesLink" class:selectedAssetTypeFilter={!landing && topCategory === "collectibles"}>Collectibles</a>
+            <a href={url({ category: "collectibles" }, false)} class="assetTypeFilter collectiblesLink">Collectibles</a>
             <ul class="slideOut">
                 <li class="slideHeader"><span>Collectible Types</span></li>
                 <li><a href={url({ category: "collectibles" }, false)} class="assetTypeFilter">All Collectibles</a></li>
@@ -311,10 +330,10 @@
         </li>
         <li class="slideHeader DropdownDivider divider-bottom"></li>
         <li>
-            <a href={url({ category: "all" }, false)} class="assetTypeFilter" class:selectedAssetTypeFilter={!landing && topCategory === "all"}>All Categories</a>
+            <a href={url({ category: "all" }, false)} class="assetTypeFilter">All Categories</a>
         </li>
         <li class="subcategories">
-            <a href={url({ category: "clothing" }, false)} class="assetTypeFilter" class:selectedAssetTypeFilter={!landing && topCategory === "clothing"}>Clothing</a>
+            <a href={url({ category: "clothing" }, false)} class="assetTypeFilter">Clothing</a>
             <ul class="slideOut">
                 <li class="slideHeader"><span>Clothing Types</span></li>
                 <li><a href={url({ category: "clothing" }, false)} class="assetTypeFilter">All Clothing</a></li>
@@ -326,7 +345,7 @@
             </ul>
         </li>
         <li class="subcategories">
-            <a href={url({ category: "bodyparts" }, false)} class="assetTypeFilter" class:selectedAssetTypeFilter={!landing && topCategory === "bodyparts"}>Body Parts</a>
+            <a href={url({ category: "bodyparts" }, false)} class="assetTypeFilter">Body Parts</a>
             <ul class="slideOut">
                 <li class="slideHeader"><span>Body Part Types</span></li>
                 <li><a href={url({ category: "bodyparts" }, false)} class="assetTypeFilter">All Body Parts</a></li>
@@ -336,8 +355,8 @@
             </ul>
         </li>
         <li class="subcategories">
-            <a href={url({ category: "gear" }, false)} class="assetTypeFilter" class:selectedAssetTypeFilter={!landing && topCategory === "gear"}>Gear</a>
-            <ul class="slideOut gearSlideOut">
+            <a href={url({ category: "gear" }, false)} class="assetTypeFilter">Gear</a>
+            <ul class="slideOut gear-slide-out">
                 <li class="slideHeader"><span>Gear Categories</span></li>
                 {#each gearTypes as type}
                     <li><a href={url({ category: "gear" }, false)} class="gearFilter">{type}</a></li>
@@ -347,25 +366,25 @@
     </ul>
 {/snippet}
 
-{#snippet legend(expanded: boolean)}
-    <div id="legend" class:divider-top={!expanded}>
-        <details open={expanded}>
-            <summary class="header" id="legendheader">
-                <h3>Legend</h3>
-            </summary>
-            <div id="legendcontent">
-                <img src="/img/catalog/legend-bc.png" alt="Builders Club">
-                <div class="legendText"><b>Builders Club Only</b><br>Only purchasable by Builders Club members.</div>
-                <img src="/img/catalog/legend-limited.png" alt="Limited">
-                <div class="legendText"><b>Limited Items</b><br>Owners of these discontinued items can re-sell them to other users at any price.</div>
-                <img src="/img/catalog/legend-limited-unique.png" alt="Limited Unique">
-                <div class="legendText"><b>Limited Unique Items</b><br>A limited supply originally sold by NoneRev. Each unit is labeled with a serial number. Once sold out, owners can re-sell them to other users.</div>
-            </div>
-        </details>
-    </div>
+{#snippet legend()}
+    <details id="legend" class:divider-top={!landing} open={legendOpen} ontoggle={e => legendOpen = e.currentTarget.open}>
+        <summary class="header" id="legendheader">
+            <h3>Legend</h3>
+        </summary>
+        <div id="legendcontent">
+            <img src="/img/catalog/legend-bc.png" alt="Builders Club">
+            <div class="legendText"><b>Builders Club Only</b><br>Only purchasable by Builders Club members.</div>
+            <img src="/img/catalog/legend-limited.png" alt="Limited">
+            <div class="legendText"><b>Limited Items</b><br>Owners of these discontinued items can re-sell them to other users at any price.</div>
+            <img src="/img/catalog/legend-limited-unique.png" alt="Limited Unique">
+            <div class="legendText"><b>Limited Unique Items</b><br>A limited supply originally sold by NoneRev. Each unit is labeled with a serial number. Once sold out, owners can re-sell them to other users.</div>
+        </div>
+    </details>
 {/snippet}
 
 <main class="rbx-content catalog-page">
+    <UserAd size="banner" class="user-ad-top" />
+    <UserAd size="skyscraper" class="user-ad-side" />
     <div class="catalog-body">
         <div id="catalog">
             <div class="header">
@@ -386,19 +405,11 @@
             </div>
 
             <div class="left-nav-menu divider-right">
-                {#if landing}
-                    <div class="browseDropdownHeader"></div>
-                    <div id="dropdown" class="splashdropdown">
-                        {@render dropdown()}
-                    </div>
-                    {@render legend(true)}
-                {:else}
-                    <div class="browseDropdownWrap">
-                        <div class="browseDropdownHeader"></div>
-                        <div id="dropdown" class="browsedropdown">
-                            {@render dropdown()}
-                        </div>
-                    </div>
+                <div class="browseDropdownHeader"></div>
+                <div id="dropdown">
+                    {@render dropdown()}
+                </div>
+                {#if !landing}
                     <div class="filters-header">
                         <h2>Filters</h2>
                     </div>
@@ -409,6 +420,18 @@
                                 <li><a href={url({ category: value })} class="assetTypeFilter" class:selected={topCategory === value}>{label}</a></li>
                             {/each}
                         </ul>
+                        {#if topCategory !== "featured"}
+                            <div class="filter-title">Genre</div>
+                            <ul class="genre-filter">
+                                <li><a href={url({ genres: [] })} class="all-genres" class:selected={filters.genres.length === 0}>All Genres</a></li>
+                                {#each genres as genre, i}
+                                    <li>
+                                        <input type="checkbox" id="genre-{i}" checked={filters.genres.includes(genre)} onchange={e => pickGenre(genre, e.currentTarget.checked)}>
+                                        <label for="genre-{i}">{genre}</label>
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
                         <div class="filter-title">Creators</div>
                         <ul>
                             <li><a href={url({ creator: "" })} class="creatorFilter" class:selected={filters.creator === ""}>All Creators</a></li>
@@ -434,8 +457,8 @@
                             </li>
                         </ul>
                     </div>
-                    {@render legend(false)}
                 {/if}
+                {@render legend()}
             </div>
 
             <div class="right-content divider-left">
@@ -461,16 +484,6 @@
                         <div class="see-all-featured">
                             <a href={url({ category: "featured" }, false)} class="assetTypeFilter">See all featured items</a>
                         </div>
-                        {#if home.collectibles.length}
-                            <h2 class="collectibles-header">Collectibles</h2>
-                            <div class="clear"></div>
-                            {#each home.collectibles as item (item.id)}
-                                {@render card(item, false)}
-                            {/each}
-                            <div class="see-all-featured">
-                                <a href={url({ category: "collectibles" }, false)} class="assetTypeFilter">See all collectibles</a>
-                            </div>
-                        {/if}
                     {/if}
                 {:else}
                     <a href={url({ category: filters.category })} class="breadCrumbFilter bolded selected">{heading}</a>
@@ -500,7 +513,7 @@
                         {#each data.items as item (item.id)}
                             {@render card(item, false)}
                         {/each}
-                        <div class="PagingContainerDivTop">
+                        <form class="PagingContainerDivTop" onsubmit={jump}>
                             {#if filters.page > 1}
                                 <a class="pager previous" href={url({ page: filters.page - 1 })} aria-label="Previous page"></a>
                             {:else}
@@ -508,20 +521,17 @@
                             {/if}
                             <span class="page text">
                                 Page
-                                <form onsubmit={jump}>
-                                    <input class="Paging_Input" name="page" type="text" value={filters.page} aria-label="Page">
-                                </form>
+                                <input class="Paging_Input" name="page" type="text" value={filters.page} aria-label="Page">
                                 of {n(data.totalPages)}
                             </span>
                             {#if filters.page < data.totalPages}
                                 <a class="pager next" href={url({ page: filters.page + 1 })} aria-label="Next page"></a>
                             {:else}
-                                <span class="pager next disabled"></span>
+                                <span class="pager next" class:disabled={filters.page > 1}></span>
                             {/if}
-                        </div>
+                        </form>
                     {/if}
                 {/if}
-                <div class="clear"></div>
             </div>
             <div class="clear"></div>
         </div>

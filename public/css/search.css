@@ -1,3 +1,268 @@
+.search-games {
+    padding: 12px 12px 40px;
+    color: #191919;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.3em;
+}
+
+.search-games-results {
+    display: flow-root;
+    min-height: 820px;
+    margin-bottom: 50px;
+    padding: 1px 0 0 1px;
+}
+
+.search-games-results.pending {
+    cursor: wait;
+}
+
+.search-games-header {
+    float: left;
+}
+
+.search-games-header h3 {
+    margin: 0;
+    padding: 5px 0;
+    color: #191919;
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 24px;
+    text-transform: none;
+}
+
+.search-games-query {
+    font-weight: 700;
+}
+
+.search-games-list {
+    position: relative;
+    float: left;
+    width: calc(100% - 72px);
+    min-height: 280px;
+    margin: 5px 0;
+    padding-bottom: 5px;
+}
+
+.search-games-list strong {
+    font-weight: 600;
+}
+
+.search-games-cards {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    white-space: normal;
+}
+
+.search-games-cards .game-card {
+    margin-right: 14.2px;
+}
+
+.search-games-more {
+    height: 1px;
+}
+
+body:has(.search-people) {
+    background-color: #fff !important;
+}
+
+body:has(.search-people) .site-main {
+    flex-grow: 0;
+}
+
+body:has(.search-people) .site-footer {
+    margin-top: 0;
+}
+
+.search-people {
+    color: #343434;
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.428;
+}
+
+.search-people div {
+    line-height: inherit;
+}
+
+.search-people a,
+.search-people a:hover {
+    color: #5a189a;
+    text-decoration: none;
+}
+
+.search-people-body {
+    width: 970px;
+    max-width: 100%;
+    min-height: 550px;
+    margin: 0 auto;
+    padding: 5px 0 25px;
+    background-color: #fff;
+}
+
+.search-people-container {
+    display: flow-root;
+    margin: 10px;
+}
+
+.search-people-label {
+    display: inline;
+    font-weight: 600;
+}
+
+.search-people-input {
+    width: 558px;
+    max-width: calc(100% - 180px);
+    height: 27px;
+    margin: 0 0 0 20px;
+    padding: 0 3px;
+    border: 1px solid #a7a7a7;
+    border-radius: 0;
+    background-color: #fff;
+    color: #000;
+    font: 400 13px/24px Arial, Helvetica, sans-serif;
+    vertical-align: baseline;
+}
+
+.search-people-input:focus {
+    outline: none;
+}
+
+.search-people-submit {
+    margin-left: 20px;
+}
+
+.search-people-submit img {
+    vertical-align: baseline;
+}
+
+.search-people-button,
+.search-people-add {
+    display: inline-block;
+    min-width: 40px;
+    height: 23px;
+    margin: 0;
+    padding: 0 7px 1px;
+    border: 1px solid #007001;
+    border-radius: 0;
+    background: #007001 url("/img/catalog/bg-btn-green.png") repeat-x left -160px;
+    color: #fff;
+    font: 400 14px/18px "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    text-align: center;
+    cursor: pointer;
+}
+
+.search-people-button:hover,
+.search-people-add:hover {
+    background-position: left -181px;
+}
+
+.search-people-add:disabled {
+    border-color: #99c699;
+    background-color: #99c699;
+    background-position: left -202px;
+    cursor: default;
+}
+
+.search-people-results {
+    float: left;
+    width: 770px;
+    max-width: 100%;
+    margin-top: 20px;
+}
+
+.search-people-error {
+    margin-bottom: 10px;
+    color: #d86868;
+}
+
+.search-people-list {
+    width: 769px;
+    max-width: 100%;
+}
+
+.search-people-row {
+    position: relative;
+    display: flow-root;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+}
+
+.search-people-row:hover {
+    background-color: #f4f4f4;
+}
+
+.search-people-row img {
+    vertical-align: baseline;
+}
+
+.search-people-avatar {
+    float: left;
+}
+
+.search-people-avatar img {
+    width: 48px;
+    height: 48px;
+}
+
+.search-people-text {
+    float: left;
+    width: 540px;
+    max-width: calc(100% - 200px);
+    margin-left: 20px;
+}
+
+.search-people-name::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.search-people-blurb a,
+.search-people-add {
+    position: relative;
+    z-index: 1;
+}
+
+.search-people-side {
+    float: right;
+    margin: 10px 0 0 20px;
+    text-align: right;
+}
+
+.search-people-add {
+    display: block;
+    margin: 1px 0 0 auto;
+}
+
+.search-people-pager {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.search-people-page {
+    position: relative;
+    top: -8px;
+    padding: 5px;
+}
+
+.search-people-arrow {
+    display: inline-block;
+    width: 27px;
+    height: 27px;
+    background: url("/img/catalog/pager-right.png") no-repeat 0 0;
+}
+
+.search-people-arrow.previous {
+    background-image: url("/img/catalog/pager-left.png");
+}
+
+.search-people-arrow:hover {
+    background-position: 0 -54px;
+}
+
 .legacy-search {
     color: #292929;
 }
@@ -29,17 +294,12 @@
     background: #fff;
 }
 
-.legacy-search-form button,
-.legacy-search-result button {
+.legacy-search-form button {
     border: 0;
     border-radius: 2px;
     background: #7d27c5;
     color: #fff;
     padding: 6px 20px;
-}
-
-.legacy-search-result button:disabled {
-    opacity: .55;
 }
 
 .legacy-search-tabs {
@@ -62,15 +322,6 @@
     padding-bottom: 7px;
 }
 
-.legacy-search-games {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
 .legacy-search-results {
     background: #fff;
     box-shadow: 0 1px 4px #0002;
@@ -85,17 +336,12 @@
     border-bottom: 1px solid #e4e4e4;
 }
 
-.legacy-search-result img,
-.legacy-search-asset-icon {
-    width: 54px;
-    height: 54px;
-    object-fit: cover;
-    background: #f3f3f3;
-}
-
 .legacy-search-asset-icon {
     display: grid;
     place-items: center;
+    width: 54px;
+    height: 54px;
+    background: #f3f3f3;
     color: #888;
     font-size: 26px;
 }
@@ -108,19 +354,9 @@
     min-width: 0;
 }
 
-.legacy-search-result-info a {
-    color: #00a2ff;
-    text-decoration: none;
-    font-size: 17px;
-}
-
 .legacy-search-result-info span {
     color: #777;
     font-size: 13px;
-}
-
-.legacy-search-price {
-    color: #18a451;
 }
 
 .legacy-search-notice {

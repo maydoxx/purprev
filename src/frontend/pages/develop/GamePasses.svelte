@@ -13,6 +13,8 @@
     let error = $state("");
     let success = $state("");
     let busy = $state(false);
+    let menu = $state(0);
+    let filter = $state("");
 
     let gameId = $state("");
     let name = $state("");
@@ -21,6 +23,7 @@
     let files = $state<FileList | null>(null);
 
     const edit = $derived(editId ? passes.find(p => p.id === editId) ?? null : null);
+    const shown = $derived(filter ? passes.filter(p => String(p.game_id) === filter) : passes);
 
     const load = async () => {
         [games, passes] = await Promise.all([
@@ -95,11 +98,21 @@
         }
     };
 
+    const toggle = (e: Event, id: number) => {
+        e.stopPropagation();
+        menu = menu === id ? 0 : id;
+    };
+
     const icon = (p: any) => p.icon || "/img/pending.png";
+
     const fallback = (e: Event) => {
         (e.currentTarget as HTMLImageElement).src = "/img/pending.png";
     };
+
+    const day = (t: number) => t ? new Date(t * 1000).toLocaleDateString("en-US") : "N/A";
 </script>
+
+<svelte:window onclick={() => menu = 0} />
 
 <svelte:head>
     <title>Develop - Game Passes - NoneRev</title>
@@ -115,85 +128,107 @@
             <div class="develop-creations">
                 <Sidebar />
                 <section class="develop-content">
+                    <div class="develop-upload develop-upload-place">
+                        <h2 class="develop-heading">{edit ? "Configure Game Pass" : "Create a Game Pass"}</h2>
+                        {#if loaded && games.length === 0}
+                            <div class="develop-upload-form">
+                                <div class="develop-upload-row">Create a place before making a game pass.</div>
+                                <a class="develop-btn" href="/develop/create">Create New Place</a>
+                            </div>
+                        {:else}
+                            <form class="develop-upload-form" onsubmit={submit}>
+                                <div class="develop-upload-row">
+                                    <label for="game_id">Target Place:</label>
+                                    <select id="game_id" name="game_id" bind:value={gameId} required>
+                                        {#each games as game}
+                                            <option value={String(game.id)}>{game.title}</option>
+                                        {/each}
+                                    </select>
+                                </div>
+                                <div class="develop-upload-row">
+                                    <label for="icon">Find your image:</label>
+                                    <input id="icon" type="file" name="icon" accept="image/png,image/jpeg,image/webp" bind:files>
+                                </div>
+                                <div class="develop-upload-row">
+                                    <label for="name">Game Pass Name:</label>
+                                    <input id="name" type="text" name="name" maxlength="100" required bind:value={name}>
+                                </div>
+                                <div class="develop-upload-row develop-upload-row-block">
+                                    <label for="description">Description:</label>
+                                    <textarea id="description" name="description" maxlength="2000" bind:value={description}></textarea>
+                                </div>
+                                <div class="develop-upload-row">
+                                    <label for="price">Price:</label>
+                                    <input id="price" type="number" name="price" min="0" max="2000000000" bind:value={price}>
+                                    <span class="develop-upload-note">Leave blank for Off Sale.</span>
+                                </div>
+                                <div class="develop-upload-actions">
+                                    <button class="develop-btn" type="submit" disabled={busy}>{edit ? "Save Changes" : "Create Game Pass"}</button>
+                                    {#if edit}
+                                        <a class="develop-btn develop-btn-negative" href="/develop/game-passes">Cancel</a>
+                                    {/if}
+                                    {#if error}
+                                        <div class="develop-result">{error}</div>
+                                    {/if}
+                                    {#if success}
+                                        <div class="develop-result develop-result-ok">{success}</div>
+                                    {/if}
+                                </div>
+                            </form>
+                        {/if}
+                    </div>
                     <div class="develop-header">
                         <h2 class="develop-heading">Game Passes</h2>
-                        <span class="develop-count">{passes.length.toLocaleString()} pass{passes.length === 1 ? "" : "es"} created</span>
-                    </div>
-                    <div class="develop-hint">Sell permanent perks for your games.</div>
-                    {#if error}
-                        <div class="develop-error">{error}</div>
-                    {/if}
-                    {#if success}
-                        <div class="develop-success">{success}</div>
-                    {/if}
-
-                    <h3 class="develop-subheading">{edit ? "Edit Game Pass" : "Create Game Pass"}</h3>
-                    {#if loaded && games.length === 0}
-                        <div class="develop-empty">
-                            Create a place before making a game pass.
-                            <a class="develop-btn" href="/develop/create">Create New Place</a>
+                        <span class="develop-aside">{passes.length.toLocaleString()} pass{passes.length === 1 ? "" : "es"} created</span>
+                        <div class="develop-list-filter">
+                            <label for="pass-place">Select from Active Places:</label>
+                            <select id="pass-place" bind:value={filter}>
+                                <option value="">All Places</option>
+                                {#each games as game}
+                                    <option value={String(game.id)}>{game.title}</option>
+                                {/each}
+                            </select>
                         </div>
-                    {:else}
-                        <form class="develop-form" onsubmit={submit}>
-                            <div class="develop-field">
-                                <label class="develop-label" for="game_id">Place:</label>
-                                <select id="game_id" class="develop-select" name="game_id" bind:value={gameId} required>
-                                    {#each games as game}
-                                        <option value={String(game.id)}>{game.title}</option>
-                                    {/each}
-                                </select>
-                            </div>
-                            <div class="develop-field">
-                                <label class="develop-label" for="name">Name:</label>
-                                <input id="name" class="develop-text" type="text" name="name" maxlength="100" required bind:value={name}>
-                            </div>
-                            <div class="develop-field">
-                                <label class="develop-label" for="description">Description:</label>
-                                <textarea id="description" class="develop-text" name="description" maxlength="2000" rows="6" bind:value={description}></textarea>
-                            </div>
-                            <div class="develop-field">
-                                <label class="develop-label" for="price">Price:</label>
-                                <input id="price" class="develop-text develop-text-short" type="number" name="price" min="0" max="2000000000" bind:value={price}>
-                                <span class="develop-help">Leave blank for Off Sale.</span>
-                            </div>
-                            <div class="develop-field">
-                                <label class="develop-label" for="icon">Icon:</label>
-                                <input id="icon" class="develop-file" type="file" name="icon" accept="image/png,image/jpeg,image/webp" bind:files>
-                            </div>
-                            <div class="develop-actions">
-                                <button class="develop-btn" type="submit" disabled={busy}>{edit ? "Save Changes" : "Create Game Pass"}</button>
-                                {#if edit}
-                                    <a class="develop-btn develop-btn-negative" href="/develop/game-passes">Cancel</a>
-                                {/if}
-                            </div>
-                        </form>
-                    {/if}
-
-                    <h3 class="develop-subheading">Your Game Passes</h3>
-                    {#if loaded && passes.length === 0}
-                        <div class="develop-empty">You haven't created any game passes yet.</div>
-                    {/if}
-                    <div class="develop-list">
-                        {#each passes as pass}
-                            <div class="develop-item">
-                                <div class="develop-thumb develop-thumb-fit">
-                                    <span>
-                                        <img src={icon(pass)} alt="" onerror={fallback}>
-                                    </span>
-                                </div>
-                                <div class="develop-info develop-info-wide">
-                                    <a class="develop-name" href="/develop/game-passes?edit={pass.id}">{pass.name}</a>
-                                    <div class="develop-meta">{pass.game_title || "Unknown Place"} · ID {pass.id}</div>
-                                    <div class="develop-meta develop-price">{priceText(pass.price)}</div>
-                                </div>
-                                <div class="develop-item-actions">
-                                    <a class="develop-control" href="/develop/game-passes?edit={pass.id}">Configure</a>
-                                    <a class="develop-control" href="/game?id={pass.game_id}#store">View</a>
-                                    <button class="develop-control" type="button" onclick={() => remove(pass.id)}>Delete</button>
-                                </div>
-                            </div>
-                        {/each}
                     </div>
+                    {#if loaded && shown.length === 0}
+                        <div class="develop-empty">You haven't created any game passes{filter ? " for this place" : ""} yet.</div>
+                    {/if}
+                    {#each shown as pass}
+                        <div class="develop-item">
+                            <div class="develop-thumb develop-thumb-item">
+                                <span>
+                                    <img src={icon(pass)} alt="" onerror={fallback}>
+                                </span>
+                            </div>
+                            <div class="develop-name-col">
+                                <a class="develop-name" href="/develop/game-passes?edit={pass.id}">{pass.name}</a>
+                                <div class="develop-details">Created {day(pass.created_at)} · {pass.game_title || "Unknown Place"}</div>
+                            </div>
+                            <div class="develop-stats develop-stats-wide">
+                                <div>
+                                    Price:
+                                    <span>{priceText(pass.price)}</span>
+                                </div>
+                                <div>
+                                    Pass ID:
+                                    <span>{pass.id}</span>
+                                </div>
+                            </div>
+                            <div class="develop-menu-col develop-item-actions">
+                                <div class="develop-gear-wrap" class:open={menu === pass.id}>
+                                    <button class="develop-gear" class:open={menu === pass.id} type="button" aria-label="Game pass menu" onclick={e => toggle(e, pass.id)}></button>
+                                    {#if menu === pass.id}
+                                        <div class="develop-menu">
+                                            <a href="/develop/game-passes?edit={pass.id}">Configure</a>
+                                            <a href="/game?id={pass.game_id}#store">View</a>
+                                            <button class="develop-menu-split" type="button" onclick={() => remove(pass.id)}>Delete</button>
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="develop-separator"></div>
+                    {/each}
                 </section>
             </div>
         </div>

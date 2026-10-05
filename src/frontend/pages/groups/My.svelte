@@ -1,11 +1,15 @@
 <script lang="ts">
     import { api, apiForm } from "../../api";
     import { router } from "../../router.svelte";
+    import Group from "./Group.svelte";
+
+    const VISIBLE_ROWS = 8;
 
     const createMode = $derived("create" in router.query);
 
     let mine = $state<any[]>([]);
-    let all = $state<any[]>([]);
+    let loaded = $state(false);
+    let listTop = $state(0);
     let error = $state("");
     let busy = $state(false);
 
@@ -15,13 +19,28 @@
 
     const list = (d: any) => Array.isArray(d) ? d : Array.isArray(d?.list) ? d.list : [];
 
-    api("/groups/my").then(d => {
-        mine = list(d);
-    }).catch(() => {});
+    const refresh = async () => {
+        mine = list(await api("/groups/my").catch(() => []));
+        loaded = true;
+    };
 
-    api("/groups?page=1").then(d => {
-        all = list(d).slice(0, 12);
-    }).catch(() => {});
+    refresh();
+
+    const gid = $derived(Math.max(0, Number(router.query.gid) || 0) || Number(mine[0]?.id ?? 0));
+
+    const ordered = $derived([...mine].sort((a, b) => {
+        if (Number(a.id) === gid || Number(b.id) === gid) {
+            return Number(a.id) === gid ? -1 : 1;
+        }
+        return String(a.name).localeCompare(String(b.name));
+    }));
+
+    const lastTop = $derived(Math.max(0, ordered.length - VISIBLE_ROWS));
+
+    $effect(() => {
+        gid;
+        listTop = 0;
+    });
 
     const create = async (e: Event) => {
         e.preventDefault();
@@ -35,7 +54,7 @@
 
         try {
             const d = await apiForm("/groups", fd);
-            router.go(d.id ? `/groups?id=${d.id}` : "/my/groups");
+            router.go(d.id ? `/my/groups?gid=${d.id}` : "/my/groups");
         } catch (err: any) {
             error = err.message;
         }
@@ -44,91 +63,58 @@
 </script>
 
 <svelte:head>
-    <title>{createMode ? "Create Group" : "Groups"} - NoneRev</title>
+    <title>{createMode ? "Create A Group" : "Groups"} - NoneRev</title>
     <link rel="stylesheet" href="/css/groups.css">
 </svelte:head>
 
-{#snippet card(g: any, sub: string)}
-    <a class="groups-list-card" href="/groups?id={g.id}">
-        <img src={g.icon || "/img/pending.png"} alt="">
-        <div class="groups-list-info">
-            <h3>{g.name}</h3>
-            <p>{(g.member_count ?? 0).toLocaleString()} Members</p>
-            <span>{sub}</span>
+{#snippet groupList()}
+    <div class="group-list-column">
+        <div class="group-list">
+            <a class="group-create" href="/my/groups?create=1">Create</a>
+            <div class="group-list-pager">
+                <button type="button" class="group-list-arrow up" aria-label="Scroll up" disabled={listTop <= 0} onclick={() => listTop -= 1}></button>
+            </div>
+            <div class="group-list-items">
+                <div class="group-list-track" style:transform="translateY({listTop * -66}px)">
+                    {#each ordered as g (g.id)}
+                        <a class="group-list-item" class:selected={Number(g.id) === gid} href="/my/groups?gid={g.id}" title={g.name}>
+                            <span class="group-list-emblem">
+                                <img src={g.icon || "/img/pending.png"} alt="" width="42" height="42">
+                            </span>
+                            <span class="group-list-name">{g.name}</span>
+                        </a>
+                    {/each}
+                </div>
+            </div>
+            <div class="group-list-pager">
+                <button type="button" class="group-list-arrow down" aria-label="Scroll down" disabled={listTop >= lastTop} onclick={() => listTop += 1}></button>
+            </div>
         </div>
-    </a>
+    </div>
 {/snippet}
 
-<main class="groups2016-page">
-    <div class="groups2016-shell groups-list-shell">
-        <div class="groups2016-page-heading">
-            <h1>{createMode ? "Create Group" : "Groups"}</h1>
-            {#if createMode}
-                <a class="groups2016-btn secondary" href="/my/groups">Back to Groups</a>
-            {:else}
-                <a class="groups2016-btn secondary" href="/my/groups?create=1">Create Group</a>
-            {/if}
+{#if createMode}
+    <main class="group-page">
+        <div class="group-container group-create-page">
+            <form class="group-create-form" onsubmit={create}>
+                <h2>Create A Group</h2>
+                {#if error}
+                    <div class="group-alert error">{error}</div>
+                {/if}
+                <label for="group-name">Name:</label>
+                <input id="group-name" type="text" bind:value={name} maxlength="60" required>
+                <label for="group-description">Description:</label>
+                <textarea id="group-description" bind:value={description} maxlength="2000"></textarea>
+                <label for="group-icon">Emblem:</label>
+                <input id="group-icon" type="file" bind:files={icon} accept="image/png,image/jpeg,image/webp">
+                <p>PNG, JPG or WEBP. Square images work best.</p>
+                <div class="group-create-buttons">
+                    <input type="submit" class="group-button" value="Create Group" disabled={busy}>
+                    <a class="group-button" href="/my/groups">Cancel</a>
+                </div>
+            </form>
         </div>
-
-        {#if error}
-            <div class="groups2016-alert error">{error}</div>
-        {/if}
-
-        {#if createMode}
-            <section class="groups2016-card groups-create-card">
-                <form class="groups-create-form" onsubmit={create}>
-                    <div class="groups-create-row">
-                        <label for="group-name">Name</label>
-                        <div>
-                            <input id="group-name" type="text" bind:value={name} maxlength="60" required>
-                            <small>Choose a name for your group.</small>
-                        </div>
-                    </div>
-                    <div class="groups-create-row">
-                        <label for="group-description">Description</label>
-                        <div>
-                            <textarea id="group-description" bind:value={description} rows="6" maxlength="2000"></textarea>
-                        </div>
-                    </div>
-                    <div class="groups-create-row">
-                        <label for="group-icon">Emblem</label>
-                        <div>
-                            <input id="group-icon" type="file" bind:files={icon} accept="image/png,image/jpeg,image/webp">
-                            <small>PNG, JPG or WEBP. Square images work best.</small>
-                        </div>
-                    </div>
-                    <div class="groups-create-actions">
-                        <button class="groups2016-btn primary" type="submit" disabled={busy}>Create Group</button>
-                        <a class="groups2016-btn secondary" href="/my/groups">Cancel</a>
-                    </div>
-                </form>
-            </section>
-        {:else}
-            <section class="groups-list-section">
-                <h2>My Groups</h2>
-                {#if mine.length === 0}
-                    <div class="groups2016-card groups-empty">You haven't joined any groups yet.</div>
-                {:else}
-                    <div class="groups-list-grid">
-                        {#each mine as g}
-                            {@render card(g, g.role ?? "Member")}
-                        {/each}
-                    </div>
-                {/if}
-            </section>
-
-            <section class="groups-list-section browse-groups">
-                <h2>Discover Groups</h2>
-                {#if all.length === 0}
-                    <div class="groups2016-card groups-empty">There aren't any groups yet.</div>
-                {:else}
-                    <div class="groups-list-grid">
-                        {#each all as g}
-                            {@render card(g, `By ${g.owner_username || "NoneRev"}`)}
-                        {/each}
-                    </div>
-                {/if}
-            </section>
-        {/if}
-    </div>
-</main>
+    </main>
+{:else if loaded}
+    <Group my gid={gid} side={groupList} onchange={refresh} />
+{/if}

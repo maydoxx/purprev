@@ -1,117 +1,198 @@
-@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600&display=swap");
+body:has(.abuse-report-page) {
+    background-color: #fff !important;
+}
 
 .abuse-report-page {
-    max-width: 970px;
+    width: 970px;
+    max-width: 100%;
+    min-height: 580px;
     margin: 0 auto;
-    padding: 0 12px;
-    color: #191919;
+    padding: 5px 0 25px 10px;
+    background-color: #fff;
+    color: #343434;
     font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
-    font-size: 16px;
-    font-weight: 300;
-    line-height: 1.3em;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.428;
 }
 
-.abuse-report-page .container-header h2 {
-    margin: 0;
-    padding: 5px 0;
+.abuse-report-page h1 {
+    display: inline-block;
+    margin: 12px;
+    padding: 0;
     color: #343434;
+    font-family: inherit;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.3em;
+    letter-spacing: -1px;
+}
+
+.abuse-report-column {
+    width: 600px;
+    max-width: 100%;
+    margin: 29px auto 0;
+}
+
+.abuse-report-header {
+    padding-bottom: 3px;
+    border-bottom: 1px solid #ddd;
+}
+
+.abuse-report-header h2 {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    color: #343434;
+    font-family: inherit;
     font-size: 30px;
     font-weight: 400;
-    line-height: 1em;
-}
-
-.abuse-report-page p {
-    margin: 0 0 12px;
-}
-
-.abuse-report-form {
-    max-width: 560px;
-}
-
-.abuse-report-target {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: baseline;
-    margin-bottom: 18px;
-}
-
-.abuse-report-field {
-    margin-bottom: 18px;
-}
-
-.abuse-report-field label {
-    display: block;
-    margin-bottom: 6px;
-}
-
-.abuse-report-select,
-.abuse-report-comment {
-    display: block;
-    width: 100%;
-    padding: 6px 12px;
-    border: 1px solid #b8b8b8;
-    border-radius: 3px;
-    background-color: #fff;
-    color: #191919;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 300;
     line-height: 1.3em;
+    letter-spacing: -1px;
 }
 
-.abuse-report-select {
-    width: auto;
-    min-width: 260px;
-    height: 36px;
+.abuse-report-row {
+    display: flex;
+    align-items: flex-start;
 }
 
-.abuse-report-comment {
-    resize: vertical;
-}
-
-.abuse-report-select:focus,
-.abuse-report-comment:focus {
-    border-color: #7b2cbf;
-    outline: 0;
-}
-
-.abuse-report-count {
-    display: block;
-    margin-top: 4px;
-    color: #b8b8b8;
-    font-size: 12px;
-    font-weight: 400;
+.abuse-report-row label {
+    flex: 0 0 100px;
+    margin: -2px 10px 0 0;
+    color: #343434;
+    font-weight: 600;
+    line-height: 18px;
     text-align: right;
 }
 
-.abuse-report-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 6px;
+.abuse-report-subject {
+    margin-top: 27px;
 }
 
-.abuse-report-page button {
+.abuse-report-comment {
+    margin-top: 27px;
+}
+
+.abuse-report-submit {
+    margin-top: 17px;
+    padding-left: 110px;
+}
+
+.abuse-report-row select,
+.abuse-report-row textarea {
+    all: revert;
+}
+
+.abuse-report-row select {
+    box-sizing: border-box;
+    width: 420px;
+    max-width: calc(100% - 110px);
+}
+
+.abuse-report-row textarea {
+    box-sizing: border-box;
+    width: 426px;
+    max-width: calc(100% - 110px);
+    height: 76px;
+    resize: none;
+}
+
+.abuse-report-btn,
+.abuse-report-btn:link,
+.abuse-report-btn:visited,
+.abuse-report-btn:hover {
+    display: inline-block;
+    box-sizing: content-box;
+    min-width: 62px;
+    height: 28px;
+    margin: 0;
+    padding: 1px 13px 3px;
+    border: 1px solid #7B2CBF;
+    border-radius: 0;
+    background: #007001 url("/img/catalog/bg-btn-green.png") repeat-x left -96px;
+    color: #fff;
     font-family: inherit;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1.3em;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
 }
 
-.abuse-report-page .rbx-btn-secondary-xs:disabled {
-    border-color: #caabe5;
-    background-color: #caabe5;
+.abuse-report-btn:hover {
+    background-position: left -128px;
+}
+
+.abuse-report-btn:hover,
+.abuse-report-btn:focus,
+.abuse-report-btn:active {
+    border-color: #5A189A;
+}
+
+.abuse-report-btn:disabled {
+    border-color: #99c699;
+    background: #99c699 url("/img/catalog/bg-btn-green.png") repeat-x left -202px;
     cursor: default;
 }
 
-.abuse-report-note,
-.abuse-report-page .text-error {
-    margin-top: 12px;
-    font-size: 12px;
+.abuse-report-error {
+    margin: 12px 0 0 110px;
+    color: #c00;
+}
+
+.abuse-report-text {
+    margin: 12px 0;
+    line-height: 1.5em;
+}
+
+.abuse-report-rules {
+    margin-top: 45px;
+}
+
+.abuse-report-preface,
+.abuse-report-list,
+.abuse-report-link {
+    line-height: 18px;
+}
+
+.abuse-report-preface {
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.abuse-report-list {
+    padding-left: 24px;
+}
+
+.abuse-report-list ul {
+    margin: 0;
+    padding-left: 35px;
+}
+
+.abuse-report-list li {
+    margin-bottom: 6px;
+    list-style: disc outside none;
+}
+
+.abuse-report-link {
+    margin: 16px 0;
+}
+
+.abuse-report-link a,
+.abuse-report-link a:visited {
+    color: #7b2cbf;
     font-weight: 400;
+    text-decoration: none;
 }
 
-.abuse-report-note {
-    color: #b8b8b8;
+.abuse-report-closing {
+    line-height: 19px;
 }
 
-.abuse-report-done .rbx-btn-secondary-xs {
-    margin-top: 6px;
+@media (max-width: 767px) {
+    .abuse-report-page {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
 }

@@ -6,19 +6,22 @@
 </script>
 
 <svelte:head>
-    <title>404 Not Found - NoneRev</title>
+    <title>NoneRev</title>
     <link rel="stylesheet" href="/css/errors.css">
 </svelte:head>
 
 <main class="error-page">
-    <div class="error-container">
-        <img src="/img/builder.png" alt="Alert">
-        <h1>Requested page not found</h1>
-        <h3>You may have clicked an expired link or mistyped the address.</h3>
-        <div class="error-divider"></div>
-        <div class="error-actions">
-            <a class="error-btn" href="/home" onclick={back}>Go to Previous Page</a>
-            <a class="error-btn" href="/">Return Home</a>
+    <div class="error-page-content">
+        <div class="error-card">
+            <div class="error-text">
+                <h3 class="error-title">Page cannot be found or no longer exists</h3>
+                <h4 class="error-message">404 <span>|</span>Page Not found</h4>
+            </div>
+            <img class="error-image" src="/img/builder.png" alt="Error">
+            <div class="error-actions">
+                <a class="btn-primary-md error-btn" href="/home" title="Go to Previous Page" onclick={back}>Back</a>
+                <a class="error-btn-control error-btn" href="/" title="Return Home">Home</a>
+            </div>
         </div>
     </div>
 </main>

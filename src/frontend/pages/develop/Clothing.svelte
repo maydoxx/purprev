@@ -4,10 +4,10 @@
     import { rows, postForm, priceText } from "./develop";
     import Sidebar from "./Sidebar.svelte";
 
-    const cats: Record<string, [string, string]> = {
-        shirts: ["Shirt", "Shirts"],
-        pants: ["Pants", "Pants"],
-        "t-shirts": ["T-Shirt", "T-Shirts"]
+    const cats: Record<string, [string, string, string]> = {
+        shirts: ["Shirt", "Shirts", "a Shirt"],
+        pants: ["Pants", "Pants", "Pants"],
+        "t-shirts": ["T-Shirt", "T-Shirts", "a T-Shirt"]
     };
 
     const slug = $derived(router.path.split("/").pop() ?? "");
@@ -21,6 +21,7 @@
     let error = $state("");
     let success = $state("");
     let busy = $state(false);
+    let menu = $state(0);
 
     let name = $state("");
     let description = $state("");
@@ -100,8 +101,17 @@
         }
     };
 
+    const toggle = (e: Event, id: number) => {
+        e.stopPropagation();
+        menu = menu === id ? 0 : id;
+    };
+
     const thumb = (item: any) => item.thumbnail || "/img/pending.png";
+
+    const day = (t: number) => t ? new Date(t * 1000).toLocaleDateString("en-US") : "N/A";
 </script>
+
+<svelte:window onclick={() => menu = 0} />
 
 <svelte:head>
     <title>Develop - {names[1]} - NoneRev</title>
@@ -117,97 +127,111 @@
             <div class="develop-creations">
                 <Sidebar />
                 <section class="develop-content">
-                    <div class="develop-header">
-                        <h2 class="develop-heading">{edit ? `Configure ${names[0]}` : names[1]}</h2>
-                        <span class="develop-count">{items.length.toLocaleString()} total</span>
-                        {#if edit}
-                            <a class="develop-control develop-header-side" href="/develop/{category}">Back to {names[1]}</a>
-                        {/if}
+                    <div class="develop-upload">
+                        <h2 class="develop-heading">{edit ? `Configure ${names[0]}` : `Create ${names[2]}`}</h2>
+                        <form class="develop-upload-form" onsubmit={submit}>
+                            <div class="develop-upload-row">{tee ? "PNG or JPG, up to 5 MB. This image is shown on the front of the torso." : "PNG or JPG, exactly 585x559 pixels, up to 5 MB."}{edit ? " Leave the image empty to keep the current one." : ""}</div>
+                            <div class="develop-upload-row">
+                                <label for="texture_file">Find your image:</label>
+                                <input id="texture_file" name="texture_file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" bind:files required={!edit}>
+                            </div>
+                            <div class="develop-upload-row">
+                                <label for="name">{names[0]} Name:</label>
+                                <input id="name" name="name" type="text" maxlength="80" bind:value={name} required>
+                            </div>
+                            <div class="develop-upload-row">
+                                <label for="price">Price:</label>
+                                <input id="price" name="price" type="number" min="0" max="2000000000" bind:value={price}>
+                                <span class="develop-upload-note">0 = Free. Leave blank for Off Sale.</span>
+                            </div>
+                            <div class="develop-upload-row develop-upload-row-block">
+                                <label for="description">Description:</label>
+                                <textarea id="description" name="description" maxlength="2000" bind:value={description}></textarea>
+                            </div>
+                            <div class="develop-upload-actions">
+                                <button class="develop-btn" type="submit" disabled={busy}>{edit ? "Save Changes" : "Upload"}</button>
+                                {#if edit}
+                                    <a class="develop-btn develop-btn-negative" href="/develop/{category}">Cancel</a>
+                                {/if}
+                                {#if error}
+                                    <div class="develop-result">{error}</div>
+                                {/if}
+                                {#if success}
+                                    <div class="develop-result develop-result-ok">{success}</div>
+                                {/if}
+                            </div>
+                        </form>
                     </div>
-                    <div class="develop-hint">{edit ? "Update this item or replace its image." : `Create and manage your ${names[1].toLowerCase()}.`}</div>
-                    {#if error}
-                        <div class="develop-error">{error}</div>
-                    {/if}
-                    {#if success}
-                        <div class="develop-success">{success}</div>
-                    {/if}
 
-                    <div class="develop-split">
-                        <div class="develop-split-main">
-                            <h3 class="develop-subheading">{edit ? "Configure" : `Upload ${names[0]}`}</h3>
-                            <form class="develop-form" onsubmit={submit}>
-                                <div class="develop-field">
-                                    <label class="develop-label" for="name">Name:</label>
-                                    <input id="name" class="develop-text" name="name" type="text" maxlength="80" bind:value={name} required>
+                    {#if edit}
+                        <div class="develop-header">
+                            <h2 class="develop-heading develop-heading-clip" title={edit.name}>{edit.name}</h2>
+                        </div>
+                        <div class="develop-edit">
+                            <img src={thumb(edit)} alt={edit.name}>
+                            <div class="develop-edit-info">
+                                <div class="develop-stats">
+                                    <div>
+                                        Item ID:
+                                        <span>{edit.id}</span>
+                                    </div>
+                                    <div>
+                                        Asset ID:
+                                        <span>{edit.asset_id ?? "-"}</span>
+                                    </div>
                                 </div>
-                                <div class="develop-field">
-                                    <label class="develop-label" for="texture_file">{tee ? "Image" : "Template"}:</label>
-                                    <input id="texture_file" class="develop-file" name="texture_file" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" bind:files required={!edit}>
-                                    <span class="develop-help">{tee ? "PNG or JPG, up to 5 MB. This image is shown on the front of the torso." : "PNG or JPG, exactly 585x559 pixels, up to 5 MB."}{edit ? " Leave empty to keep the current image." : ""}</span>
-                                </div>
-                                <div class="develop-field">
-                                    <label class="develop-label" for="price">Price:</label>
-                                    <input id="price" class="develop-text develop-text-short" name="price" type="number" min="0" max="2000000000" bind:value={price}>
-                                    <span class="develop-help">0 = Free. Leave blank for Off Sale.</span>
-                                </div>
-                                <div class="develop-field">
-                                    <label class="develop-label" for="description">Description:</label>
-                                    <textarea id="description" class="develop-text" name="description" maxlength="2000" rows="6" bind:value={description}></textarea>
-                                </div>
-                                <div class="develop-actions">
-                                    <button class="develop-btn" type="submit" disabled={busy}>{edit ? "Save Changes" : "Upload"}</button>
-                                    {#if edit}
-                                        <a class="develop-btn develop-btn-negative" href="/develop/{category}">Cancel</a>
-                                    {/if}
-                                </div>
-                            </form>
-
-                            {#if edit}
-                                <div class="develop-divider"></div>
-                                <div class="develop-actions">
+                                <div class="develop-edit-actions">
                                     <button class="develop-control" type="button" disabled title="Rendering is done by the RCC manager">Render Preview</button>
                                     <a class="develop-control" href="/catalog/item?id={edit.id}">View Item</a>
                                     <button class="develop-control" type="button" onclick={remove}>Delete</button>
                                 </div>
                                 <span class="develop-help">Previews are rendered by the RCC manager, not from here yet.</span>
-                            {/if}
-                        </div>
-
-                        {#if edit}
-                            <div class="develop-preview">
-                                <img src={thumb(edit)} alt={edit.name}>
-                                <strong>{edit.name}</strong>
-                                <span>Item ID: {edit.id}</span>
-                                <span>Asset ID: {edit.asset_id ?? "-"}</span>
                             </div>
-                        {/if}
-                    </div>
-
-                    {#if !edit}
-                        <h3 class="develop-subheading">Your {names[1]}</h3>
+                        </div>
+                    {:else}
+                        <div class="develop-header">
+                            <h2 class="develop-heading">{names[1]}</h2>
+                            <span class="develop-aside">{items.length.toLocaleString()} total</span>
+                        </div>
                         {#if loaded && items.length === 0}
                             <div class="develop-empty">You haven't uploaded any {names[1].toLowerCase()} yet.</div>
                         {/if}
-                        <div class="develop-list">
-                            {#each items as item}
-                                <div class="develop-item">
-                                    <div class="develop-thumb develop-thumb-fit">
-                                        <a href="/catalog/item?id={item.id}">
-                                            <img src={thumb(item)} alt={item.name}>
-                                        </a>
+                        {#each items as item}
+                            <div class="develop-item">
+                                <div class="develop-thumb develop-thumb-item">
+                                    <a href="/catalog/item?id={item.id}">
+                                        <img src={thumb(item)} alt={item.name}>
+                                    </a>
+                                </div>
+                                <div class="develop-name-col">
+                                    <a class="develop-name" href="/catalog/item?id={item.id}">{item.name}</a>
+                                    <div class="develop-details">Created {day(item.created_at)}</div>
+                                </div>
+                                <div class="develop-stats develop-stats-wide">
+                                    <div>
+                                        Price:
+                                        <span>{priceText(item.price)}</span>
                                     </div>
-                                    <div class="develop-info develop-info-wide">
-                                        <a class="develop-name" href="/catalog/item?id={item.id}">{item.name}</a>
-                                        <div class="develop-meta">Item ID: {item.id} · Asset ID: {item.asset_id ?? "-"}</div>
-                                        <div class="develop-meta develop-price">{priceText(item.price)}</div>
-                                    </div>
-                                    <div class="develop-item-actions">
-                                        <a class="develop-control" href="/develop/{category}?edit={item.id}">Configure</a>
-                                        <a class="develop-control" href="/catalog/item?id={item.id}">View</a>
+                                    <div>
+                                        Asset ID:
+                                        <span>{item.asset_id ?? "-"}</span>
                                     </div>
                                 </div>
-                            {/each}
-                        </div>
+                                <div class="develop-menu-col develop-item-actions">
+                                    <div class="develop-gear-wrap" class:open={menu === item.id}>
+                                        <button class="develop-gear" class:open={menu === item.id} type="button" aria-label="Item menu" onclick={e => toggle(e, item.id)}></button>
+                                        {#if menu === item.id}
+                                            <div class="develop-menu">
+                                                <a href="/develop/{category}?edit={item.id}">Configure</a>
+                                                <a href="/my/create-user-ad?targetType=item&targetId={item.id}">Advertise</a>
+                                                <a class="develop-menu-split" href="/catalog/item?id={item.id}">View Item</a>
+                                            </div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="develop-separator"></div>
+                        {/each}
                     {/if}
                 </section>
             </div>

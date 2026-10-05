@@ -7,8 +7,11 @@
     let loaded = $state(false);
     let label = $state<Record<number, string>>({});
     let menu = $state(0);
+    let activeOnly = $state(false);
     let target = 0;
     let picker = $state<HTMLInputElement>();
+
+    const shown = $derived(activeOnly ? places.filter(p => p.has_file) : places);
 
     api("/develop/places").then(d => {
         places = rows(d);
@@ -70,61 +73,77 @@
             <div class="develop-creations">
                 <Sidebar />
                 <section class="develop-content">
-                    <a class="develop-btn" href="/develop/create">Create New Place</a>
-                    <div class="develop-header">
+                    <a class="develop-btn develop-create-new" href="/develop/create">Create New Place</a>
+                    <div class="develop-header develop-header-filters">
                         <h2 class="develop-heading">Places</h2>
-                        <span class="develop-count">{places.length.toLocaleString()} place{places.length === 1 ? "" : "s"} created</span>
+                        <span class="develop-aside">{places.length.toLocaleString()} place{places.length === 1 ? "" : "s"} created</span>
+                        <div class="develop-filters">
+                            <div class="develop-sort">
+                                <label for="created-by">Created by:</label>
+                                <select id="created-by">
+                                    <option>Me</option>
+                                </select>
+                            </div>
+                            <label class="develop-active-only">
+                                <input type="checkbox" bind:checked={activeOnly}>
+                                Show Active Only
+                            </label>
+                        </div>
                     </div>
-                    {#if loaded && places.length === 0}
+                    {#if loaded && shown.length === 0}
                         <div class="develop-empty">You haven't created any places yet. Your places will show up here after you create one.</div>
                     {/if}
-                    <div class="develop-list">
-                        {#each places as place}
-                            <div class="develop-item">
-                                <div class="develop-thumb">
-                                    <a href="/game?id={place.id}">
-                                        <img src={placeIcon(place)} alt={place.title}>
-                                    </a>
-                                </div>
-                                <div class="develop-info">
-                                    <a class="develop-name" href="/game?id={place.id}">{place.title}</a>
-                                    <div class="develop-meta">
-                                        <a class="develop-status" class:off={!place.has_file} href="/develop/configure?id={place.id}">{place.has_file ? "Place file uploaded" : "Place file missing"}</a>
-                                        <span>Updated: {day(place.updated_at)}</span>
+                    {#each shown as place}
+                        <div class="develop-item">
+                            <div class="develop-thumb">
+                                <a href="/game?id={place.id}">
+                                    <img src={placeIcon(place)} alt={place.title}>
+                                </a>
+                            </div>
+                            <div class="develop-name-col">
+                                <a class="develop-name" href="/game?id={place.id}">{place.title}</a>
+                                <div class="develop-details">
+                                    <div class="develop-status-cell">
+                                        <a class="develop-status" class:off={!place.has_file} href="/develop/configure?id={place.id}" title={place.has_file ? "Place file uploaded" : "Place file missing"}>{place.has_file ? "Active" : "Inactive"}</a>
                                     </div>
-                                </div>
-                                <div class="develop-stats">
-                                    <span>
-                                        Total Visitors:
-                                        <b>{Number(place.visits ?? 0).toLocaleString()}</b>
-                                    </span>
-                                    <span>
-                                        Place ID:
-                                        <b>{place.id}</b>
-                                    </span>
-                                </div>
-                                <div class="develop-item-actions">
+                                    <span>Updated {day(place.updated_at)}</span>
                                     {#if label[place.id]}
-                                        <span class="develop-item-note">{label[place.id]}</span>
+                                        <span class="develop-note">{label[place.id]}</span>
                                     {/if}
-                                    <a class="develop-control" href="/develop/configure?id={place.id}">Configure</a>
-                                    <div class="develop-gear-wrap" class:open={menu === place.id}>
-                                        <button class="develop-gear" class:open={menu === place.id} type="button" aria-label="Place menu" onclick={e => toggle(e, place.id)}></button>
-                                        {#if menu === place.id}
-                                            <div class="develop-menu">
-                                                <a href="/develop/configure?id={place.id}">Configure Place</a>
-                                                <a href="/game?id={place.id}">View Place</a>
-                                                <button type="button" disabled={!!label[place.id]} onclick={() => pick(place.id)}>Upload Thumbnail</button>
-                                                <button type="button" disabled title="Rendering is done by the RCC manager">Render</button>
-                                                <a class="develop-menu-split" href="/develop/badges?place={place.id}">Create Badge</a>
-                                                <a href="/develop/game-passes?place={place.id}">Create Game Pass</a>
-                                            </div>
-                                        {/if}
-                                    </div>
                                 </div>
                             </div>
-                        {/each}
-                    </div>
+                            <div class="develop-stats">
+                                <div>
+                                    Total Visitors:
+                                    <span>{Number(place.visits ?? 0).toLocaleString()}</span>
+                                </div>
+                                <div>
+                                    Place ID:
+                                    <span>{place.id}</span>
+                                </div>
+                            </div>
+                            <div class="develop-edit-col">
+                                <a class="develop-control" href="/develop/configure?id={place.id}">Edit</a>
+                            </div>
+                            <div class="develop-menu-col">
+                                <div class="develop-gear-wrap" class:open={menu === place.id}>
+                                    <button class="develop-gear" class:open={menu === place.id} type="button" aria-label="Place menu" onclick={e => toggle(e, place.id)}></button>
+                                    {#if menu === place.id}
+                                        <div class="develop-menu">
+                                            <a href="/develop/configure?id={place.id}">Configure Place</a>
+                                            <a href="/my/create-user-ad?targetType=game&targetId={place.id}">Advertise</a>
+                                            <a href="/develop/badges?place={place.id}">Create Badge</a>
+                                            <a href="/develop/game-passes?place={place.id}">Create Game Pass</a>
+                                            <a class="develop-menu-split" href="/game?id={place.id}">View Place</a>
+                                            <button type="button" disabled={!!label[place.id]} onclick={() => pick(place.id)}>Upload Thumbnail</button>
+                                            <button type="button" disabled title="Rendering is done by the RCC manager">Render</button>
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="develop-separator"></div>
+                    {/each}
                     <input type="file" accept="image/png,image/jpeg,image/gif" bind:this={picker} onchange={upload} hidden>
                 </section>
             </div>

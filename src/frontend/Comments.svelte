@@ -136,8 +136,10 @@
 
 {#if kind === "game"}
     <div class="comments-container">
-        <h3>Comments</h3>
-        <div class="section-content AddAComment">
+        <div class="comments-header">
+            <h3>Comments</h3>
+        </div>
+        <div class="comments-add">
             <div class="comment-form">
                 <form class="form-horizontal" onsubmit={post}>
                     <div class="form-group">
@@ -185,12 +187,12 @@
                 {/if}
             </div>
         </div>
-    </div>
-    {#if hasMore}
         <div class="ajax-comments-more-button-container">
-            <button type="button" class="btn-control-sm rbx-comments-see-more" disabled={loading} onclick={() => load(comments.length)}>See More</button>
+            {#if hasMore}
+                <button type="button" class="btn-control-sm rbx-comments-see-more" disabled={loading} onclick={() => load(comments.length)}>See More</button>
+            {/if}
         </div>
-    {/if}
+    </div>
 {:else}
     <div class="AjaxCommentsContainer">
         {#if session.me}

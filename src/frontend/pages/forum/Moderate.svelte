@@ -136,69 +136,86 @@
         {:else if notFound}
             <div class="forum-empty">{action === "move" ? "That thread does not exist." : "That post does not exist."}</div>
         {:else if action === "edit"}
-            <h1 class="forum-title">Edit Post</h1>
+            <h2 class="forum-title">Edit Post</h2>
             <div class="forum-note">Editing post #{id} by {post?.author_username || "Unknown"}</div>
-            <form class="forum-form forum-mod" onsubmit={save}>
-                {#if isFirst}
-                    <div class="forum-field">
-                        <label for="forum-subject">Subject:</label>
-                        <input id="forum-subject" class="forum-text" type="text" name="subject" maxlength="120" bind:value={subject} required>
-                    </div>
-                {/if}
-                <div class="forum-field">
-                    <label for="forum-body">Message:</label>
-                    <textarea id="forum-body" class="forum-text" name="body" rows="12" maxlength="10000" bind:value={body} required></textarea>
-                </div>
-                <div class="forum-submit">
-                    <div class="forum-submit-buttons">
-                        <a class="forum-btn forum-btn-wide" href={backUrl}>Cancel</a>
-                        <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>Save Changes</button>
-                    </div>
-                </div>
+            <form onsubmit={save}>
+                <table class="forum-form">
+                    <tbody>
+                        {#if isFirst}
+                            <tr>
+                                <td class="forum-form-label"><label for="forum-subject">Subject:</label></td>
+                                <td><input id="forum-subject" class="forum-input" type="text" name="subject" maxlength="120" bind:value={subject} required></td>
+                            </tr>
+                        {/if}
+                        <tr>
+                            <td class="forum-form-label forum-form-top"><label for="forum-body">Message:</label></td>
+                            <td><textarea id="forum-body" class="forum-textarea" name="body" rows="20" maxlength="10000" bind:value={body} required></textarea></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td class="forum-submit-cell">
+                                <div class="forum-submit">
+                                    <div class="forum-submit-buttons">
+                                        <a class="forum-button forum-button-form" href={backUrl}>Cancel</a>
+                                        <button class="forum-button forum-button-form" type="submit" disabled={busy}>Save Changes</button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </form>
             {#if error}
                 <div class="forum-error">{error}</div>
             {/if}
         {:else if action === "move"}
-            <h1 class="forum-title">Move Thread</h1>
+            <h2 class="forum-title">Move Thread</h2>
             <div class="forum-note">{thread?.subject ?? ""}</div>
-            <form class="forum-form forum-mod" onsubmit={move}>
-                <div class="forum-field">
-                    <label for="forum-target">Move to:</label>
-                    <select id="forum-target" class="forum-text" name="forum_id" bind:value={forumId} required>
-                        {#each groups as group}
-                            <optgroup label={group.section}>
-                                {#each list(group.forums) as f}
-                                    <option value={f.id}>{f.name}</option>
-                                {/each}
-                            </optgroup>
-                        {/each}
-                    </select>
-                </div>
-                <div class="forum-submit">
-                    <div class="forum-submit-buttons">
-                        <a class="forum-btn forum-btn-wide" href={threadUrl(id)}>Cancel</a>
-                        <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>Move Thread</button>
-                    </div>
-                </div>
+            <form onsubmit={move}>
+                <table class="forum-form">
+                    <tbody>
+                        <tr>
+                            <td class="forum-form-label"><label for="forum-target">Move to:</label></td>
+                            <td>
+                                <select id="forum-target" class="forum-select" name="forum_id" bind:value={forumId} required>
+                                    {#each groups as group}
+                                        <optgroup label={group.section}>
+                                            {#each list(group.forums) as f}
+                                                <option value={f.id}>{f.name}</option>
+                                            {/each}
+                                        </optgroup>
+                                    {/each}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td class="forum-submit-cell">
+                                <div class="forum-submit">
+                                    <div class="forum-submit-buttons">
+                                        <a class="forum-button forum-button-form" href={threadUrl(id)}>Cancel</a>
+                                        <button class="forum-button forum-button-form" type="submit" disabled={busy}>Move Thread</button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </form>
             {#if error}
                 <div class="forum-error">{error}</div>
             {/if}
         {:else if action === "delete"}
-            <h1 class="forum-title">{isFirst ? "Delete Thread" : "Delete Post"}</h1>
-            <div class="forum-bar forum-original-bar">
-                <span class="forum-bar-title">{isFirst ? "Original Post" : "Post"}</span>
-            </div>
+            <h2 class="forum-title">{isFirst ? "Delete Thread" : "Delete Post"}</h2>
+            <div class="forum-bar forum-bar-title">{isFirst ? "Original Post" : "Post"}</div>
             <div class="forum-original">
-                <span class="forum-original-title">{post?.author_username || "Unknown"}</span>
+                <b>{post?.author_username || "Unknown"}</b>
                 <div class="forum-original-body">{@render bodyText(post?.body ?? "")}</div>
             </div>
-            <div class="forum-bar forum-bar-form"></div>
             <div class="forum-note">{isFirst ? "This is the first post. Deleting it will delete the entire thread and all replies." : "Are you sure you want to delete this reply?"}</div>
-            <form class="forum-actions" onsubmit={remove}>
-                <a class="forum-btn forum-btn-wide" href={backUrl}>Cancel</a>
-                <button class="forum-btn forum-btn-wide" type="submit" disabled={busy}>{isFirst ? "Delete Thread" : "Delete Post"}</button>
+            <form class="forum-preview-buttons" onsubmit={remove}>
+                <a class="forum-button forum-button-form" href={backUrl}>Cancel</a>
+                <button class="forum-button forum-button-form" type="submit" disabled={busy}>{isFirst ? "Delete Thread" : "Delete Post"}</button>
             </form>
             {#if error}
                 <div class="forum-error">{error}</div>

@@ -217,16 +217,14 @@
 
     $effect(() => {
         document.body.className = inApp
-            ? "rbx-in-app"
+            ? "in-app"
             : landing.includes(router.name)
               ? "none-landing"
               : router.name === "blog"
                 ? "none-blog"
                 : router.name === "download"
                   ? "none-download-page"
-                  : session.me && !bare.includes(router.name)
-                    ? "rbx-has-left-nav"
-                    : "";
+                  : "";
     });
 
     $effect(() => {
@@ -245,12 +243,20 @@
         <Page />
     {:else if landing.includes(router.name) || bare.includes(router.name)}
         <Page />
-    {:else}
-        <Header />
-        <Page />
-        <Footer />
-        {#if session.me}
-            <ChatBar />
+        {#if router.name === "landing"}
+            <Footer landing />
         {/if}
+    {:else}
+        <div class="site-shell" class:logged-in={!!session.me}>
+            <Header />
+            <div class="site-main">
+                <Banners />
+                <Page />
+            </div>
+            <Footer />
+            {#if session.me}
+                <ChatBar />
+            {/if}
+        </div>
     {/if}
 {/if}

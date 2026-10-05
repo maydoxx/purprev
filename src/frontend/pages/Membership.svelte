@@ -9,10 +9,10 @@
     api("/membership").then(d => data = d).catch(err => error = err.message);
 
     const n = (v: number) => Number(v).toLocaleString("en-US");
-    const names: Record<string, string> = {
-        BC: "Classic",
-        TBC: "Turbo",
-        OBC: "Outrageous"
+    const labels: Record<string, string> = {
+        BC: "Builders Club",
+        TBC: "Turbo Builders Club",
+        OBC: "Outrageous Builders Club"
     };
 
     const tier = (id: string) => data?.tiers.find((t: any) => t.id === id);
@@ -30,6 +30,12 @@
     };
 
     const until = (t: number) => new Date(t * 1000).toLocaleDateString("en-US");
+
+    const member = $derived(session.me && session.me.membership !== "None" ? session.me.membership : "");
+    const expires = $derived(session.me?.membership_expires ?? 0);
+
+    // no period is stored, so more than a month left means a yearly plan
+    const plan = $derived(expires * 1000 - Date.now() > 31 * 86400000 ? "annual" : "monthly");
 
     const big = $derived<[string, string, string, string, string, boolean][]>([
         ["Daily NONEBUX", money(data?.free.stipend), money(tier("BC")?.stipend), money(tier("TBC")?.stipend), money(tier("OBC")?.stipend), true],
@@ -52,8 +58,15 @@
     <div id="BCPageContainer">
         <div class="header">
             <span><h1>Upgrade to NoneRev Builders Club</h1></span>
-            {#if session.me && session.me.membership !== "None"}
-                <span class="expire-text">{names[session.me.membership]} member{#if session.me.membership_expires > 0}, renews on <span class="date">{until(session.me.membership_expires)}</span>{/if}</span>
+            {#if member}
+                <div class="member-line">
+                    <span class="member-hat"></span><span class="expire-text">
+                        Your {labels[member]} Membership
+                        {#if expires > 0}
+                            Renews <span class="date">{until(expires)}</span>
+                        {/if}
+                    </span>
+                </div>
             {/if}
         </div>
 
@@ -108,10 +121,18 @@
                                 <div class="product-nbc divider-bottom"></div>
                             </td>
                             {#each ["BC", "TBC", "OBC"] as id}
+                                {@const current = id === member && period === plan}
                                 <td class="product-cell divider-left">
-                                    <div class="product-cell">
+                                    <div class="product-cell" class:product-current={current}>
                                         <div class="product-text">
-                                            <h3>{period === "annual" ? "Annually" : "Monthly"}</h3>
+                                            {#if current}
+                                                <div class="product-duration">Your Current Plan</div>
+                                                {#if expires > 0}
+                                                    <div class="product-expiration">Renews {until(expires)}</div>
+                                                {/if}
+                                            {:else}
+                                                <h3>{period === "annual" ? "Annually" : "Monthly"}</h3>
+                                            {/if}
                                         </div>
                                         <a data-rank={id} data-duration={period} class="btn-medium btn-primary product-button" href="/upgrades/paymentmethods?tier={id}&period={period}" onclick={e => { e.preventDefault(); pick(id, period); }}>{price(id, period)}</a>
                                     </div>
@@ -142,6 +163,11 @@
                 <div class="cell cellDivider">
                     For billing and payment questions: <a href="mailto:admin@nonerev.de">admin@nonerev.de</a>
                 </div>
+                {#if session.me && session.me.currency > 0}
+                    <div class="cell cellDivider balance-cell">
+                        <b>NONEBUX Balance:</b> <span class="balance">N${n(session.me.currency)}</span>
+                    </div>
+                {/if}
                 <div class="cell cellDivider">
                     <h3>Buy NONEBUX</h3>
                     <p>NONEBUX is the virtual currency used in many of our online games. You can also use NONEBUX for finding a great look for your avatar. Get cool gear to take into multiplayer battles. Buy Limited items to sell and trade. You’ll need NONEBUX to make it all happen. What are you waiting for?</p>

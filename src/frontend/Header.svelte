@@ -2,20 +2,40 @@
     import { session } from "./session.svelte";
     import { router } from "./router.svelte";
     import { api } from "./api";
-    import Banners from "./Banners.svelte";
+
+    const targets = [
+        ["People", "user"],
+        ["Games", "games"],
+        ["Catalog", "catalog"],
+        ["Groups", "groups"],
+        ["Library", "library"]
+    ];
 
     let q = $state("");
     let suggestions = $state<any[]>([]);
     let searchFocused = $state(false);
+    let selected = $state(0);
     let pending = $state(0);
+    let messages = $state(0);
     let unread = $state(0);
     let navOpen = $state(false);
+    let settingsOpen = $state(false);
+    let searchShown = $state(false);
+
+    const query = $derived(q.trim());
+    const searchUrls = $derived(query ? targets.map(([, type]) => `/search?q=${encodeURIComponent(query)}&type=${type}`) : []);
+    const extra = $derived(suggestions.filter(s => !searchUrls.includes(s.url)));
+    const urls = $derived([...searchUrls, ...extra.map(s => String(s.url))]);
+    const active = $derived(selected < urls.length ? selected : 0);
 
     $effect(() => {
         if (!session.me) return;
         const refresh = () => {
             api("/user/friends?tab=requests").then(d => {
                 pending = d.pendingCount;
+            }).catch(() => {});
+            api("/messages/unread").then(d => {
+                messages = d.unread;
             }).catch(() => {});
             api("/notifications/count").then(d => {
                 unread = d.unread;
@@ -48,9 +68,59 @@
         return () => clearTimeout(timer);
     });
 
+    $effect(() => {
+        router.path;
+        navOpen = false;
+        settingsOpen = false;
+        searchShown = false;
+    });
+
+    const go = (url: string) => {
+        searchFocused = false;
+        router.go(url);
+    };
+
     const search = (e: Event) => {
         e.preventDefault();
-        router.go("/search?q=" + encodeURIComponent(q));
+        if (urls.length) {
+            go(urls[active]!);
+        }
+    };
+
+    const typed = () => {
+        if (selected >= targets.length) {
+            selected = 0;
+        }
+        searchFocused = true;
+    };
+
+    const keys = (e: KeyboardEvent) => {
+        if (!searchFocused || !urls.length) return;
+        if (e.key === "ArrowDown" || e.key === "Tab") {
+            e.preventDefault();
+            selected = (active + 1) % urls.length;
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            selected = (active + urls.length - 1) % urls.length;
+        } else if (e.key === "Escape") {
+            searchFocused = false;
+        }
+    };
+
+    const pick = (e: MouseEvent, url: string) => {
+        e.preventDefault();
+        go(url);
+    };
+
+    const toggleSettings = (e: MouseEvent) => {
+        e.preventDefault();
+        settingsOpen = !settingsOpen;
+    };
+
+    const closeSettings = (e: MouseEvent) => {
+        if (settingsOpen && !(e.target as HTMLElement).closest(".header-settings")) {
+            settingsOpen = false;
+        }
     };
 
     const logout = async (e: Event) => {
@@ -59,126 +129,171 @@
         router.go("/");
     };
 
-    const badge = (n: number) => n > 99 ? "99+" : String(n);
+    const badge = (n: number) => n < 99 ? String(n) : "99+";
+
+    const bigBadge = (n: number) => n < 1000 ? String(n) : "1k+";
 </script>
 
-<div id="header" class="rbx-header" role="navigation" aria-label="Main navigation">
-    <div class="container-fluid">
-        <div class="rbx-navbar-header">
+<svelte:window onclick={closeSettings} />
+
+<div class="site-header" role="navigation" aria-label="Main navigation">
+    <div class="site-header-inner">
+        <div class="header-brand">
             {#if session.me}
-                <div class="rbx-nav-collapse" onclick={() => navOpen = !navOpen} title="Menu" role="button" aria-label="Toggle navigation">
+                <button type="button" class="nav-toggle" title="Menu" aria-label="Toggle navigation" aria-expanded={navOpen} onclick={() => navOpen = !navOpen}>
                     <span class="icon-nav-menu"></span>
-                </div>
+                    {#if messages + pending > 0}
+                        <span class="nav-toggle-count" title={String(messages + pending)}>{badge(messages + pending)}</span>
+                    {/if}
+                </button>
+            {:else}
+                <div class="nav-toggle"></div>
             {/if}
-            <a class="rbx-brand" href="/home" title="NoneRev">
-                <span class="logo"></span>
+            <a class="header-logo" href={session.me ? "/home" : "/"} title="NoneRev">
+                <span></span>
             </a>
         </div>
 
-        <ul class="rbx-navbar rbx-navbar-desktop">
+        <ul class="header-links">
             <li><a href="/games">Games</a></li>
             <li><a href="/catalog">Catalog</a></li>
             <li><a href="/develop/">Develop</a></li>
-            <li><a class="buy-robux" href="/upgrades/nonebux">NONEBUX</a></li>
+            {#if session.me}
+                <li><a href="/forum">Forums</a></li>
+            {:else}
+                <li><a href="/upgrades/nonebux">NONEBUX</a></li>
+            {/if}
             <li><a href="/download">Download</a></li>
         </ul>
 
-        <div id="navbar-universal-search" class="rbx-navbar-search search-form" role="search">
-            <form onsubmit={search} class="rbx-input-group">
-                <input id="navbar-search-input" class="input-field" type="text" bind:value={q} placeholder="Search" maxlength="120" autocomplete="off" onfocus={() => searchFocused = true} onblur={() => setTimeout(() => searchFocused = false, 120)}>
-                <button id="navbar-search-btn" class="rbx-input-addon-btn" type="submit" aria-label="Search">
+        <div class="header-search" class:shown={searchShown} role="search">
+            <form class="header-search-group" onsubmit={search}>
+                <input class="header-search-input" type="text" bind:value={q} placeholder="Search" maxlength="120" autocomplete="off" oninput={typed} onfocus={() => searchFocused = true} onblur={() => searchFocused = false} onkeydown={keys}>
+                <button class="header-search-button" type="submit" aria-label="Search">
                     <span class="icon-nav-search"></span>
                 </button>
             </form>
-            {#if searchFocused && suggestions.length}
-                <ul class="dropdown-menu rbx-dropdown-menu show" role="menu">
-                    {#each suggestions as suggestion}
-                        <li><a class="dropdown-item" href={suggestion.url} onclick={() => searchFocused = false}>{suggestion.label}</a></li>
+            {#if searchFocused && urls.length}
+                <ul class="header-search-menu" role="menu">
+                    {#each targets as [label], i}
+                        <li class="header-search-option" class:selected={i === active}>
+                            <a href={urls[i]} onmouseenter={() => selected = i} onmousedown={e => e.preventDefault()} onclick={e => pick(e, urls[i]!)}>Search <span class="header-search-term">"{query}"</span> in {label}</a>
+                        </li>
+                    {/each}
+                    {#each extra as suggestion, i}
+                        <li class="header-search-option" class:selected={targets.length + i === active}>
+                            <a href={suggestion.url} onmouseenter={() => selected = targets.length + i} onmousedown={e => e.preventDefault()} onclick={e => pick(e, suggestion.url)}>{suggestion.label}</a>
+                        </li>
                     {/each}
                 </ul>
             {/if}
         </div>
 
-        <div class="rbx-navbar-right">
+        <div class="header-right">
             {#if session.me}
-                <ul class="rbx-navbar-icon-group">
-                    <li class="dropdown">
-                        <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Settings">
+                <ul class="header-icons">
+                    <li class="header-settings">
+                        <a class="header-icon-item" href="/my/settings" role="button" title="Settings" aria-expanded={settingsOpen} onclick={toggleSettings}>
                             <span class="icon-nav-settings"></span>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end rbx-dropdown-menu">
-                            {#if session.me.admin > 0}
-                                <li><a href="/admi/">Admin</a></li>
-                            {/if}
-                            <li><a href="/my/settings">Settings</a></li>
-                            <li><a href="/logout" onclick={logout}>Logout</a></li>
-                        </ul>
+                        {#if settingsOpen}
+                            <div class="header-popover-arrow"></div>
+                            <div class="header-popover">
+                                <ul class="header-menu" role="menu">
+                                    {#if session.me.admin > 0}
+                                        <li><a href="/admi/">Admin</a></li>
+                                    {/if}
+                                    <li><a href="/my/settings">Settings</a></li>
+                                    <li><a href="/logout" onclick={logout}>Logout</a></li>
+                                </ul>
+                            </div>
+                        {/if}
                     </li>
                     <li>
-                        <a href="/my/money" title="Tix balance" aria-label={`Tix balance: ${(session.me.tix ?? 0).toLocaleString()}`}>
+                        <a class="header-icon-item" href="/my/money" title="Tix balance" aria-label={`Tix balance: ${(session.me.tix ?? 0).toLocaleString()}`}>
                             <span class="icon-nav-tix"></span>
-                            <span class="rbx-text-navbar-right">{(session.me.tix ?? 0).toLocaleString()}</span>
+                            <span class="header-amount">{(session.me.tix ?? 0).toLocaleString()}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="/upgrades/nonebux" title="Nonebux">
+                        <a class="header-icon-item" href="/upgrades/nonebux" title="Nonebux">
                             <span class="icon-nav-robux"></span>
-                            <span class="rbx-text-navbar-right">{session.me.currency.toLocaleString()}</span>
+                            <span class="header-amount">{session.me.currency.toLocaleString()}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="/my/notifications" title="Notifications" aria-label={`Notifications: ${unread} unread`}>
+                        <a class="header-icon-item" href="/my/notifications" title="Notifications" aria-label={`Notifications: ${unread} unread`}>
                             <span class="icon-nav-message"></span>
                             {#if unread > 0}
-                                <span class="rbx-topbar-badge">{badge(unread)}</span>
+                                <span class="header-icon-count">{badge(unread)}</span>
                             {/if}
                         </a>
+                    </li>
+                    <li class="header-search-toggle">
+                        <button type="button" class="header-icon-item" aria-label="Search" onclick={() => searchShown = !searchShown}>
+                            <span class="icon-nav-search-white"></span>
+                        </button>
                     </li>
                 </ul>
             {:else}
-                <ul class="rbx-navbar-right-nav">
-                    <li><a class="rbx-navbar-login" href="/login">Log In</a></li>
-                    <li><a class="rbx-navbar-signup" href="/signup">Sign Up</a></li>
+                <ul class="header-account-links">
+                    <li><a href="/login">Log In</a></li>
+                    <li><a href="/signup">Sign Up</a></li>
+                    <li class="header-search-toggle">
+                        <button type="button" aria-label="Search" onclick={() => searchShown = !searchShown}>
+                            <span class="icon-nav-search-white"></span>
+                        </button>
+                    </li>
                 </ul>
             {/if}
         </div>
 
-        <ul class="rbx-navbar rbx-navbar-mobile">
+        <ul class="header-links header-links-row">
             <li><a href="/games">Games</a></li>
             <li><a href="/catalog">Catalog</a></li>
             <li><a href="/develop/">Develop</a></li>
-            <li><a class="buy-robux" href="/upgrades/nonebux">NONEBUX</a></li>
+            {#if session.me}
+                <li><a href="/forum">Forums</a></li>
+            {:else}
+                <li><a href="/upgrades/nonebux">NONEBUX</a></li>
+            {/if}
+            <li><a href="/download">Download</a></li>
         </ul>
     </div>
 </div>
 
 {#if session.me}
-    <div id="navigation" class="rbx-left-col" class:nav-show={navOpen}>
+    <div class="left-nav" class:open={navOpen}>
         <ul>
-            <li class="rbx-nav-username">
+            <li class="left-nav-user">
                 <a href="/user?id={session.me.id}" title={session.me.username}>{session.me.username}</a>
             </li>
-            <li class="rbx-divider"></li>
-            <li><a href="/home"><span class="icon-nav-home"></span><span class="rbx-text-nav">Home</span></a></li>
-            <li><a href="/user?id={session.me.id}"><span class="icon-nav-profile"></span><span class="rbx-text-nav">Profile</span></a></li>
-            <li><a class="rbx-nav-badged" href="/my/messages"><span class="icon-nav-message"></span><span class="rbx-text-nav">Messages</span></a></li>
-            <li><a class="rbx-nav-badged" href="/my/friends"><span class="icon-nav-friends"></span><span class="rbx-text-nav">Friends</span>{#if pending > 0}<span class="rbx-nav-badge">{badge(pending)}</span>{/if}</a></li>
-            <li><a href="/my/avatar"><span class="icon-nav-charactercustomizer"></span><span class="rbx-text-nav">Avatar</span></a></li>
-            <li><a href="/my/inventory"><span class="icon-nav-inventory"></span><span class="rbx-text-nav">Inventory</span></a></li>
-            <li><a href="/trade"><span class="icon-nav-trade"></span><span class="rbx-text-nav">Trade</span></a></li>
-            <li><a href="/my/groups"><span class="icon-nav-group"></span><span class="rbx-text-nav">Groups</span></a></li>
-            <li><a href="/my/forums"><span class="icon-nav-forum"></span><span class="rbx-text-nav">Forum</span></a></li>
-            <li><a href="/blog"><span class="icon-nav-blog"></span><span class="rbx-text-nav">Blog</span></a></li>
-            <li><a href="/catalog"><span class="icon-nav-shop"></span><span class="rbx-text-nav">Shop</span></a></li>
-            <li class="rbx-upgrade-now"><a href="/premium/membership">Upgrade Now</a></li>
-            <li class="rbx-sidebar-events">
-                <span class="rbx-sidebar-events-title">Events</span>
-                <a href="/blog?category=events" title="NONE BETA events">
-                    <img src="/img/none-beta.png" alt="NONE BETA">
-                </a>
-            </li>
+            <li class="left-nav-divider"></li>
         </ul>
+        <div class="left-nav-scroll">
+            <ul>
+                <li><a class="left-nav-link" href="/home"><span class="icon-nav-home"></span><span class="left-nav-label">Home</span></a></li>
+                <li><a class="left-nav-link" href="/user?id={session.me.id}"><span class="icon-nav-profile"></span><span class="left-nav-label">Profile</span></a></li>
+                <li>
+                    <a class="left-nav-link" href="/my/messages"><span class="icon-nav-message"></span><span class="left-nav-label">Messages</span>{#if messages > 0}<span class="left-nav-count" title={String(messages)}>{bigBadge(messages)}</span>{/if}</a>
+                </li>
+                <li>
+                    <a class="left-nav-link" href="/my/friends"><span class="icon-nav-friends"></span><span class="left-nav-label">Friends</span>{#if pending > 0}<span class="left-nav-count" title={String(pending)}>{badge(pending)}</span>{/if}</a>
+                </li>
+                <li><a class="left-nav-link" href="/my/avatar"><span class="icon-nav-charactercustomizer"></span><span class="left-nav-label">Avatar</span></a></li>
+                <li><a class="left-nav-link" href="/my/inventory"><span class="icon-nav-inventory"></span><span class="left-nav-label">Inventory</span></a></li>
+                <li><a class="left-nav-link" href="/trade"><span class="icon-nav-trade"></span><span class="left-nav-label">Trade</span></a></li>
+                <li><a class="left-nav-link" href="/my/groups"><span class="icon-nav-group"></span><span class="left-nav-label">Groups</span></a></li>
+                <li><a class="left-nav-link" href="/my/forums"><span class="icon-nav-forum"></span><span class="left-nav-label">Forum</span></a></li>
+                <li><a class="left-nav-link" href="/blog"><span class="icon-nav-blog"></span><span class="left-nav-label">Blog</span></a></li>
+                <li class="left-nav-upgrade"><a href="/premium/membership">Upgrade Now</a></li>
+                <li class="left-nav-events">Events</li>
+                <li class="left-nav-sponsor">
+                    <a href="/blog?category=events" title="NONE BETA events">
+                        <img src="/img/none-beta.png" alt="NONE BETA">
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 {/if}
-
-<Banners />

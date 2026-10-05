@@ -1,4 +1,6 @@
 <script lang="ts">
+    let { landing = false } = $props<{ landing?: boolean }>();
+
     const links = [
         ["Blog", "/blog"],
         ["Forum", "/forum"],
@@ -10,12 +12,12 @@
     ];
 </script>
 
-<footer class="site-footer">
+<footer class="site-footer" class:site-footer-landing={landing}>
     <div class="site-footer-inner">
         <ul class="site-footer-links">
             {#each links as [label, href]}
                 <li>
-                    <a href={href}>{label}</a>
+                    <a class:site-footer-privacy={label === "Privacy"} href={href}>{label}</a>
                 </li>
             {/each}
         </ul>

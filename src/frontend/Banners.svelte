@@ -2,9 +2,9 @@
     import { api } from "./api";
 
     const styles: Record<string, string> = {
-        info: "rbx-alert-info",
-        warning: "rbx-alert-warning",
-        success: "rbx-alert-success"
+        info: "site-alert-info",
+        warning: "site-alert-warning",
+        success: "site-alert-success"
     };
 
     let banners = $state<any[]>([]);
@@ -34,13 +34,13 @@
 
 {#each banners as b (b.id)}
     {#if !(b.dismissible && (dismissed[keyOf(b)] || closed(b)))}
-        <div class="{styles[b.style] ?? styles.info} rbx-site-banner" class:rbx-site-banner-dismissible={b.dismissible} data-banner-key={keyOf(b)}>
-            <span class="rbx-site-banner-text">{b.message}</span>
+        <div class="site-alert {styles[b.style] ?? styles.info}" class:site-alert-dismissible={b.dismissible} role="alert" data-banner-key={keyOf(b)}>
+            <span class="site-alert-text">{b.message}</span>
             {#if b.linkUrl && b.linkText}
-                <a class="font-bold rbx-site-banner-link" href={b.linkUrl}>{b.linkText}</a>
+                <a class="site-alert-link" href={b.linkUrl}>{b.linkText}</a>
             {/if}
             {#if b.dismissible}
-                <button type="button" class="rbx-site-banner-close" aria-label="Dismiss" onclick={() => dismiss(b)}>&times;</button>
+                <button type="button" class="site-alert-close" aria-label="Dismiss" onclick={() => dismiss(b)}>&times;</button>
             {/if}
         </div>
     {/if}

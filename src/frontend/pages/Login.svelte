@@ -1,13 +1,25 @@
+<script module lang="ts">
+    export const failed = $state({
+        username: "",
+        error: ""
+    });
+</script>
+
 <script lang="ts">
-    import AuthBackground from "../AuthBackground.svelte";
+    import Header from "../Header.svelte";
+    import Banners from "../Banners.svelte";
+    import Footer from "../Footer.svelte";
     import { api } from "../api";
     import { session } from "../session.svelte";
     import { router } from "../router.svelte";
 
-    let username = $state("");
+    let username = $state(failed.username);
     let password = $state("");
-    let error = $state("");
+    let error = $state(failed.error);
     let busy = $state(false);
+
+    failed.username = "";
+    failed.error = "";
 
     const submit = async (e: Event) => {
         e.preventDefault();
@@ -33,25 +45,50 @@
     <link rel="stylesheet" href="/css/landing-2016.css">
 </svelte:head>
 
-<AuthBackground />
-<main class="none-auth-main">
-    <div class="none-auth-container">
-        <a href="/" class="none-auth-logo-link"><img src="/img/nonelogo.png" alt="None."></a>
-        <div class="none-auth-panel">
-            <h1>Log In</h1>
-            {#if error}<div class="none-auth-error" role="alert">{error}</div>{/if}
-            <form onsubmit={submit}>
-                    <div class="none-auth-field">
-                        <label for="username">Username</label>
-                        <input id="username" name="username" type="text" required autocomplete="username" bind:value={username} maxlength="20" placeholder="Username">
+<div class="login-page">
+    <Header />
+    <Banners />
+    <div class="login-body">
+        <h1>Login to NoneRev</h1>
+        <form class="login-area" onsubmit={submit}>
+            <div class="login-left">
+                <div class="login-panel">
+                    {#if error}
+                        <div class="login-error" role="alert">{error}</div>
+                    {/if}
+                    <table class="login-table">
+                        <tbody>
+                            <tr>
+                                <td><label for="username">Username:</label></td>
+                                <td><input id="username" name="username" type="text" required autocomplete="username" maxlength="20" bind:value={username}></td>
+                            </tr>
+                            <tr>
+                                <td><label for="password">Password:</label></td>
+                                <td><input id="password" name="password" type="password" required autocomplete="current-password" bind:value={password}></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="login-actions">
+                        <div class="login-forgot">
+                            <a href="/discord" target="_blank" rel="noreferrer">Forgot your password?</a>
+                        </div>
+                        <button type="submit" class="login-button" disabled={busy}>Sign In</button>
                     </div>
-                    <div class="none-auth-field">
-                        <label for="password">Password</label>
-                        <input id="password" name="password" type="password" required autocomplete="current-password" bind:value={password} placeholder="Password">
-                    </div>
-                <button type="submit" class="none-auth-button" disabled={busy}>{busy ? "Please wait…" : "Log In"}</button>
-            </form>
-            <p class="none-auth-note">Don't have an account? <a href="/register">Sign Up</a></p>
+                </div>
+            </div>
+            <div class="login-right">
+                <div class="login-signup">
+                    <p>Not a member?</p>
+                    <h2>Sign Up to Build &amp; Make Friends</h2>
+                    <a class="login-button login-button-green" href="/signup">Sign Up</a>
+                </div>
+            </div>
+        </form>
+        <div class="login-guest">
+            <h2>No invite key? Apply to join NoneRev</h2>
+            <br>
+            <p>Tell us a bit about you, and once we say yes the account is yours. <a class="login-button login-button-small" href="/apply">Apply</a></p>
         </div>
     </div>
-</main>
+    <Footer />
+</div>

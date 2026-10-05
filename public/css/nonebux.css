@@ -2,8 +2,9 @@
 
 .nonebux-page {
     min-height: calc(100vh - 40px);
+    padding-top: 0;
     color: #191919;
-    background: #f2f2f2;
+    background: #e3e3e3;
     font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
     font-size: 16px;
     font-weight: 300;
@@ -53,6 +54,7 @@
 }
 
 .nonebux-header h3 {
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 24px;
     font-weight: 300;
 }

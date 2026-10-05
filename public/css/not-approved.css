@@ -1,103 +1,132 @@
-@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600&display=swap");
-
-.not-approved-page {
-    min-height: calc(100vh - 40px);
-    padding: 10px 12px 25px;
-    background-color: #fff;
-    color: #191919;
-    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
-    font-size: 14px;
-    font-weight: 300;
-    line-height: 1.3em;
+body:has(.not-approved-page) {
+    background-color: #fff !important;
 }
 
-.not-approved-stage {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 50vh;
+.not-approved-page {
+    width: 970px;
+    max-width: 100%;
+    min-height: 580px;
+    margin: 0 auto;
+    padding: 5px 0 25px;
+    background-color: #fff;
+    color: #343434;
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.428;
 }
 
 .not-approved-box {
-    max-width: 562px;
+    box-sizing: content-box;
+    max-width: 500px;
+    margin: 0 auto;
     padding: 30px;
     border: 1px solid #000;
 }
 
 .not-approved-box h2 {
+    display: inline-block;
     margin: 0;
-    padding: 5px 0;
+    padding: 0;
     color: #343434;
+    font-family: inherit;
     font-size: 30px;
     font-weight: 400;
-    line-height: 1em;
+    line-height: 1.3em;
     letter-spacing: -1px;
 }
 
-.not-approved-body {
-    margin-left: 8px;
-}
-
-.not-approved-body p {
-    margin: 14px 0 0;
-    font-weight: 400;
+.not-approved-box p {
+    margin: 12px;
     line-height: 1.5em;
 }
 
-.not-approved-body p:first-child {
-    margin-top: 8px;
+.not-approved-box b {
+    font-weight: 700;
 }
 
-.not-approved-body strong {
-    font-weight: 600;
-}
-
-.not-approved-body a {
+.not-approved-box a,
+.not-approved-box a:visited {
     color: #7b2cbf;
     font-weight: 400;
     text-decoration: none;
 }
 
-.not-approved-body a:hover {
-    text-decoration: underline;
-}
-
-.not-approved-agree {
-    margin-top: 16px;
-    font-weight: 400;
+.not-approved-center {
     text-align: center;
 }
 
-.not-approved-agree label {
-    margin-left: 4px;
+.not-approved-offense {
+    width: 500px;
+    max-width: 100%;
+    margin-bottom: 5px;
+    padding: 10px;
+    border: 1px solid #000;
+    background-color: #fff;
+    line-height: 1.428;
 }
 
-.not-approved-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    margin-top: 16px;
+.not-approved-offense div {
+    line-height: inherit;
+}
+
+.not-approved-offense-reason {
+    margin-bottom: 5px;
+}
+
+.not-approved-offense blockquote {
+    margin: 14px 40px;
+    padding: 0;
+    border: 0;
+    font-size: 14px;
+    white-space: pre-line;
+    overflow-wrap: break-word;
+}
+
+.not-approved-box input[type="checkbox"] {
+    appearance: none;
+    width: 11px;
+    height: 11px;
+    margin: 0 1px 0 0;
+    border: 1px solid #b0b0b0;
+    border-radius: 2px;
+    background: linear-gradient(#efefef, #d8d8d8);
+    vertical-align: -1px;
+}
+
+.not-approved-box input[type="checkbox"]:checked {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9'%3E%3Cpolyline points='2,4 4.2,6.8 7.2,1.8' fill='none' stroke='%233b3b3b' stroke-width='1.7'/%3E%3C/svg%3E") center / 9px 9px no-repeat, linear-gradient(#efefef, #d8d8d8);
+}
+
+.not-approved-box label {
+    margin: 0;
     font-weight: 400;
 }
 
-.not-approved-actions button {
-    cursor: pointer;
-}
-
-.not-approved-actions button:disabled {
-    opacity: 0.5;
+.not-approved-box button {
+    box-sizing: border-box;
+    height: 20px;
+    margin: 0;
+    padding: 0 7px;
+    border: 1px solid;
+    border-color: #a5a5a5 #9b9b9b #949494;
+    border-radius: 2px;
+    background: linear-gradient(#f5f5f3, #dcdcda);
+    color: #000;
+    font: 400 13.3333px/18px Arial, Helvetica, sans-serif;
+    letter-spacing: normal;
     cursor: default;
 }
 
-@media (max-width: 991.98px) {
-    .not-approved-page {
-        min-height: calc(100vh - 80px);
-    }
+.not-approved-box button:disabled {
+    border-color: #adb2b5;
+    background: #f4f4f4;
+    color: #838383;
 }
 
 @media (max-width: 767px) {
-    .not-approved-box h2 {
-        font-size: 24px;
+    .not-approved-page {
+        padding-right: 12px;
+        padding-left: 12px;
     }
 }

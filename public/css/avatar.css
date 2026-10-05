@@ -1,70 +1,156 @@
-
-
-.avatar-container {
-    max-width: 970px;
-    margin: 0 auto;
-    font-size: 16px;
-    color: #191919;
+body:has(.avatar-page) {
+    background-color: #fff !important;
 }
 
-.avatar-container:after {
+.avatar-page {
+    box-sizing: border-box;
+    width: 970px;
+    min-height: 550px;
+    margin: 0 auto;
+    padding: 10px;
+    color: #343434;
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.428;
+    background-color: #fff;
+}
+
+.avatar-page::after {
     content: "";
     display: table;
     clear: both;
 }
 
-.avatar-container h2 {
-    margin: 0 0 12px;
-    font-size: 26px;
-    font-weight: 300;
-    color: #191919;
+.avatar-page *,
+.avatar-page *::before,
+.avatar-page *::after {
+    box-sizing: content-box;
+}
+
+.avatar-page :where(div) {
+    line-height: inherit;
+}
+
+.avatar-page a {
+    color: #5A189A;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+.avatar-page a:hover,
+.avatar-page a:focus {
+    text-decoration: none;
+}
+
+.avatar-page button,
+.avatar-page input {
+    font-family: inherit;
+    line-height: inherit;
+}
+
+.avatar-page h1,
+.avatar-page h2 {
+    padding: 0;
+    color: #343434;
+    line-height: 1.3em;
+    letter-spacing: -1px;
+}
+
+.avatar-page h1 {
+    margin: 12px;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.avatar-page h2 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 400;
+}
+
+.avatar-page p {
+    margin: 12px;
+    line-height: 1.5em;
 }
 
 .avatar-left {
     float: left;
-    width: 300px;
-    padding: 0 12px;
+    width: 375px;
+    margin-top: 10px;
 }
 
-.avatar-right {
-    float: left;
-    width: calc(100% - 300px);
-    padding: 0 12px 0 30px;
-}
-
-
-.avatar-thumb {
+.avatar-holder {
     position: relative;
-    width: 300px;
-    height: 300px;
-    margin: 0 0 6px;
-    text-align: center;
+    width: 352px;
+    height: 352px;
+    margin: 25px auto 0;
 }
 
-.avatar-thumb img {
-    width: 300px;
-    height: 300px;
-    object-fit: contain;
+.avatar-holder img,
+.avatar-holder .avatar-3d {
+    display: block;
+    width: 352px;
+    height: 352px;
+}
+
+.btn-control-small,
+.btn-control-large {
+    display: inline-block;
+    margin: 0;
+    padding: 0 6px;
+    color: #000;
+    font-weight: 400;
+    text-align: center;
+    background-color: #ccc;
+    background-position: top;
+    border: 1px solid #777;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.btn-control-small:hover,
+.btn-control-large:hover {
+    background-position: bottom;
+    border-color: #888;
+}
+
+.btn-control-small:disabled,
+.btn-control-large:disabled {
+    color: #a7a7a7;
+    background-position: center;
+    border-color: #ccc;
+    cursor: default;
+}
+
+.btn-control-small {
+    height: 18px;
+    font-size: 11px;
+    line-height: 18px;
+    background-image: url("/img/catalog/btn-control-small-tile.png");
+}
+
+.btn-control-large {
+    height: 25px;
+    padding: 0 7px;
+    font-size: 13px;
+    line-height: 24px;
+    background-image: url("/img/catalog/btn-control-large-tile.png");
+}
+
+.avatar-view-toggle {
+    position: absolute;
+    right: 80px;
+    bottom: 0;
 }
 
 .avatar-redraw {
-    font-size: 13px;
-    color: #191919;
-    margin-bottom: 40px;
-}
-
-.avatar-redraw a {
-    color: #5A189A;
-    text-decoration: none;
-}
-
-.avatar-redraw a:hover {
-    text-decoration: underline;
+    width: 250px;
+    margin: 5px 0 0 70px;
+    line-height: 19.2px;
 }
 
 .avatar-status {
-    min-height: 20px;
-    font-size: 13px;
     color: #757575;
 }
 
@@ -72,337 +158,699 @@
     color: #d86868;
 }
 
-
-.avatar-colors p {
-    margin: 0 0 12px;
-    font-size: 13px;
+.avatar-type {
+    margin: 26px 0 0 70px;
 }
 
-.body-figure {
+.avatar-type-option {
+    display: inline-block;
+    font-size: 22px;
+    line-height: 1.8;
+    cursor: pointer;
+    user-select: none;
+}
+
+.avatar-type-option:hover {
+    background-color: #efefef;
+}
+
+.avatar-type-option.selected {
+    background-color: #dedede;
+    transition: background-color 2s ease-out;
+}
+
+.avatar-type-option input {
+    width: 11px;
+    height: 11px;
+    margin: 3px 2px 0 4px;
+    background: linear-gradient(#fcfcfc, #dcdcdc);
+    border: 1px solid #a9a9a9;
+    border-radius: 50%;
+    cursor: pointer;
+    appearance: none;
+}
+
+.avatar-type-option input:checked {
+    background: radial-gradient(circle, #555 0 2.5px, transparent 3px), linear-gradient(#fcfcfc, #dcdcdc);
+}
+
+.avatar-type-option span {
+    padding-right: 6px;
+}
+
+.avatar-type-note {
+    width: 225px;
+    margin: 5px 0 0 70px;
+    line-height: 19.2px;
+}
+
+.avatar-page .avatar-colors-title {
+    margin: 10px 0 0 70px;
+}
+
+.avatar-mannequin {
+    width: 350px;
+    height: 400px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.mannequin-frame {
+    width: 194px;
+    height: 240px;
+    margin: 10px auto 0;
+}
+
+.mannequin-parts {
     position: relative;
-    width: 184px;
-    height: 190px;
-    margin: 0 auto 12px;
+    height: 2px;
+    margin: 11px 4px;
 }
 
-.body-part {
+.mannequin-part {
     position: absolute;
     display: block;
-    padding: 0;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 2px;
-    cursor: pointer;
-    transition: box-shadow 0.15s;
-}
-
-.body-part:hover,
-.body-part.active {
-    box-shadow: 0 0 0 2px #7B2CBF;
-}
-
-.body-part[data-part="head_color"] { left: 74px; top: 0; width: 36px; height: 36px; }
-.body-part[data-part="torso_color"] { left: 54px; top: 40px; width: 76px; height: 76px; }
-.body-part[data-part="left_arm_color"] { left: 14px; top: 40px; width: 36px; height: 76px; }
-.body-part[data-part="right_arm_color"] { left: 134px; top: 40px; width: 36px; height: 76px; }
-.body-part[data-part="left_leg_color"] { left: 54px; top: 120px; width: 36px; height: 70px; }
-.body-part[data-part="right_leg_color"] { left: 94px; top: 120px; width: 36px; height: 70px; }
-
-.color-picker {
-    display: none;
-    width: 276px;
-    padding: 8px;
-    background: #fff;
-    border: 1px solid #b8b8b8;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-}
-
-.color-picker.open {
-    display: block;
-}
-
-.color-picker .picker-title {
-    margin: 0 0 6px;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.color-picker .swatches {
-    display: grid;
-    grid-template-columns: repeat(10, 24px);
-    gap: 2px;
-}
-
-.color-picker .swatches button {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: 1px solid #999;
-    cursor: pointer;
-}
-
-.color-picker .swatches button:hover {
-    box-shadow: 0 0 0 2px #7B2CBF;
-    position: relative;
-    z-index: 1;
-}
-
-.color-picker .swatches button.selected {
-    outline: 2px solid #191919;
-    outline-offset: -2px;
-}
-
-
-.wardrobe-tabs {
-    list-style: none;
     margin: 0;
     padding: 0;
-    border-bottom: 1px solid #b8b8b8;
+    border: 1px solid #ddd;
+    border-radius: 0;
+    cursor: pointer;
 }
 
-.wardrobe-tabs:after {
-    content: "";
-    display: table;
-    clear: both;
+.mannequin-part[data-part="head_color"] {
+    top: 0;
+    left: 72px;
+    width: 44px;
+    height: 44px;
 }
 
-.wardrobe-tabs li {
+.mannequin-part[data-part="right_arm_color"] {
+    top: 52px;
+    left: 0;
+    width: 40px;
+    height: 88px;
+}
+
+.mannequin-part[data-part="torso_color"] {
+    top: 52px;
+    left: 48px;
+    width: 88px;
+    height: 88px;
+}
+
+.mannequin-part[data-part="left_arm_color"] {
+    top: 52px;
+    left: 144px;
+    width: 40px;
+    height: 88px;
+}
+
+.mannequin-part[data-part="right_leg_color"] {
+    top: 146px;
+    left: 48px;
+    width: 40px;
+    height: 88px;
+}
+
+.mannequin-part[data-part="left_leg_color"] {
+    top: 146px;
+    left: 96px;
+    width: 40px;
+    height: 88px;
+}
+
+.avatar-right {
     float: left;
-    margin: 0 4px -1px 0;
+    width: 570px;
+    margin-top: 10px;
 }
 
-.wardrobe-tabs a {
-    display: block;
-    padding: 12px 10px;
+.avatar-page a.btn-get-more {
+    float: right;
+    padding: 7px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 100%;
+    white-space: nowrap;
+    background-color: #02b757;
+    border: 1px solid #02b757;
+    border-radius: 3px;
+    user-select: none;
+}
+
+.avatar-page a.btn-get-more:hover,
+.avatar-page a.btn-get-more:focus {
+    background-color: #3fc679;
+    border-color: #3fc679;
+    box-shadow: 0 1px 3px rgba(150, 150, 150, 0.74);
+}
+
+.get-more-text {
+    float: right;
+    width: 140px;
+    margin: 2px 6px 0 0;
+    color: #191919;
+    text-align: right;
+}
+
+.avatar-tabs {
+    overflow: hidden;
+    padding-left: 5px;
+}
+
+.avatar-tabs button {
+    position: relative;
+    top: -1px;
+    float: left;
+    margin: 4px 2px 0 1px;
+    padding: 7px;
+    color: #343434;
     font-size: 15px;
     font-weight: 700;
-    color: #191919;
-    text-decoration: none;
-    background: #e3e3e3;
-    border: 1px solid #b8b8b8;
+    background-color: #d6d6d6;
+    border: 1px solid #9e9e9e;
     border-bottom: 0;
+    border-radius: 0;
+    cursor: pointer;
 }
 
-.wardrobe-tabs a.active {
-    background: #fff;
-    border-bottom: 1px solid #fff;
+.avatar-tabs button:hover {
+    background-color: #e9e9e9;
 }
 
-.wardrobe-tabs a.disabled {
-    color: #757575;
+.avatar-tabs button.tab-active {
+    top: 1px;
+    z-index: 1;
+    margin: 0 1px 0 0;
+    padding: 9px 7px;
+    background-color: #fff;
+    border-color: #ccc;
+}
+
+.avatar-tab-panel {
+    position: relative;
+    top: -1px;
+    width: 550px;
+    height: 470px;
+    margin-bottom: 2px;
+    padding: 10px 15px 16px;
+    background-color: #fff;
+    border-top: 1px solid #ccc;
+}
+
+.wardrobe-categories {
+    height: 84px;
+    text-align: center;
     cursor: default;
 }
 
-
-.wardrobe-categories {
-    margin: 12px 0 6px;
-    text-align: center;
-    font-size: 13px;
-}
-
 .wardrobe-categories a {
-    display: inline-block;
-    padding: 2px 5px;
-    margin: 0 2px 4px;
-    color: #5A189A;
-    text-decoration: none;
+    padding: 3px 6px;
+    line-height: 1.8;
 }
 
 .wardrobe-categories a:hover {
-    text-decoration: underline;
+    background-color: #efefef;
 }
 
-.wardrobe-categories a.active {
-    color: #191919;
-    background: #e3e3e3;
-    border-radius: 2px;
+.wardrobe-categories a.selected {
+    background-color: #dedede;
 }
 
-
-.item-tiles {
-    list-style: none;
-    margin: 0;
-    padding: 12px 0 0;
+.wardrobe-create {
+    line-height: 1.8;
 }
 
-.item-tiles:after {
-    content: "";
-    display: table;
-    clear: both;
+.wardrobe-content {
+    min-height: 386px;
 }
 
-.item-tile {
-    position: relative;
-    float: left;
-    width: 25%;
-    min-height: 190px;
-    padding: 0 5px 12px;
+.avatar-empty {
+    line-height: 40px;
     text-align: center;
-    box-sizing: border-box;
 }
 
-.item-tile .item-image {
+.asset-tile {
+    float: left;
+    width: 130px;
+    min-height: 181px;
+    margin: 5px 7px 5px 0;
+}
+
+.asset-thumb {
     position: relative;
+    width: 128px;
+    height: 110px;
+    text-align: center;
+}
+
+.asset-thumb a {
     display: inline-block;
     width: 110px;
     height: 110px;
 }
 
-.item-tile .item-image img {
+.asset-thumb img {
     width: 110px;
     height: 110px;
     object-fit: contain;
 }
 
-.item-tile .item-badge {
+.asset-button {
     position: absolute;
-    top: -5px;
+    top: 0;
     right: -4px;
-    min-width: 42px;
-    height: 21px;
-    padding: 0 8px;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 20px;
+}
+
+.btn-small {
+    display: inline-block;
+    height: 18px;
+    min-width: 40px;
+    margin: 0;
+    padding: 1px 7px 2px;
     color: #fff;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
-    background: #6A1B9A linear-gradient(#9D4EDD, #6A1B9A);
-    border: 1px solid #4C117D;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 18px;
+    background: #63229c url("/img/btn-purple.png") left -160px;
+    border: 1px solid #63229c;
     border-radius: 0;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    box-sizing: border-box;
 }
 
-.item-tile .item-badge:hover {
-    background: #9D4EDD linear-gradient(#B264E3, #6A1B9A);
+.btn-small:not(:disabled):hover {
+    background-position: left -181px;
 }
 
-.item-tile .item-badge.wearing,
-.item-tile .item-badge[disabled] {
+.btn-small:disabled {
     cursor: default;
-    opacity: 1;
 }
 
-.item-tile .item-name {
-    display: block;
-    margin-top: 6px;
-    padding: 0 4px;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 18px;
-    color: #5A189A;
-    text-decoration: none;
+.asset-details {
+    width: 125px;
     overflow: hidden;
-    max-height: 36px;
-}
-
-.item-tile .item-name:hover {
-    text-decoration: underline;
-}
-
-.item-tile .item-note {
-    display: block;
-    margin-top: 4px;
-    font-size: 11px;
-    color: #757575;
-}
-
-.wardrobe-empty {
-    padding: 30px 0;
+    padding: 2px 0 6px;
     text-align: center;
-    color: #757575;
 }
 
+.asset-name a {
+    font-weight: 700;
+    line-height: 1.5em;
+    vertical-align: top;
+}
 
-.wardrobe-pager {
-    margin: 6px 0 18px;
-    padding: 6px 0;
+.asset-type span {
+    font-size: 12px;
+}
+
+.asset-type .asset-type-label {
+    color: #999;
+    font-weight: 600;
+}
+
+.avatar-pager {
+    clear: left;
     text-align: center;
-    font-size: 13px;
-    border-bottom: 1px solid #b8b8b8;
+    user-select: none;
 }
 
-.wardrobe-pager a,
-.wardrobe-pager span {
-    display: inline-block;
+.avatar-pager a,
+.avatar-pager span {
     padding: 2px 6px;
-    color: #191919;
-    text-decoration: none;
 }
 
-.wardrobe-pager a:hover {
-    text-decoration: underline;
+.avatar-pager span {
+    cursor: default;
 }
 
-.wardrobe-pager .current {
-    background: #e3e3e3;
+.avatar-pager span span {
+    background-color: #d8d8d8;
+}
+
+.avatar-pager a:not(.disabled):hover {
+    background-color: #efefef;
+}
+
+.avatar-page .avatar-pager a.disabled {
+    color: #343434;
+    cursor: default;
+}
+
+.avatar-divider {
+    margin-top: 10px;
+    border-top: 1px solid #ccc;
+}
+
+.avatar-page .avatar-right > h2 {
+    margin-top: 20px;
+}
+
+.wearing-content {
+    min-height: 380px;
+    margin-top: 10px;
+    padding-left: 15px;
+}
+
+.wearing-content:has(.avatar-empty) {
+    min-height: 0;
+}
+
+.outfits-banner {
+    position: relative;
+    height: 30px;
+    margin: 5px 0 10px;
+}
+
+.outfits-banner-right {
+    position: absolute;
+    top: 0;
+    right: -13px;
+}
+
+.outfits-container {
+    display: inline-block;
+    width: 100%;
+    min-height: 380px;
+}
+
+.outfits-container .avatar-empty {
+    margin-top: 10px;
+}
+
+.outfit-tile {
+    position: relative;
+    float: left;
+    width: 100px;
+    height: 170px;
+    margin: 10px;
+}
+
+.outfit-avatar {
+    display: block;
+    width: 100px;
+    height: 100px;
+    margin: 0 0 8px;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.outfit-avatar img {
+    display: block;
+    width: 100px;
+    height: 100px;
+}
+
+.outfit-name {
+    overflow: hidden;
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.outfit-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+}
+
+.outfit-gear {
+    display: block;
+    width: 40px;
+    height: 27px;
+    padding: 0;
+    background: url("/img/develop/gear.png") no-repeat right top;
+    border: 0;
+    cursor: pointer;
+}
+
+.outfit-gear:hover {
+    background-position: right center;
+}
+
+.outfit-gear.active {
+    background-position: right bottom;
+}
+
+.outfit-menu-list {
+    position: absolute;
+    top: 26px;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    white-space: nowrap;
+    background-color: #efefef;
+    border: 1px solid #777;
+}
+
+.outfit-menu-list button,
+.avatar-page .outfit-menu-list a {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 4px 8px;
+    color: #000;
+    font-size: 12px;
+    text-align: left;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.outfit-menu-list button:hover,
+.avatar-page .outfit-menu-list a[href]:hover {
+    color: #fff;
+    background-color: #5A189A;
+}
+
+.avatar-page .outfit-menu-list a:not([href]) {
+    color: #a7a7a7;
+    cursor: default;
+}
+
+.outfits-pager {
+    text-align: center;
+}
+
+.outfits-pager .btn-control-small {
+    margin: 0 4px;
+    padding: 0 5px;
+}
+
+.color-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1002;
+    width: fit-content;
+    height: fit-content;
+    max-height: calc(100vh - 60px);
+    margin: auto;
+    overflow-y: auto;
+    padding: 3px;
+    color: #343434;
+    font-size: 27px;
+    font-weight: 700;
+    text-align: center;
+    background-color: #fff;
+    border: 2px solid #888;
+}
+
+.color-modal-title {
+    height: 38px;
+    padding-top: 2px;
+}
+
+.color-modal-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    width: 368px;
+    height: 398px;
+    margin: 0 5px 5px;
+}
+
+.color-swatch {
+    width: 40px;
+    height: 40px;
+    margin: 1px 1px 6px;
+    padding: 0;
+    border: 2px solid #fff;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.color-swatch:hover {
+    border-color: #e1e1e1;
+}
+
+.avatar-modal-close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: url("/img/avatar/close.svg") no-repeat 0 0;
+    border: 0;
+    cursor: pointer;
+}
+
+.avatar-modal-close:hover {
+    background-position: 0 -20px;
+}
+
+.avatar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    background-color: #000;
+    opacity: 0.8;
+}
+
+.outfit-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1002;
+    width: 425px;
+    height: fit-content;
+    margin: auto;
+    padding: 5px;
+    color: #343434;
+    text-align: center;
+    background-color: #e1e1e1;
+    border: 2px solid #272727;
+}
+
+.outfit-modal .avatar-modal-close {
+    right: 7px;
+}
+
+.outfit-modal-title {
+    margin: 5px;
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1.3em;
+    letter-spacing: -1px;
+}
+
+.outfit-modal-body {
+    padding-bottom: 7px;
+    background-color: #fff;
+}
+
+.outfit-modal-message {
+    padding: 19px 15px 27px;
+    font-size: 15px;
     font-weight: 700;
 }
 
-.wardrobe-pager a.disabled {
-    color: #999;
-    pointer-events: none;
+.outfit-modal-message p {
+    margin-bottom: 15px;
 }
 
-.currently-wearing {
-    margin-top: 24px;
+.outfit-modal-message label {
+    font-size: 14px;
+    font-weight: 600;
 }
 
-@media (max-width: 767.98px) {
+.outfit-modal-message input {
+    width: 170px;
+    height: 25px;
+    margin-left: 4px;
+    padding: 0 3px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 24px;
+    border: 1px solid #a7a7a7;
+    border-radius: 0;
+}
+
+.outfit-modal-buttons {
+    height: 50px;
+    padding: 1px 0 11px;
+}
+
+.btn-large {
+    display: inline-block;
+    height: 27px;
+    min-width: 70px;
+    margin: 0 5px;
+    padding: 9px 13px 12px;
+    color: #fff;
+    font-size: 23px;
+    font-weight: 400;
+    line-height: 27px;
+    background-position: left 0;
+    border: 1px solid;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.btn-large:hover {
+    background-position: left -48px;
+}
+
+.btn-large-purple {
+    background-color: #63239b;
+    background-image: url("/img/btn-purple.png");
+    border-color: #63239b;
+}
+
+.btn-large-gray {
+    background-color: #565656;
+    background-image: url("/img/develop/btn-gray.png");
+    border-color: #565656;
+}
+
+@media (max-width: 991.98px) {
+    .avatar-page {
+        width: auto;
+        max-width: 600px;
+    }
+
     .avatar-left,
     .avatar-right {
         float: none;
-        width: 100%;
-        padding: 0 12px;
+        width: auto;
     }
 
-    .item-tile {
+    .avatar-tab-panel {
+        width: auto;
+        height: auto;
+        min-height: 470px;
+    }
+
+    .outfits-banner-right {
+        right: 0;
+    }
+}
+
+@media (max-width: 543.98px) {
+    .avatar-redraw,
+    .avatar-type,
+    .avatar-type-note,
+    .avatar-page .avatar-colors-title {
+        margin-left: 0;
+    }
+
+    .avatar-mannequin {
+        width: auto;
+    }
+
+    .asset-tile {
         width: 50%;
+        margin-right: 0;
+    }
+
+    .asset-thumb {
+        margin: 0 auto;
+    }
+
+    .asset-details {
+        width: auto;
     }
 }
-
-.avatar-rig {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 12px 0 6px;
-    font-size: 14px;
-    color: #757575;
-}
-
-.avatar-rig-switch {
-    display: inline-flex;
-    border: 1px solid #b8b8b8;
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.avatar-rig-switch button {
-    padding: 4px 14px;
-    border: 0;
-    background: #fff;
-    color: #757575;
-    font: inherit;
-    cursor: pointer;
-}
-
-.avatar-rig-switch button + button {
-    border-left: 1px solid #b8b8b8;
-}
-
-.avatar-rig-switch button.active {
-    background: #7b2cbf;
-    color: #fff;
-}
-
-.wardrobe-tabs button { border: 0; background: transparent; color: #444; padding: 10px 20px; cursor: pointer; }
-.wardrobe-tabs button.active { border-bottom: 3px solid #7d27c5; color: #191919; }
-.avatar-outfits { min-height: 370px; padding: 14px; background: #fff; }
-.avatar-outfits h2 { margin: 0 0 14px; font-size: 22px; font-weight: 400; }
-.avatar-outfit-create { display: flex; gap: 8px; margin-bottom: 16px; }
-.avatar-outfit-create input { flex: 1; min-width: 0; border: 1px solid #bbb; padding: 7px; }
-.avatar-outfits button { border: 1px solid #a7a7a7; background: #fff; padding: 6px 12px; }
-.avatar-outfit-create button { border-color: #7d27c5; background: #7d27c5; color: #fff; }
-.avatar-outfit-list { list-style: none; margin: 0; padding: 0; }
-.avatar-outfit-list li { display: flex; align-items: center; gap: 8px; padding: 12px 4px; border-top: 1px solid #e5e5e5; }
-.avatar-outfit-list li strong { flex: 1; }
