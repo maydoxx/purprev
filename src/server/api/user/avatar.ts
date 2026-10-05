@@ -4,6 +4,7 @@ import { sql, now } from "../../db";
 import { brickcolors } from "../../brickcolors";
 import { rcc } from "../../rcc";
 import { mediaUrl, withThumbnail } from "../../paths";
+import { mediaHas, mediaRecord, parseKey } from "../../media";
 
 const DEFAULT_COLORS = {
     head_color: 24,
@@ -182,6 +183,28 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         ok: await rcc.render.avatar(user.id),
         full: await mediaUrl("avatars", user.id)
     }), {
+        auth: true
+    })
+
+    // in case the manager never reports back
+    .get("/render", async ({ user }) => {
+        const job = await rcc.render.status("avatar", user.id);
+        if (job?.status === "done") {
+            for (const f of job.outputs ?? []) {
+                const parsed = parseKey(String(f.key ?? ""));
+                if (parsed && parsed.id === user.id) {
+                    await mediaRecord(parsed.kind, parsed.id, parsed.ext, Number(f.size ?? 0));
+                }
+            }
+        }
+        return {
+            status: job?.status ?? "unknown",
+            error: job?.error ?? "",
+            warnings: job?.warnings ?? [],
+            full: await mediaUrl("avatars", user.id),
+            has3d: await mediaHas("avatars3d", user.id)
+        };
+    }, {
         auth: true
     })
 

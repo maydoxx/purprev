@@ -39,6 +39,41 @@
     let page = $state(1);
     let status = $state("");
     let statusError = $state(false);
+    let avatarVersion = $state(0);
+    let watch = 0;
+
+    // renders take a few seconds
+    const watchRender = async () => {
+        const mine = ++watch;
+        for (let i = 0; i < 40 && mine === watch; i++) {
+            await new Promise(r => setTimeout(r, 3000));
+            let job: any;
+            try {
+                job = await api("/user/avatar/render");
+            } catch {
+                continue;
+            }
+            if (mine !== watch) {
+                return;
+            }
+            if (job.status === "done") {
+                avatarVersion = Date.now();
+                statusError = false;
+                status = job.warnings.length ? `Your avatar has been re-drawn, but without a 3D view: ${job.warnings.join("; ")}` : "Your avatar has been re-drawn.";
+                return;
+            }
+            if (job.status === "failed") {
+                statusError = true;
+                status = `Re-drawing failed: ${job.error}`;
+                return;
+            }
+            if (job.status === "unknown" && i >= 3) {
+                statusError = true;
+                status = "The renderer did not answer, try again later.";
+                return;
+            }
+        }
+    };
 
     const load = async () => {
         data = await api("/user/avatar");
@@ -74,6 +109,7 @@
             await load();
             statusError = false;
             status = "Outfit applied. Your avatar is being re-drawn.";
+            watchRender();
         } catch (err: any) {
             statusError = true;
             status = err.message;
@@ -112,6 +148,7 @@
             data.colors = res.colors;
             statusError = false;
             status = "Saved. Your avatar is being re-drawn.";
+            watchRender();
         } catch (err: any) {
             statusError = true;
             status = err.message;
@@ -127,6 +164,9 @@
             data.avatar_type = res.avatar_type;
             statusError = !res.ok;
             status = res.ok ? `Switched to ${type}. Your avatar is being re-drawn.` : "Saved, but the renderer could not be reached.";
+            if (res.ok) {
+                watchRender();
+            }
         } catch (err: any) {
             statusError = true;
             status = err.message;
@@ -139,6 +179,9 @@
             const res = await api("/user/avatar/render", {});
             statusError = !res.ok;
             status = res.ok ? "Your avatar is being re-drawn, give it a minute." : "Could not reach the renderer, try again later.";
+            if (res.ok) {
+                watchRender();
+            }
         } catch (err: any) {
             statusError = true;
             status = err.message;
@@ -190,9 +233,11 @@
         <div class="avatar-left">
             <div class="avatar-thumb">
                 {#if threeD}
-                    <Avatar3D userId={me.id} />
+                    {#key avatarVersion}
+                        <Avatar3D userId={me.id} />
+                    {/key}
                 {:else}
-                    <img src="/api/user/getProfilePicture?userId={me.id}&type=full" alt={me.username}>
+                    <img src="/api/user/getProfilePicture?userId={me.id}&type=full{avatarVersion ? `&v=${avatarVersion}` : ""}" alt={me.username}>
                 {/if}
                 <button type="button" class="avatar-3d-toggle" onclick={() => threeD = !threeD}>{threeD ? "2D" : "3D"}</button>
             </div>

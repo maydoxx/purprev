@@ -19,7 +19,9 @@
         let controls: OrbitControls | null = null;
 
         const load = async () => {
-            const res = await fetch(`/api/user/avatar3d?userId=${userId}`);
+            const res = await fetch(`/api/user/avatar3d?userId=${userId}`, {
+                cache: "no-store"
+            });
             if (res.status === 404) {
                 state = "missing";
                 return;
