@@ -9,7 +9,7 @@ import { mediaPut, mediaCopy, mediaEntry, mediaKey, contentType } from "../../me
 import { storage } from "../../storage";
 import { rcc } from "../../rcc";
 import { assetUrl } from "../../site";
-import { GENRES, GEAR, MAX_PLAYERS, MAX_PLAYERS_BC, ACCESS, gearCsv, gameSettings, placeLimit, placeLimitLabel } from "../../games";
+import { GENRES, GEAR, MAX_PLAYERS, MAX_PLAYERS_BC, ACCESS, gearCsv, gameSettings, placeLimit, placeLimitLabel, isGenre } from "../../games";
 import type { User } from "../../session";
 
 const CHUNK_MAX = 768 * 1024;
@@ -358,6 +358,13 @@ const cleanName = (name: string) => {
 };
 
 const cleanDescription = (description?: string) => (description ?? "").trim().slice(0, 2000);
+
+const cleanGenre = (genre: string) => {
+    if (!isGenre(genre)) {
+        throw new DevelopError("Pick a genre from the list.");
+    }
+    return genre;
+};
 
 
 const parsePrice = (price?: number) => {
@@ -749,11 +756,12 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             const name = cleanName(body.name);
             const description = cleanDescription(body.description);
             const price = parsePrice(body.price);
+            const genre = cleanGenre(body.genre ?? "All");
             const assetId = await storeClothing(user.id, category, name, body.texture_file);
 
             const created = await sql`
-                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, created_at, updated_at)
-                VALUES (${name}, ${description}, ${user.id}, ${category}, ${assetId}, ${price}, '', 0, ${now()}, ${now()}) RETURNING id`;
+                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, genre, created_at, updated_at)
+                VALUES (${name}, ${description}, ${user.id}, ${category}, ${assetId}, ${price}, '', 0, ${genre}, ${now()}, ${now()}) RETURNING id`;
             const itemId = Number(created[0].id);
             rcc.render.item(itemId, assetId);
 
@@ -773,6 +781,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             name: t.String(),
             description: t.Optional(t.String()),
             price,
+            genre: t.Optional(t.String()),
             texture_file: t.File({ type: "image" })
         })
     })
@@ -784,6 +793,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             const name = cleanName(body.name);
             const description = cleanDescription(body.description);
             const price = parsePrice(body.price);
+            const genre = cleanGenre(body.genre ?? item.genre);
             let assetId = numericId(item.asset_id);
             const newImage = hasFile(body.texture_file);
 
@@ -796,7 +806,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
 
 
             await sql`
-                UPDATE catalog_items SET name = ${name}, description = ${description}, asset_id = ${assetId}, price = ${price},
+                UPDATE catalog_items SET name = ${name}, description = ${description}, asset_id = ${assetId}, price = ${price}, genre = ${genre},
                     thumbnail = ${newImage ? "" : item.thumbnail}, updated_at = ${now()}
                 WHERE id = ${params.id} AND creator_id = ${user.id}
             `;
@@ -819,6 +829,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             name: t.String(),
             description: t.Optional(t.String()),
             price,
+            genre: t.Optional(t.String()),
             texture_file: t.Optional(t.File({ type: "image" }))
         })
     })

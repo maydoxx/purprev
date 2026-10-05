@@ -29,6 +29,7 @@
         bc_only: false,
         is_starter: false,
         package_parts: "",
+        genre: "All",
         is_limited: false,
         is_limited_unique: false,
         limited_stock: "",
@@ -79,6 +80,7 @@
             bc_only: Number(item.bc_only) === 1,
             is_starter: Number(item.is_starter) === 1,
             package_parts: item.package_parts ?? "",
+            genre: item.genre ?? "All",
             is_limited: Number(item.is_limited) === 1,
             is_limited_unique: Number(item.is_limited_unique) === 1,
             limited_stock: item.limited_stock ?? "",
@@ -105,6 +107,7 @@
                 bc_only: form.bc_only,
                 is_starter: form.is_starter,
                 package_parts: form.package_parts,
+                genre: form.genre,
                 is_limited: form.is_limited || form.is_limited_unique,
                 is_limited_unique: form.is_limited_unique,
                 limited_stock: opt(form.limited_stock)
@@ -195,9 +198,17 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label" for="creator">Creator username</label>
                             <input class="form-control" id="creator" required bind:value={form.creator}>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="genre">Genre</label>
+                            <select class="form-select" id="genre" bind:value={form.genre}>
+                                {#each data?.genres ?? ["All"] as g}
+                                    <option value={g}>{g}</option>
+                                {/each}
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="asset_id">Asset id</label>

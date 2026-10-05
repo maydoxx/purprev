@@ -126,6 +126,7 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
         const currency = query.currency && query.currency in CURRENCIES ? query.currency : "all";
         const creator = (query.creator ?? "").trim();
         const unavailable = query.unavailable === "1" || query.unavailable === "true";
+        const genres = (query.genre ?? "").split(",").map(g => g.trim()).filter(g => g !== "All" && isGenre(g));
 
         const where = sql`
             ${q !== "" ? sql`catalog_items.name ILIKE ${"%" + q + "%"}` : sql`1 = 1`}
@@ -133,6 +134,7 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             AND ${CURRENCIES[currency]}
             AND ${creator !== "" ? sql`users.username = ${creator}` : sql`1 = 1`}
             AND ${unavailable ? sql`1 = 1` : available}
+            AND ${genres.length > 0 ? sql`catalog_items.genre IN ${sql(genres)}` : sql`1 = 1`}
         `;
 
         const [count] = await sql`
@@ -157,6 +159,8 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             sort,
             currency,
             creator,
+            genre: genres,
+            genres: GENRES,
             page,
             totalPages,
             total,
@@ -171,6 +175,7 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             currency: t.Optional(t.String()),
             creator: t.Optional(t.String()),
             unavailable: t.Optional(t.String()),
+            genre: t.Optional(t.String()),
             page: t.Optional(t.Numeric())
         })
     })

@@ -9,6 +9,7 @@ import { CATEGORIES as BLOG_CATEGORIES } from "../site/blog";
 import { siteSettings, setSiteSetting } from "../../settings";
 import { isTier } from "../../membership";
 import { ONLINE_WINDOW } from "../../friends";
+import { GENRES, isGenre } from "../../games";
 
 const PER_PAGE = 20;
 const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
@@ -88,7 +89,8 @@ const item = t.Object({
     })),
     bc_only: t.Optional(t.Boolean()),
     is_starter: t.Optional(t.Boolean()),
-    package_parts: t.Optional(t.String({ maxLength: 255 }))
+    package_parts: t.Optional(t.String({ maxLength: 255 })),
+    genre: t.Optional(t.String())
 });
 
 class AdminError extends Error {}
@@ -248,6 +250,10 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
     if (!ITEM_CATEGORIES.includes(category)) {
         throw new AdminError("Invalid category.");
     }
+    const genre = body.genre ?? existing?.genre ?? "All";
+    if (!isGenre(genre)) {
+        throw new AdminError("Invalid genre.");
+    }
 
     const limitedUnique = body.is_limited_unique ? 1 : 0;
     const limited = limitedUnique || body.is_limited ? 1 : 0;
@@ -275,6 +281,7 @@ const cleanItem = async (body: typeof item.static, existing: any) => {
         bc_only: body.bc_only ? 1 : 0,
         is_starter: body.is_starter ? 1 : 0,
         package_parts: category === "Package" ? parts.slice(0, 12).join(";") : "",
+        genre,
         is_limited: limited,
         is_limited_unique: limitedUnique,
         limited_stock: stock,
@@ -468,7 +475,10 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         for (const row of page.items) {
             row.thumbnail = row.thumbnail || await mediaUrl("catalog", row.id);
         }
-        return page;
+        return {
+            ...page,
+            genres: GENRES
+        };
     }, {
         admin: true,
         query: list
@@ -478,8 +488,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         try {
             const c = await cleanItem(body, null);
             const created = await sql`
-                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, tix_price, thumbnail, is_featured, bc_only, is_starter, package_parts, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
-                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.tix_price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_starter}, ${c.package_parts}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()}) RETURNING id`;
+                INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, tix_price, thumbnail, is_featured, bc_only, is_starter, package_parts, genre, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
+                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.tix_price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_starter}, ${c.package_parts}, ${c.genre}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()}) RETURNING id`;
             const itemId = Number(created[0].id);
             if (c.remote !== "") {
                 await storeThumbnail(itemId, c.remote);
@@ -498,14 +508,14 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .patch("/catalog/:id", async ({ params, body, status }) => {
         try {
-            const [existing] = await sql`SELECT id, limited_sold FROM catalog_items WHERE id = ${params.id}`;
+            const [existing] = await sql`SELECT id, limited_sold, genre FROM catalog_items WHERE id = ${params.id}`;
             if (!existing) {
                 throw new AdminError("That item does not exist.");
             }
             const c = await cleanItem(body, existing);
             await sql`
                 UPDATE catalog_items SET name = ${c.name}, description = ${c.description}, creator_id = ${c.creator_id}, category = ${c.category},
-                    asset_id = ${c.asset_id}, price = ${c.price}, tix_price = ${c.tix_price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured}, bc_only = ${c.bc_only}, is_starter = ${c.is_starter}, package_parts = ${c.package_parts},
+                    asset_id = ${c.asset_id}, price = ${c.price}, tix_price = ${c.tix_price}, thumbnail = ${c.thumbnail}, is_featured = ${c.is_featured}, bc_only = ${c.bc_only}, is_starter = ${c.is_starter}, package_parts = ${c.package_parts}, genre = ${c.genre},
                     is_limited = ${c.is_limited}, is_limited_unique = ${c.is_limited_unique}, limited_stock = ${c.limited_stock}, updated_at = ${now()}
                 WHERE id = ${params.id}
             `;
