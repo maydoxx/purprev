@@ -44,7 +44,14 @@ const columns: [string, string, string][] = [
     ["games", "allowed_gear", "varchar(160) NOT NULL DEFAULT ''"],
     ["games", "copylocked", "smallint NOT NULL DEFAULT 1"],
     ["games", "access", "varchar(8) NOT NULL DEFAULT 'everyone' CHECK (access IN ('everyone', 'friends', 'private'))"],
-    ["games", "featured", "smallint NOT NULL DEFAULT 0"]
+    ["games", "featured", "smallint NOT NULL DEFAULT 0"],
+    ["moderation_actions", "created_at", "integer NOT NULL DEFAULT 0"],
+    ["catalog_items", "genre", "varchar(20) NOT NULL DEFAULT 'All'"],
+    ["vip_servers", "access_code", "varchar(64) NOT NULL DEFAULT gen_random_uuid()::text"],
+    ["vip_servers", "active", "smallint NOT NULL DEFAULT 1"],
+    ["vip_servers", "allow_friends", "smallint NOT NULL DEFAULT 0"],
+    ["users", "last_studio", "integer NOT NULL DEFAULT 0"],
+    ["users", "studio_place_id", "integer NOT NULL DEFAULT 0"]
 ];
 for (const [table, column, definition] of columns) {
     const [row] = await sql`SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ${table} AND column_name = ${column}`;
@@ -53,6 +60,9 @@ for (const [table, column, definition] of columns) {
         console.log(`added ${table}.${column}`);
     }
 }
+
+// the column may only exist after the loop above
+await sql`CREATE UNIQUE INDEX IF NOT EXISTS vip_servers_access_code ON vip_servers (access_code)`;
 
 // seeds insert fixed ids
 const identities = await sql`SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = current_schema() AND is_identity = 'YES'`;
