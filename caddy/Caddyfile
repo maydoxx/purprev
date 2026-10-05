@@ -20,8 +20,14 @@ nonerev.de {
     root * C:\Users\Administrator\Desktop\purprev\dist
     encode gzip
 
-    @backend path /api/* /uploads/* /Game/* /game/* /Asset /asset /Asset/* /asset/* /Setting/* /Error/* /error/* /user/* /Friend/* /marketplace/* /ownership/* /currency/* /persistence/* /thumbs/* /Thumbs/* /moderation/* /mobileapi/* /UserCheck/* /Login/* /login/* /device/* /notifications/* /sponsoredpage/* /v1.1/* /my/account/* /My/Places.aspx /IDE/* /ide/* /Data/* /UI/* /universes/* /developerproducts/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
+    @backend path /api/* /uploads/* /Game/* /game/* /Asset /asset /Asset/* /asset/* /Setting/* /Error/* /error/* /user/* /users/* /userblock/* /Friend/* /marketplace/* /ownership/* /currency/* /gametransactions/* /points/* /reservedservers/* /persistence/* /thumbs/* /Thumbs/* /moderation/* /AbuseReport/* /adimpression/* /mobileapi/* /UserCheck/* /Login/* /login/* /device/* /notifications/* /sponsoredpage/* /client-status/* /v1.0/* /v1.1/* /my/account/* /my/friendsonline /My/Places.aspx /IDE/* /ide/* /Data/* /UI/* /universes/* /developerproducts/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
     handle @backend {
+        reverse_proxy 127.0.0.1:3000
+    }
+
+    # the site has /groups, /groups/search and the vite bundles in /assets
+    @backend_ids path_regexp ^/(groups|assets)/[0-9]+(/.*)?$
+    handle @backend_ids {
         reverse_proxy 127.0.0.1:3000
     }
 

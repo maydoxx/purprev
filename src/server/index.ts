@@ -33,11 +33,31 @@ const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
 
 
-    .onError({ as: "global" }, ({ code, error, request, set }) => {
+    .onRequest(({ request }): Promise<Response> | undefined => {
+        const url = new URL(request.url);
+        const path = url.pathname.replace(/\/{2,}/g, "/");
+        if (path !== url.pathname) {
+            url.pathname = path;
+            // a new Request would lose requestIP, which isInternal needs
+            Object.defineProperty(request, "url", {
+                value: url.href
+            });
+            return app.handle(request);
+        }
+    })
+
+    .onError({ as: "global" }, ({ code, error, request, set, status }) => {
         const where = `${request.method} ${new URL(request.url).pathname}`;
         const message = error instanceof Error ? error.message : String(error);
 
-        if (code === "VALIDATION" || code === "NOT_FOUND") {
+        if (code === "NOT_FOUND") {
+            console.warn(`${where} -> ${code}`);
+            return status(404, {
+                error: "not found"
+            });
+        }
+
+        if (code === "VALIDATION") {
             console.warn(`${where} -> ${code}: ${message.split("\n")[0]}`);
             return;
         }
