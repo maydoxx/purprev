@@ -1,11 +1,31 @@
 <script lang="ts">
-    import GameCard from "../GameCard.svelte";
     import { api } from "../api";
     import { router } from "../router.svelte";
 
+    const categories: [string, string, string | null][] = [
+        ["animations", "Animations", null],
+        ["audio", "Audio", null],
+        ["badges", "Badges", null],
+        ["decals", "Decals", null],
+        ["faces", "Faces", "faces"],
+        ["game-passes", "Game Passes", null],
+        ["gear", "Gear", "gear"],
+        ["hats", "Hats", "hats"],
+        ["heads", "Heads", null],
+        ["models", "Models", null],
+        ["packages", "Packages", "packages"],
+        ["pants", "Pants", "pants"],
+        ["places", "Places", null],
+        ["plugins", "Plugins", null],
+        ["shirts", "Shirts", "shirts"],
+        ["t-shirts", "T-Shirts", "t-shirts"]
+    ];
+    const PER_PAGE = 30;
+
     const id = $derived(Number(router.query.id) || 0);
+    const category = $derived(categories.some(c => c[0] === router.query.category) ? router.query.category! : "hats");
     const page = $derived(Math.max(1, Number(router.query.page) || 1));
-    const type = $derived(router.query.type === "items" ? "items" : "games");
+    const info = $derived(categories.find(c => c[0] === category)!);
 
     let data = $state<any>(null);
     let missing = $state(false);
@@ -17,148 +37,127 @@
             missing = true;
             return;
         }
-        api(`/user/favorites/${id}?page=${page}&type=${type}`).then(d => data = d).catch(() => missing = true);
+        api(`/user/favorites/${id}?category=${category}&page=${page}`).then(d => data = d).catch(() => missing = true);
     });
 
-    const url = (p: number, kind = type) => `/favorites?id=${id}&type=${kind}&page=${p}`;
+    const url = (cat: string, p: number) => `/favorites?id=${id}&category=${cat}${p > 1 ? `&page=${p}` : ""}`;
+    const itemUrl = (item: any) => category === "places" ? `/game?id=${item.id}` : `/catalog/item?id=${item.id}`;
+    const thumb = (item: any) => item.thumbnail || item.icon || "/img/pending.png";
+    const overlay = (item: any) => item.is_limited_unique ? "/img/catalog/overlay-limited-unique.png" : item.is_limited ? "/img/catalog/overlay-limited.png" : "";
+    const limited = (item: any) => item.is_limited || item.is_limited_unique;
+    const n = (v: any) => Number(v).toLocaleString();
 </script>
 
 <svelte:head>
     <title>{data ? `${data.username}'s Favorites` : "Favorites"} - NoneRev</title>
+    <link rel="stylesheet" href="/css/inventory.css">
 </svelte:head>
 
-<main class="rbx-content">
-    <div class="favorites-page">
+<main class="inventory-page">
+    <div class="inventory-shell">
         {#if missing}
-            <div class="section-content-off">That user does not exist.</div>
-        {:else if data}
-            <div class="container-header">
-                <h2><a href="/user?id={id}">{data.username}</a>'s Favorites <span class="assets-count">({data.total.toLocaleString()})</span></h2>
-            </div>
-            <nav class="favorites-tabs" aria-label="Favorite type">
-                <a href={url(1, "games")} class:active={type === "games"}>Games</a>
-                <a href={url(1, "items")} class:active={type === "items"}>Catalog Items</a>
-            </nav>
-            {#if type === "items" && data.items?.length === 0}
-                <div class="section-content-off">{data.username} has no favorite items yet.</div>
-            {:else if type === "games" && data.games.length === 0}
-                <div class="section-content-off">{data.username} has no favorite games yet.</div>
-            {:else if type === "items"}
-                <ul class="favorite-items-list">
-                    {#each data.items as item (item.id)}
-                        <li>
-                            <a href="/catalog/item?id={item.id}">
-                                <img src={item.thumbnail || "/img/pending.png"} alt="">
-                                <span>{item.name}</span>
-                            </a>
-                        </li>
-                    {/each}
-                </ul>
-            {:else}
-                <ul class="favorites-list">
-                    {#each data.games as game (game.id)}
-                        <GameCard {game} />
-                    {/each}
-                </ul>
-            {/if}
-            {#if data.totalPages > 1}
-                <nav aria-label="Page navigation" class="d-flex justify-content-center mt-3">
-                    <ul class="pagination">
-                        {#each Array.from({ length: data.totalPages }, (_, i) => i + 1) as i}
-                            <li class="page-item" class:active={i === page}>
-                                <a class="page-link" href={url(i)}>{i}</a>
-                            </li>
+            <div class="inventory-empty">That user does not exist.</div>
+        {:else}
+            <h1>{data ? `${data.username}'s Favorites` : "Favorites"}</h1>
+
+            <div class="inventory-layout">
+                <aside class="inventory-categories">
+                    <h2>Category</h2>
+                    <nav>
+                        {#each categories as [key, label]}
+                            <a href={url(key, 1)} class:active={key === category}>{label}</a>
                         {/each}
-                    </ul>
-                </nav>
-            {/if}
+                    </nav>
+                </aside>
+
+                <section class="inventory-content">
+                    <div class="inventory-heading-row">
+                        <div>
+                            <h2>{info[1]}</h2>
+                            <p>
+                                {#if data && data.items.length > 0}
+                                    Showing {(page - 1) * PER_PAGE + 1} - {(page - 1) * PER_PAGE + data.items.length} of {n(data.total)} results
+                                {:else}
+                                    Showing 0 results
+                                {/if}
+                            </p>
+                        </div>
+
+                        <div class="inventory-get-more">
+                            {#if category === "places"}
+                                <span>Explore games to<br>find more places!</span>
+                                <a href="/games">Get More</a>
+                            {:else}
+                                <span>Explore the catalog to<br>find more {info[1].toLowerCase()}!</span>
+                                <a href={info[2] ? `/catalog?category=${info[2]}` : "/catalog"}>Get More</a>
+                            {/if}
+                        </div>
+                    </div>
+
+                    {#if !data}
+                        <div class="inventory-empty">Loading...</div>
+                    {:else if data.items.length === 0}
+                        <div class="inventory-empty">{data.username} has no favorite {info[1].toLowerCase()} yet.</div>
+                    {:else}
+                        <div class="inventory-grid">
+                            {#each data.items as item}
+                                <article class="inventory-item">
+                                    <a class="inventory-thumb" href={itemUrl(item)}>
+                                        <img src={thumb(item)} alt={item.name}>
+                                        {#if overlay(item)}
+                                            <img class="inventory-limited-overlay" src={overlay(item)} alt={item.is_limited_unique ? "Limited U" : "Limited"}>
+                                        {/if}
+                                    </a>
+                                    <div class="inventory-item-info">
+                                        <a class="inventory-item-name" href={itemUrl(item)} title={item.name}>{item.name}</a>
+                                        <div class="inventory-creator">
+                                            By
+                                            {#if item.creator_id}
+                                                <a href="/user?id={item.creator_id}">{item.creator_name}</a>
+                                            {:else}
+                                                <span>NoneRev</span>
+                                            {/if}
+                                        </div>
+                                        {#if category !== "places"}
+                                            <div class="inventory-price">
+                                                {#if limited(item) && item.best_price !== null}
+                                                    <span class="inventory-robux">{n(item.best_price)}</span>
+                                                {:else if limited(item)}
+                                                    <span class="inventory-not-a-price">No Resellers</span>
+                                                {:else if item.price === null && item.tix_price === null}
+                                                    <span class="inventory-not-a-price">Off Sale</span>
+                                                {:else if item.price !== null && Number(item.price) === 0}
+                                                    <span class="inventory-not-a-price">Free</span>
+                                                {:else if item.price !== null}
+                                                    <span class="inventory-robux">{n(item.price)}</span>
+                                                {:else}
+                                                    <span class="inventory-tickets">{n(item.tix_price)}</span>
+                                                {/if}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                </article>
+                            {/each}
+                        </div>
+
+                        {#if data.totalPages > 1}
+                            <div class="inventory-pagination">
+                                {#if page > 1}
+                                    <a href={url(category, page - 1)}>Previous</a>
+                                {:else}
+                                    <span class="disabled">Previous</span>
+                                {/if}
+                                <span class="page-number">Page {page} of {data.totalPages}</span>
+                                {#if page < data.totalPages}
+                                    <a href={url(category, page + 1)}>Next</a>
+                                {:else}
+                                    <span class="disabled">Next</span>
+                                {/if}
+                            </div>
+                        {/if}
+                    {/if}
+                </section>
+            </div>
         {/if}
     </div>
 </main>
-
-<style>
-    .favorites-page {
-        max-width: 970px;
-        margin: 0 auto;
-        color: #191919;
-    }
-
-    .favorites-page h2 {
-        margin: 0 0 12px;
-        font-size: 24px;
-        font-weight: 300;
-    }
-
-    .favorites-page h2 a {
-        color: inherit;
-        text-decoration: none;
-    }
-
-    .favorites-page h2 a:hover {
-        text-decoration: underline;
-    }
-
-    .favorites-page .assets-count {
-        font-weight: inherit;
-    }
-
-    .favorites-list {
-        display: flex;
-        flex-wrap: wrap;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
-    .favorites-tabs {
-        display: flex;
-        margin-bottom: 14px;
-        background: #fff;
-        box-shadow: 0 1px 3px #969696bd;
-    }
-
-    .favorites-tabs a {
-        flex: 1;
-        padding: 12px;
-        text-align: center;
-        color: #333;
-        text-decoration: none;
-    }
-
-    .favorites-tabs a.active {
-        border-bottom: 4px solid #7d27c5;
-    }
-
-    .favorite-items-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-        gap: 10px;
-        list-style: none;
-        padding: 0;
-    }
-
-    .favorite-items-list li {
-        background: #fff;
-        box-shadow: 0 1px 3px #969696bd;
-    }
-
-    .favorite-items-list a {
-        display: flex;
-        flex-direction: column;
-        padding: 7px;
-        color: #333;
-        text-decoration: none;
-    }
-
-    .favorite-items-list img {
-        width: 100%;
-        aspect-ratio: 1;
-        object-fit: contain;
-    }
-
-    .favorite-items-list span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-</style>

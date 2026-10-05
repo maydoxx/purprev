@@ -58,7 +58,7 @@
     <link rel="stylesheet" href="/css/inventory.css">
 </svelte:head>
 
-<main class="inventory-2016">
+<main class="inventory-page">
     <div class="inventory-shell">
         <h1>My Inventory</h1>
 

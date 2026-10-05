@@ -1,14 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600&display=swap");
 
-.inventory-2016,
-.inventory-2016 a,
-.inventory-2016 button,
-.inventory-2016 input,
-.inventory-2016 select {
+.inventory-page,
+.inventory-page a,
+.inventory-page button,
+.inventory-page input,
+.inventory-page select {
     font-family: "Source Sans Pro", Arial, sans-serif;
 }
 
-.inventory-2016 {
+.inventory-page {
     min-height: calc(100vh - 40px);
     padding: 28px 18px 70px;
     color: #191919;
@@ -264,7 +264,7 @@
 }
 
 @media (max-width: 720px) {
-    .inventory-2016 {
+    .inventory-page {
         padding-left: 12px;
         padding-right: 12px;
     }
@@ -342,4 +342,42 @@
     font-size: 11px;
     line-height: 14px;
     font-weight: 600;
+}
+
+.inventory-price {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.inventory-robux,
+.inventory-tickets {
+    position: relative;
+    padding-left: 20px;
+    color: #060;
+    font-weight: 600;
+}
+
+.inventory-robux::before,
+.inventory-tickets::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translateY(-50%);
+    background: url("/img/nonebux-green.png") center / contain no-repeat;
+}
+
+.inventory-tickets {
+    color: #c28a00;
+}
+
+.inventory-tickets::before {
+    background-image: url("/img/tix-gold.png");
+}
+
+.inventory-not-a-price {
+    color: #888;
 }
