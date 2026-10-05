@@ -6,11 +6,15 @@ const CDN = (process.env.SETUP_URL || process.env.CDN_URL || "").replace(/\/+$/,
 const FILES: Record<string, string> = {
     windows: "NoneRevLauncher.exe",
     linux: "nonerev",
-    android: "android/NoneRevPlayer.apk"
+    android: "android/NoneRevPlayer.apk",
+    studio: "studio/NoneRevStudio.zip",
+    "linux-native": "linux/NoneRevPlayer-linux-x86_64.tar.gz"
 };
 const VERSIONS: Record<string, string> = {
     windows: "version.txt",
-    android: "android/version.txt"
+    android: "android/version.txt",
+    studio: "studio/version.txt",
+    "linux-native": "linux/version.txt"
 };
 
 const routes = (prefix: string) => new Elysia({ prefix })
