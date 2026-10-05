@@ -19,6 +19,45 @@ const CATEGORIES: Record<string, string | null> = {
     places: null
 };
 
+const placesFilter = (filter: string, user: { id: number, username: string }, offset: number) => {
+    if (filter === "my-vip-servers" || filter === "other-vip-servers") {
+        const where = filter === "my-vip-servers"
+            ? sql`v.owner_id = ${user.id}`
+            : sql`v.owner_id <> ${user.id} AND v.id IN (SELECT vip_id FROM vip_server_members WHERE user_id = ${user.id})`;
+        return Promise.all([
+            sql`
+                SELECT games.id, games.id AS game_id, games.title AS name, games.creator_id, users.username AS creator_name,
+                    v.id AS vip_id, v.name AS vip_name, v.owner_id AS vip_owner_id, owner.username AS vip_owner_name
+                FROM vip_servers v
+                JOIN games ON games.id = v.game_id
+                LEFT JOIN users ON users.id = games.creator_id
+                LEFT JOIN users owner ON owner.id = v.owner_id
+                WHERE ${where}
+                ORDER BY v.created_at DESC, v.id DESC LIMIT ${PER_PAGE} OFFSET ${offset}
+            `,
+            sql`SELECT COUNT(*)::int AS n FROM vip_servers v JOIN games ON games.id = v.game_id WHERE ${where}`
+        ]);
+    }
+    if (filter === "purchased") {
+        const owned = sql`games.id IN (SELECT p.game_id FROM user_game_passes up JOIN game_passes p ON p.id = up.pass_id WHERE up.user_id = ${user.id})`;
+        return Promise.all([
+            sql`
+                SELECT games.id, games.id AS game_id, games.title AS name, games.creator_id, users.username AS creator_name FROM games
+                LEFT JOIN users ON users.id = games.creator_id
+                WHERE ${owned} ORDER BY games.id DESC LIMIT ${PER_PAGE} OFFSET ${offset}
+            `,
+            sql`SELECT COUNT(*)::int AS n FROM games WHERE ${owned}`
+        ]);
+    }
+    return Promise.all([
+        sql`
+            SELECT id, id AS game_id, title AS name, creator_id, ${user.username} AS creator_name FROM games
+            WHERE creator_id = ${user.id} ORDER BY id DESC LIMIT ${PER_PAGE} OFFSET ${offset}
+        `,
+        sql`SELECT COUNT(*)::int AS n FROM games WHERE creator_id = ${user.id}`
+    ]);
+};
+
 export const inventory = new Elysia({ prefix: "/inventory" })
     .use(session)
     .get("/", async ({ query, user, status }) => {
@@ -32,6 +71,7 @@ export const inventory = new Elysia({ prefix: "/inventory" })
         const page = Math.max(1, query.page ?? 1);
         const offset = (page - 1) * PER_PAGE;
         const type = CATEGORIES[category];
+        const filter = query.places_filter ?? "created";
 
         const [items, [count]] = type
             ? await Promise.all([
@@ -61,13 +101,7 @@ export const inventory = new Elysia({ prefix: "/inventory" })
                 sql`SELECT COUNT(*)::int AS n FROM user_badges WHERE user_id = ${user.id}`
             ])
             : category === "places"
-            ? await Promise.all([
-                sql`
-                    SELECT id, id AS game_id, title AS name, creator_id, ${user.username} AS creator_name FROM games
-                    WHERE creator_id = ${user.id} ORDER BY id DESC LIMIT ${PER_PAGE} OFFSET ${offset}
-                `,
-                sql`SELECT COUNT(*)::int AS n FROM games WHERE creator_id = ${user.id}`
-            ])
+            ? await placesFilter(filter, user, offset)
             : await Promise.all([
                 sql`
                     SELECT p.id, p.name, p.icon, p.game_id, p.creator_id, users.username AS creator_name, games.title AS game_title
@@ -88,6 +122,9 @@ export const inventory = new Elysia({ prefix: "/inventory" })
                     icon: await mediaUrl("icons", Number(g.id))
                 })))
                 : items,
+            ...(category === "places" ? {
+                places_filter: filter
+            } : {}),
             page,
             totalPages: Math.max(1, Math.ceil(Number(count.n) / PER_PAGE))
         };
@@ -95,6 +132,12 @@ export const inventory = new Elysia({ prefix: "/inventory" })
         auth: true,
         query: t.Object({
             category: t.Optional(t.String()),
+            places_filter: t.Optional(t.Union([
+                t.Literal("created"),
+                t.Literal("my-vip-servers"),
+                t.Literal("other-vip-servers"),
+                t.Literal("purchased")
+            ])),
             page: t.Optional(t.Numeric())
         })
     })
