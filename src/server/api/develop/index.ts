@@ -7,6 +7,7 @@ import { sql, now } from "../../db";
 import { saveImage, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
 import { mediaPut, mediaCopy, mediaEntry, mediaKey, contentType } from "../../media";
 import { storage } from "../../storage";
+import { imageSize } from "../../image";
 import { rcc } from "../../rcc";
 import { assetUrl } from "../../site";
 import { GENRES, GEAR, MAX_PLAYERS, MAX_PLAYERS_BC, ACCESS, gearCsv, gameSettings, placeLimit, placeLimitLabel, isGenre } from "../../games";
@@ -187,51 +188,6 @@ const cleanSettings = (body: any, user: User) => {
 
 const chunkPath = (dir: string, index: number) => join(dir, `${String(index).padStart(4, "0")}.part`);
 
-
-const imageSize = (bytes: Uint8Array) => {
-    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    if (bytes.length >= 24 && view.getUint32(0) === 0x89504e47) {
-        return {
-            type: "png",
-            width: view.getUint32(16),
-            height: view.getUint32(20)
-        };
-    }
-    if (bytes.length >= 10 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
-        return {
-            type: "gif",
-            width: view.getUint16(6, true),
-            height: view.getUint16(8, true)
-        };
-    }
-    if (bytes.length >= 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
-        let offset = 2;
-        while (offset + 9 < bytes.length) {
-            if (bytes[offset] !== 0xff) {
-                return null;
-            }
-            const marker = bytes[offset + 1]!;
-
-            if (marker === 0xff) {
-                offset += 1;
-                continue;
-            }
-            if (marker === 0x01 || marker === 0xd8 || (marker >= 0xd0 && marker <= 0xd7)) {
-                offset += 2;
-                continue;
-            }
-            if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
-                return {
-                    type: "jpg",
-                    width: view.getUint16(offset + 7),
-                    height: view.getUint16(offset + 5)
-                };
-            }
-            offset += 2 + view.getUint16(offset + 2);
-        }
-    }
-    return null;
-};
 
 const checkTexture = async (category: string, file: File) => {
     if (file.size <= 0) {

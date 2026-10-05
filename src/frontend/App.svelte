@@ -73,6 +73,9 @@
     import AbuseReport from "./pages/AbuseReport.svelte";
     import AdminReports from "./pages/admin/Reports.svelte";
     import GroupsSearch from "./pages/groups/Search.svelte";
+    import CreateUserAd from "./pages/CreateUserAd.svelte";
+    import MyUserAds from "./pages/MyUserAds.svelte";
+    import AdminUserAds from "./pages/admin/UserAds.svelte";
 
     session.refresh();
 
@@ -141,12 +144,18 @@
         abusereport: AbuseReport,
         "admin-reports": AdminReports,
         "groups-search": GroupsSearch,
+        "create-user-ad": CreateUserAd,
+        "user-ads": MyUserAds,
+        "admin-user-ads": AdminUserAds,
     };
 
     const landing = ["landing", "login", "signup", "apply"];
     const bare = ["blog", "download"];
 
     const needsLogin = [
+        "create-user-ad",
+        "user-ads",
+        "admin-user-ads",
         "membership-checkout",
         "home",
         "settings",

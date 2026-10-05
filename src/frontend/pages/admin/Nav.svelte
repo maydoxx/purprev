@@ -19,6 +19,7 @@
             ["/admi/catalog", "Catalog", ["/admi/catalog"]],
             ["/admi/blog", "Blog", ["/admi/blog"]],
             ["/admi/banners", "Banners", ["/admi/banners"]],
+            ["/admi/user-ads", "User Ads", ["/admi/user-ads"]],
             ["/admi/gamecards", "Game Cards", ["/admi/gamecards"]]
         ]],
         ["System", [

@@ -17,7 +17,7 @@ export const REASONS = [
     "Other"
 ];
 
-const TYPES = ["game", "user", "item", "comment", "group"];
+const TYPES = ["game", "user", "item", "comment", "group", "ad"];
 
 type Target = {
     name: string;
@@ -51,6 +51,13 @@ const targetOf = async (type: string, id: number): Promise<Target | null> => {
         return row ? {
             name: row.name,
             url: `/groups?id=${id}`
+        } : null;
+    }
+    if (type === "ad") {
+        const [row] = await sql`SELECT name FROM user_ads WHERE id = ${id}`;
+        return row ? {
+            name: row.name,
+            url: ""
         } : null;
     }
     return {

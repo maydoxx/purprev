@@ -1,0 +1,261 @@
+.user-ad {
+    margin: 0 auto;
+    background-color: transparent;
+    color: #757575;
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 18px;
+}
+
+.user-ad-banner {
+    width: 728px;
+}
+
+.user-ad-skyscraper {
+    width: 160px;
+}
+
+.user-ad-rectangle {
+    width: 300px;
+}
+
+.user-ad-link {
+    display: block;
+}
+
+.user-ad-link img {
+    display: block;
+    border: 0;
+}
+
+.user-ad-annotations {
+    display: flex;
+    justify-content: space-between;
+    height: 18px;
+    margin-top: 2px;
+}
+
+.user-ad-identification {
+    color: #191919;
+    text-transform: uppercase;
+}
+
+.user-ad .user-ad-report,
+.user-ad .user-ad-report:visited {
+    color: #757575;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+.user-ad .user-ad-report:hover {
+    color: #e27676;
+}
+
+@media (max-width: 728px) {
+    .user-ad-banner {
+        display: none;
+    }
+}
+
+.create-ad {
+    max-width: 970px;
+    padding: 0 12px;
+}
+
+.develop-page .create-ad h2 {
+    margin: 18px 0 8px;
+    color: #343434;
+    font-size: 21px;
+    font-weight: 400;
+}
+
+.create-ad p {
+    margin: 0 0 8px;
+}
+
+.create-ad-templates {
+    width: 360px;
+    margin: 0 0 12px;
+    padding-left: 20px;
+}
+
+.create-ad-templates li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.create-ad-form {
+    margin-top: 24px;
+}
+
+.create-ad-row {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    margin-bottom: 8px;
+}
+
+.create-ad-row > label,
+.create-ad-row > span:first-child {
+    flex: 0 0 150px;
+    font-weight: 600;
+}
+
+.create-ad-row input[type="text"],
+.create-ad-row select {
+    width: 280px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid #c3c3c3;
+    border-radius: 0;
+    background-color: #fff;
+    color: #191919;
+    font-size: 14px;
+}
+
+.create-ad-size {
+    margin-left: 10px;
+    color: #999;
+    font-size: 12px;
+}
+
+.create-ad-note {
+    margin-top: 12px;
+    color: #999;
+}
+
+.user-ad-item .develop-thumb {
+    flex-basis: 110px;
+}
+
+.user-ad-item .develop-thumb a,
+.user-ad-item .develop-thumb span {
+    width: 100px;
+    height: 69px;
+    border: 1px solid #efefef;
+}
+
+.user-ad-for {
+    color: #999;
+    font-size: 13px;
+}
+
+.user-ad-stats {
+    display: grid;
+    grid-template-columns: repeat(4, max-content);
+    column-gap: 18px;
+    margin-top: 4px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.user-ad-stats span {
+    color: #999;
+}
+
+.user-ad-stats b {
+    color: #000;
+    font-weight: 400;
+}
+
+.user-ad-state {
+    color: #999;
+}
+
+.user-ad-state.rejected {
+    color: #d86868;
+}
+
+.user-ad-bid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.user-ad-bid label {
+    font-weight: 600;
+}
+
+.user-ad-bid input,
+.user-ad-bid select {
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid #c3c3c3;
+    border-radius: 0;
+    font-size: 14px;
+}
+
+.user-ad-bid input {
+    width: 90px;
+}
+
+.user-ad-bid .develop-btn {
+    height: 30px;
+    min-width: 62px;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.user-ad-balance {
+    flex-basis: 100%;
+    color: #999;
+    font-size: 12px;
+}
+
+.admin-ad-preview {
+    display: block;
+    max-width: 300px;
+    max-height: 150px;
+    border: 1px solid #e3e3e3;
+}
+
+.user-ad-top {
+    margin-bottom: 12px;
+}
+
+/* hangs 12px right of the centred 970 column so the page itself does not move, any centred ancestor works */
+.site-main:has(.user-ad-side) {
+    position: relative;
+}
+
+.user-ad-side {
+    position: absolute;
+    top: 0;
+    left: calc(50% + 497px);
+}
+
+/* no room beside a centred column, so the column moves left to make room like 2016 */
+@media (max-width: 1359px) {
+    .site-main:has(.user-ad-side) {
+        padding-right: 172px;
+    }
+
+    .user-ad-side {
+        left: calc(50% + 411px);
+    }
+}
+
+@media (max-width: 1159px) {
+    .site-main:has(.user-ad-side) {
+        padding-right: 0;
+    }
+
+    .user-ad-side {
+        display: none;
+    }
+}
+
+.user-ad-pair {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 24px;
+}
+
+.user-ad-pair .user-ad {
+    margin: 0;
+}
