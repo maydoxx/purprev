@@ -16,7 +16,7 @@ PurpRev is both a backend and frontend for [NoneRev](https://nonerev.pw).
 | - | - |
 | Frontend | [Svelte 5](https://svelte.dev) and [Vite](https://vite.dev) |
 | Backend  | [Bun](https://bun.com) and [Elysia](https://elysiajs.com), API docs made by its OpenAPI plugin |
-| Database | [MySQL](https://www.mysql.com) |
+| Database | [PostgreSQL](https://www.postgresql.org) |
 
 ## Requirements
 
@@ -24,7 +24,7 @@ It really depends on how you run it, you can pick one below:
 
 | Way                           | You need                                                             |
 | - | - |
-| [Local](#local)               | [Bun](https://bun.com) v1.4 or newer and a [MySQL](https://www.mysql.com) database |
+| [Local](#local)               | [Bun](https://bun.com) v1.4 or newer and a [PostgreSQL](https://www.postgresql.org) database |
 | [Docker](#docker)             | [Docker](https://www.docker.com) with compose |
 | [Podman](#podman-quadlets)    | [Podman](https://podman.io) on a machine with systemd |
 
@@ -49,11 +49,11 @@ cp .env.example .env
 | - | - |
 | `VITE_PORT` | Port of the frontend |
 | `API_PORT` | Port of the backend |
-| `MYSQL_HOST` | Where the database is, `localhost` if its on the same machine |
-| `MYSQL_PORT` | `3306` unless you changed it |
-| `MYSQL_DATABASE` | Name of the database |
-| `MYSQL_USER` | Database login |
-| `MYSQL_PASSWORD` | Database password |
+| `PG_HOST` | Where the database is, `localhost` if its on the same machine |
+| `PG_PORT` | `5432` unless you changed it |
+| `PG_DATABASE` | Name of the database |
+| `PG_USER` | Database login |
+| `PG_PASSWORD` | Database password |
 | `RCCMANAGER_HOST` | Where RCCManager is, `localhost` if its on the same machine |
 | `RCCMANAGER_PORT` | RCCManager binding port, default `25500` |
 | `RCCMANAGER_PASSWORD` | RCCManager password |
@@ -77,7 +77,7 @@ cp .env.example .env
 
 Put the join script key in `keys/PrivateKey.pem` (gitignored). Game servers and renders come from RCCManager (its own repo), the site only talks to it over HTTP.
 
-In Docker and Podman the database is its own container, so `MYSQL_HOST` and `MYSQL_PORT` get set for you. The database, user and password still come from `.env`.
+In Docker and Podman the database is its own container, so `PG_HOST` and `PG_PORT` get set for you. The database, user and password still come from `.env`.
 
 ## Running
 
