@@ -15,12 +15,18 @@ export const moderation = new Elysia({ prefix: "/moderation" })
         }
         const [row] = await sql`
             SELECT moderation_actions.id, moderation_actions.action, moderation_actions.reason, moderation_actions."expiresAt",
-                users.username AS moderator
+                moderation_actions.created_at AS "createdAt", users.username AS moderator
             FROM moderation_actions
             LEFT JOIN users ON users.id = moderation_actions."moderatedBy"
             WHERE moderation_actions.id = ${user.ongoing_action_id}
         `;
-        return row ?? {};
+        if (!row) {
+            return {};
+        }
+        return {
+            ...row,
+            offenses: await sql`SELECT label, body FROM moderation_offenses WHERE action_id = ${row.id} ORDER BY id`
+        };
     }, {
         auth: true
     })
@@ -33,6 +39,7 @@ export const moderation = new Elysia({ prefix: "/moderation" })
                 error: "Your account cannot be reactivated yet."
             });
         }
+        await sql`DELETE FROM moderation_offenses WHERE action_id IN (SELECT id FROM moderation_actions WHERE user_id = ${user.id})`;
         await sql`DELETE FROM moderation_actions WHERE user_id = ${user.id}`;
         await sql`UPDATE users SET ongoing_action_id = NULL WHERE id = ${user.id}`;
         return {

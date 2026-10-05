@@ -30,7 +30,8 @@ const MODERATION: Record<string, [number, number]> = {
     ban3d: [3, 259200],
     ban7d: [4, 604800],
     ban14d: [5, 1209600],
-    account_deletion: [6, 0]
+    account_deletion: [6, 0],
+    reminder: [7, 0]
 };
 
 
@@ -854,19 +855,32 @@ export const admin = new Elysia({ prefix: "/api/admin" })
     })
 
 
-    .get("/moderation", ({ query }) => paginate(
-        sql`SELECT COUNT(*)::int AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
-        query.page,
-        limit => sql`
-            SELECT users.id, users.username, moderation_actions.action, moderation_actions.reason,
-                moderation_actions."moderatedBy", moderation_actions."expiresAt", moderator.username AS moderator_name
-            FROM users
-            LEFT JOIN moderation_actions ON moderation_actions.id = users.ongoing_action_id
-            LEFT JOIN users AS moderator ON moderator.id = moderation_actions."moderatedBy"
-            WHERE users.ongoing_action_id IS NOT NULL
-            ORDER BY users.id DESC ${limit}
-        `
-    ), {
+    .get("/moderation", async ({ query }) => {
+        const page = await paginate(
+            sql`SELECT COUNT(*)::int AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
+            query.page,
+            limit => sql`
+                SELECT users.id, users.username, moderation_actions.id AS action_id, moderation_actions.action, moderation_actions.reason,
+                    moderation_actions."moderatedBy", moderation_actions."expiresAt", moderation_actions.created_at AS "createdAt", moderator.username AS moderator_name
+                FROM users
+                LEFT JOIN moderation_actions ON moderation_actions.id = users.ongoing_action_id
+                LEFT JOIN users AS moderator ON moderator.id = moderation_actions."moderatedBy"
+                WHERE users.ongoing_action_id IS NOT NULL
+                ORDER BY users.id DESC ${limit}
+            `
+        );
+        const actions = page.items.map(row => Number(row.action_id)).filter(n => n > 0);
+        const offenses = actions.length > 0
+            ? await sql`SELECT action_id, label, body FROM moderation_offenses WHERE action_id IN ${sql(actions)} ORDER BY id`
+            : [];
+        for (const row of page.items) {
+            row.offenses = offenses.filter((o: any) => o.action_id === row.action_id).map((o: any) => ({
+                label: o.label,
+                body: o.body
+            }));
+        }
+        return page;
+    }, {
         admin: true,
         query: t.Object({
             page: t.Optional(t.Numeric())
@@ -890,10 +904,20 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
             const [action, seconds] = MODERATION[body.type]!;
             const expiresAt = seconds > 0 ? now() + seconds : 0;
-            const created = await sql`
-                INSERT INTO moderation_actions (user_id, action, reason, "moderatedBy", "expiresAt")
-                VALUES (${target.id}, ${action}, ${reason}, ${user.id}, ${expiresAt}) RETURNING id`;
-            await sql`UPDATE users SET ongoing_action_id = ${Number(created[0].id)} WHERE id = ${target.id}`;
+            const offenses = (body.offenses ?? []).map(o => ({
+                label: (o.label ?? "").trim(),
+                body: o.body.trim()
+            })).filter(o => o.body !== "");
+            await sql.begin(async tx => {
+                const created = await tx`
+                    INSERT INTO moderation_actions (user_id, action, reason, "moderatedBy", "expiresAt", created_at)
+                    VALUES (${target.id}, ${action}, ${reason}, ${user.id}, ${expiresAt}, ${now()}) RETURNING id`;
+                const actionId = Number(created[0].id);
+                for (const offense of offenses) {
+                    await tx`INSERT INTO moderation_offenses (action_id, label, body) VALUES (${actionId}, ${offense.label}, ${offense.body})`;
+                }
+                await tx`UPDATE users SET ongoing_action_id = ${actionId} WHERE id = ${target.id}`;
+            });
             return {
                 ok: true
             };
@@ -910,14 +934,20 @@ export const admin = new Elysia({ prefix: "/api/admin" })
                 t.Literal("ban3d"),
                 t.Literal("ban7d"),
                 t.Literal("ban14d"),
-                t.Literal("account_deletion")
+                t.Literal("account_deletion"),
+                t.Literal("reminder")
             ]),
-            reason: t.String()
+            reason: t.String(),
+            offenses: t.Optional(t.Array(t.Object({
+                label: t.Optional(t.String({ maxLength: 40 })),
+                body: t.String({ maxLength: 4000 })
+            }), { maxItems: 10 }))
         })
     })
 
 
     .delete("/moderation/:id", async ({ params }) => {
+        await sql`DELETE FROM moderation_offenses WHERE action_id IN (SELECT id FROM moderation_actions WHERE user_id = ${params.id})`;
         await sql`DELETE FROM moderation_actions WHERE user_id = ${params.id}`;
         await sql`UPDATE users SET ongoing_action_id = NULL WHERE id = ${params.id}`;
         return {

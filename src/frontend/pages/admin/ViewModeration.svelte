@@ -11,7 +11,8 @@
         3: "3 day ban",
         4: "7 day ban",
         5: "14 day ban",
-        6: "Account deletion"
+        6: "Account deletion",
+        7: "Reminder"
     };
 
     const page = $derived(Math.max(1, Number(router.query.page) || 1));
@@ -68,6 +69,7 @@
                         <th>Action</th>
                         <th>Reason</th>
                         <th>Moderator</th>
+                        <th>Reviewed</th>
                         <th>Expires</th>
                         <th></th>
                     </tr>
@@ -77,15 +79,21 @@
                         <tr>
                             <td><a href="/user?id={row.id}" class="fw-semibold text-decoration-none">{row.username}</a></td>
                             <td><span class="badge text-bg-danger">{actionNames[Number(row.action)] ?? "Unknown"}</span></td>
-                            <td style="min-width:220px">{row.reason || ""}</td>
+                            <td style="min-width:220px">
+                                {row.reason || ""}
+                                {#each row.offenses ?? [] as offense}
+                                    <div class="small text-secondary mt-1">{offense.label ? `${offense.label}: ` : ""}{offense.body}</div>
+                                {/each}
+                            </td>
                             <td>{row.moderator_name || "Unknown"}</td>
+                            <td>{adminDate(row.createdAt)}</td>
                             <td>{expires(row)}</td>
                             <td class="admin-actions">
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick={() => undo(row.id)}>Undo</button>
                             </td>
                         </tr>
                     {:else}
-                        <tr><td colspan="6" class="text-center text-muted py-5">No active moderation actions.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-5">No active moderation actions.</td></tr>
                     {/each}
                 </tbody>
             </table>
