@@ -122,8 +122,10 @@ const proxy = async (id: number) => {
     return blob(body);
 };
 
-const bodyColorsXml = async (userId: number) => {
-    const [row] = await sql`SELECT * FROM user_avatar WHERE user_id = ${userId}`;
+const bodyColorsXml = async (userId?: number, outfitId?: number) => {
+    const [row] = outfitId !== undefined
+        ? (await sql`SELECT colors FROM avatar_outfits WHERE id = ${outfitId}`).map((r: any) => JSON.parse(r.colors))
+        : await sql`SELECT * FROM user_avatar WHERE user_id = ${userId ?? 0}`;
     const c = {
         head_color: 24,
         torso_color: 23,
@@ -224,14 +226,19 @@ const routes = (prefix: string) => new Elysia({ prefix })
         })
     })
 
-    .get("/BodyColors.ashx", async ({ query }) =>
-        new Response(await bodyColorsXml(query.userId), {
+    .get("/BodyColors.ashx", async ({ query, status }) => {
+        if (query.userId === undefined && query.outfitId === undefined) {
+            return status(400, "userId missing");
+        }
+        return new Response(await bodyColorsXml(query.userId, query.outfitId), {
             headers: {
                 "Content-Type": "application/xml"
             }
-        }), {
+        });
+    }, {
         query: t.Object({
-            userId: t.Numeric()
+            userId: t.Optional(t.Numeric()),
+            outfitId: t.Optional(t.Numeric())
         })
     })
 
@@ -244,6 +251,19 @@ const routes = (prefix: string) => new Elysia({ prefix })
         if (query.itemId !== undefined) {
             const [item] = await sql`SELECT category, asset_id, package_parts FROM catalog_items WHERE id = ${query.itemId}`;
             return text(item ? itemUrls(item).join(";") : "");
+        }
+        if (query.outfitId !== undefined) {
+            const [outfit] = await sql`SELECT items FROM avatar_outfits WHERE id = ${query.outfitId}`;
+            if (!outfit) {
+                return status(404, "outfit not found");
+            }
+            const ids: number[] = JSON.parse(outfit.items);
+            const worn = ids.length === 0 ? [] : await sql`
+                SELECT category, asset_id, package_parts FROM catalog_items
+                WHERE id IN ${sql(ids)}
+                ORDER BY category, id
+            `;
+            return text([`${SITE_URL}/Asset/BodyColors.ashx?outfitId=${query.outfitId}`, ...worn.flatMap(itemUrls)].join(";"));
         }
         if (query.userId === undefined) {
             return status(400, "userId missing");
@@ -261,7 +281,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
         query: t.Object({
             userId: t.Optional(t.Numeric()),
             assetId: t.Optional(t.Numeric()),
-            itemId: t.Optional(t.Numeric())
+            itemId: t.Optional(t.Numeric()),
+            outfitId: t.Optional(t.Numeric())
         })
     })
 

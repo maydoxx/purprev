@@ -5,7 +5,7 @@ import { STORAGE, UPLOADS, storage } from "./storage";
 import { mediaEntry, mediaKey, mediaRecord, parseKey, contentType } from "./media";
 
 const PARALLEL = 16;
-const KINDS = ["avatars", "thumbnails", "icons", "catalog", "badges", "gamepasses", "blog", "groups", "places", "assets"];
+const KINDS = ["avatars", "thumbnails", "icons", "catalog", "badges", "gamepasses", "blog", "groups", "places", "assets", "ads", "outfits"];
 
 if (!process.argv[2] && STORAGE === "cloudflare") {
     let added = 0;

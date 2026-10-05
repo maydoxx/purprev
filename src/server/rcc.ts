@@ -113,6 +113,15 @@ export const rcc = {
             return true;
         }),
 
-        status: (kind: "avatar" | "place" | "item", id: number) => quiet<any>(null, () => call("GET", `/render/${kind}/${id}`))
+        outfit: (outfitId: number, userId: number) => quiet(false, async () => {
+            const [pref] = await sql`SELECT avatar_type FROM user_avatar WHERE user_id = ${userId}`;
+            await call("POST", `/render/outfit/${outfitId}`, {
+                appearanceUrl: `${SITE_INTERNAL_URL}/Asset/CharacterFetch.ashx?outfitId=${outfitId}`,
+                r15: pref?.avatar_type === "R15" ? "1" : "0"
+            });
+            return true;
+        }),
+
+        status: (kind: "avatar" | "place" | "item" | "outfit", id: number) => quiet<any>(null, () => call("GET", `/render/${kind}/${id}`))
     }
 };

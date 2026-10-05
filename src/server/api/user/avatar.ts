@@ -4,7 +4,7 @@ import { sql, now } from "../../db";
 import { brickcolors } from "../../brickcolors";
 import { rcc } from "../../rcc";
 import { mediaUrl, withThumbnail } from "../../paths";
-import { mediaHas, mediaRecord, parseKey } from "../../media";
+import { mediaHas, mediaRecord, mediaRemove, parseKey } from "../../media";
 
 const DEFAULT_COLORS = {
     head_color: 24,
@@ -42,6 +42,27 @@ const wornItems = (userId: number) => sql`
     WHERE user_items.user_id = ${userId} AND user_items.wearing = 1
     ORDER BY catalog_items.category, catalog_items.id
 `;
+
+const recordRender = async (job: any, id: number) => {
+    if (job?.status !== "done") {
+        return;
+    }
+    for (const f of job.outputs ?? []) {
+        const parsed = parseKey(String(f.key ?? ""));
+        if (parsed && parsed.id === id) {
+            await mediaRecord(parsed.kind, parsed.id, parsed.ext, Number(f.size ?? 0));
+        }
+    }
+};
+
+const outfitThumbnail = async (outfitId: number) => {
+    const url = await mediaUrl("outfits", outfitId);
+    if (url) {
+        return url;
+    }
+    await recordRender(await rcc.render.status("outfit", outfitId), outfitId);
+    return mediaUrl("outfits", outfitId);
+};
 
 export const avatar = new Elysia({ prefix: "/avatar" })
     .use(session)
@@ -189,14 +210,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
     // in case the manager never reports back
     .get("/render", async ({ user }) => {
         const job = await rcc.render.status("avatar", user.id);
-        if (job?.status === "done") {
-            for (const f of job.outputs ?? []) {
-                const parsed = parseKey(String(f.key ?? ""));
-                if (parsed && parsed.id === user.id) {
-                    await mediaRecord(parsed.kind, parsed.id, parsed.ext, Number(f.size ?? 0));
-                }
-            }
-        }
+        await recordRender(job, user.id);
         return {
             status: job?.status ?? "unknown",
             error: job?.error ?? "",
@@ -210,7 +224,10 @@ export const avatar = new Elysia({ prefix: "/avatar" })
 
     .get("/outfits", async ({ user }) => {
         const rows = await sql`SELECT id, name, created_at FROM avatar_outfits WHERE user_id = ${user.id} ORDER BY created_at DESC, id DESC`;
-        return rows;
+        return Promise.all(rows.map(async (r: any) => ({
+            ...r,
+            thumbnail: await outfitThumbnail(Number(r.id))
+        })));
     }, {
         auth: true
     })
@@ -230,12 +247,15 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         }
         const colors = await bodyColors(user.id);
         const worn = await sql`SELECT item_id FROM user_items WHERE user_id = ${user.id} AND wearing = 1`;
-        await sql`
+        const [row] = await sql`
             INSERT INTO avatar_outfits (user_id, name, colors, items, created_at)
             VALUES (${user.id}, ${name}, ${JSON.stringify(colors)}, ${JSON.stringify(worn.map((r: any) => Number(r.item_id)))}, ${now()})
+            RETURNING id
         `;
+        rcc.render.outfit(Number(row.id), user.id);
         return {
-            ok: true
+            ok: true,
+            id: Number(row.id)
         };
     }, {
         auth: true,
@@ -276,8 +296,63 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         })
     })
 
+    .post("/outfits/:id/rename", async ({ params, body, user, status }) => {
+        const name = body.name.trim();
+        if (!name) {
+            return status(400, {
+                error: "Give the outfit a name"
+            });
+        }
+        const [row] = await sql`UPDATE avatar_outfits SET name = ${name} WHERE id = ${params.id} AND user_id = ${user.id} RETURNING id`;
+        if (!row) {
+            return status(404, {
+                error: "Outfit not found"
+            });
+        }
+        return {
+            ok: true,
+            name
+        };
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric()
+        }),
+        body: t.Object({
+            name: t.String({ maxLength: 60 })
+        })
+    })
+
+    // saves what is worn now over the outfit
+    .post("/outfits/:id/update", async ({ params, user, status }) => {
+        const colors = await bodyColors(user.id);
+        const worn = await sql`SELECT item_id FROM user_items WHERE user_id = ${user.id} AND wearing = 1`;
+        const [row] = await sql`
+            UPDATE avatar_outfits SET colors = ${JSON.stringify(colors)}, items = ${JSON.stringify(worn.map((r: any) => Number(r.item_id)))}
+            WHERE id = ${params.id} AND user_id = ${user.id}
+            RETURNING id
+        `;
+        if (!row) {
+            return status(404, {
+                error: "Outfit not found"
+            });
+        }
+        rcc.render.outfit(params.id, user.id);
+        return {
+            ok: true
+        };
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric()
+        })
+    })
+
     .delete("/outfits/:id", async ({ params, user }) => {
-        await sql`DELETE FROM avatar_outfits WHERE id = ${params.id} AND user_id = ${user.id}`;
+        const [row] = await sql`DELETE FROM avatar_outfits WHERE id = ${params.id} AND user_id = ${user.id} RETURNING id`;
+        if (row) {
+            await mediaRemove("outfits", params.id);
+        }
         return {
             ok: true
         };
