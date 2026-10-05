@@ -46,9 +46,10 @@ const starterColors = async (userId: number) => {
         VALUES (${userId}, ${skin}, ${pick(TORSO)}, ${skin}, ${skin}, ${LEGS}, ${LEGS}, ${now()}) ON CONFLICT DO NOTHING`;
 };
 
+// everyone starts as a bacon hair
 export const giveStarterItems = async (userId: number) => {
     await starterColors(userId);
-    const set = pick(STARTER_SETS);
+    const set = STARTER_SETS[0]!;
     const ids = set.items.map(i => i[0]);
     const items = await sql`
         SELECT id FROM catalog_items
@@ -77,8 +78,9 @@ const create = async (creator: number, i: Seed) => {
         INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, bc_only, is_starter, package_parts, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
         VALUES (${i.name}, ${i.description}, ${creator}, ${i.category}, ${i.assetId}, 0, '', 0, 0, 0, ${i.parts.join(";")}, 0, 0, NULL, 0, ${now()}, ${now()}) RETURNING id`;
     const id = Number(created[0].id);
+    // the item is already in, a missing picture must not stop the rest of the import
     if (i.thumbnail !== "") {
-        await storeThumbnail(id, i.thumbnail);
+        await storeThumbnail(id, i.thumbnail).catch(err => console.warn(`no thumbnail for ${i.name}:`, String(err).split("\n")[0]));
     }
     console.log(`${i.category} ${i.name} -> ${id}`);
 };

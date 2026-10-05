@@ -30,6 +30,7 @@ import { abuse } from "./api/site/abuse";
 import { sets } from "./api/sets";
 import { comments } from "./api/comments";
 import { ads } from "./api/ads";
+import { firstRun } from "./firstuser";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
 
@@ -119,3 +120,5 @@ for (const addr of (process.env.ALSO_LISTEN ?? "").split(",").filter(Boolean)) {
         fetch: app.fetch
     });
 }
+
+firstRun().catch(err => console.error("first run setup failed:", err));
