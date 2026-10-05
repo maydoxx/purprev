@@ -5,7 +5,6 @@ const CDN = (process.env.SETUP_URL || process.env.CDN_URL || "").replace(/\/+$/,
 
 const FILES: Record<string, string> = {
     windows: "NoneRevLauncher.exe",
-    linux: "nonerev",
     android: "android/NoneRevPlayer.apk",
     studio: "studio/NoneRevStudio.zip",
     "linux-native": "linux/NoneRevPlayer-linux-x86_64.tar.gz"

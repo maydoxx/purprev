@@ -14,13 +14,8 @@ const DOWNLOADS = [
         fileUrl: "/api/setup/download"
     },
     {
-        title: "None 2016 Client (Linux, Proton)",
-        description: "Runs the client through Proton, no Steam needed. Save it, then run: chmod +x nonerev && ./nonerev install",
-        fileUrl: "/api/setup/download?os=linux"
-    },
-    {
         title: "None 2016 Client (Linux, native)",
-        description: "Native Linux build, no Proton. Extract it into a folder, then run ./NoneRevPlayer --register once so the Play button opens it.",
+        description: "Native Linux build. Extract it into a folder, then run ./NoneRevPlayer --register once so the Play button opens it.",
         fileUrl: "/api/setup/download?os=linux-native"
     },
     {
