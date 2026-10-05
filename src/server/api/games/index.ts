@@ -5,6 +5,7 @@ import { mediaUrl } from "../../paths";
 import { rcc } from "../../rcc";
 import { SITE_URL } from "../../site";
 import { GENRES, gameSettings, isGenre } from "../../games";
+import { byVipId, canJoin, jobOf } from "../../privateservers";
 
 const PER_PAGE = 20;
 const DAY = 86400;
@@ -273,7 +274,7 @@ export const games = new Elysia({ prefix: "/api/games" })
 
     .get("/:id/servers", async ({ params }) => {
         const servers = await rcc.servers();
-        return servers.filter(server => Number(server.placeId) === params.id).map(server => ({
+        return servers.filter(server => Number(server.placeId) === params.id && !server.key).map(server => ({
             jobId: server.jobId,
             players: server.players,
             ready: server.ready
@@ -287,14 +288,25 @@ export const games = new Elysia({ prefix: "/api/games" })
             return [];
         }
         const rows = await sql`
-            SELECT v.id, v.name, v.owner_id, u.username AS owner_name, v.created_at FROM vip_servers v
+            SELECT v.id, v.name, v.owner_id, u.username AS owner_name, v.created_at, v.active, v.allow_friends FROM vip_servers v
             JOIN users u ON u.id = v.owner_id
             LEFT JOIN vip_server_members m ON m.vip_id = v.id AND m.user_id = ${user.id}
-            WHERE v.game_id = ${params.id} AND (v.owner_id = ${user.id} OR m.user_id = ${user.id})
+            WHERE v.game_id = ${params.id} AND (
+                v.owner_id = ${user.id} OR m.user_id = ${user.id}
+                OR (v.allow_friends = 1 AND EXISTS (
+                    SELECT 1 FROM friendships f WHERE f.status = 'accepted'
+                    AND ((f.requester_id = v.owner_id AND f.target_id = ${user.id}) OR (f.target_id = v.owner_id AND f.requester_id = ${user.id}))
+                ))
+            )
             ORDER BY v.created_at DESC
         `;
+        const servers = rows.length === 0 ? [] : await rcc.servers();
         return await Promise.all(rows.map(async (vip: any) => ({
             ...vip,
+            active: Number(vip.active) === 1,
+            allow_friends: Number(vip.allow_friends) === 1,
+            running: servers.some(s => s.key === `vip-${vip.id}`),
+            players: servers.find(s => s.key === `vip-${vip.id}`)?.players ?? 0,
             members: Number(vip.owner_id) === user.id
                 ? await sql`SELECT u.id, u.username FROM vip_server_members m JOIN users u ON u.id = m.user_id WHERE m.vip_id = ${vip.id} ORDER BY u.username`
                 : []
@@ -322,9 +334,10 @@ export const games = new Elysia({ prefix: "/api/games" })
                 error: "You can create up to five VIP servers per game"
             });
         }
-        await sql`INSERT INTO vip_servers (game_id, owner_id, name, created_at) VALUES (${params.id}, ${user.id}, ${name}, ${now()})`;
+        const [vip] = await sql`INSERT INTO vip_servers (game_id, owner_id, name, created_at) VALUES (${params.id}, ${user.id}, ${name}, ${now()}) RETURNING id`;
         return {
-            ok: true
+            ok: true,
+            id: Number(vip.id)
         };
     }, {
         auth: true,
@@ -382,12 +395,57 @@ export const games = new Elysia({ prefix: "/api/games" })
         })
     })
 
-    .delete("/:id/vip/:vipId", async ({ params, user, status }) => {
-        const [vip] = await sql`SELECT id FROM vip_servers WHERE id = ${params.vipId} AND game_id = ${params.id} AND owner_id = ${user.id}`;
-        if (!vip) {
+    .patch("/:id/vip/:vipId", async ({ params, body, user, status }) => {
+        const ps = await byVipId(params.vipId);
+        if (!ps || ps.gameId !== params.id || ps.ownerId !== user.id) {
             return status(404, {
                 error: "VIP server not found"
             });
+        }
+        const name = body.name?.trim();
+        if (name === "") {
+            return status(400, {
+                error: "Name your VIP server"
+            });
+        }
+        await sql`
+            UPDATE vip_servers SET
+                name = COALESCE(${name ?? null}::varchar, name),
+                active = COALESCE(${body.active === undefined ? null : body.active ? 1 : 0}::smallint, active),
+                allow_friends = COALESCE(${body.allowFriends === undefined ? null : body.allowFriends ? 1 : 0}::smallint, allow_friends)
+            WHERE id = ${params.vipId}
+        `;
+        // nobody may stay in a server that was switched off
+        const job = body.active === false ? await jobOf(ps) : null;
+        if (job) {
+            await rcc.close(job.jobId).catch(() => {});
+        }
+        return {
+            ok: true
+        };
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.Numeric(),
+            vipId: t.Numeric()
+        }),
+        body: t.Object({
+            name: t.Optional(t.String({ maxLength: 60 })),
+            active: t.Optional(t.Boolean()),
+            allowFriends: t.Optional(t.Boolean())
+        })
+    })
+
+    .delete("/:id/vip/:vipId", async ({ params, user, status }) => {
+        const ps = await byVipId(params.vipId);
+        if (!ps || ps.gameId !== params.id || ps.ownerId !== user.id) {
+            return status(404, {
+                error: "VIP server not found"
+            });
+        }
+        const job = await jobOf(ps);
+        if (job) {
+            await rcc.close(job.jobId).catch(() => {});
         }
         await sql.begin(async tx => {
             await tx`DELETE FROM vip_server_members WHERE vip_id = ${params.vipId}`;
@@ -465,8 +523,17 @@ export const games = new Elysia({ prefix: "/api/games" })
         })
     })
 
-    .get("/:id/launch", ({ params, query, token }) => {
-        const launcher = `${SITE_URL}/Game/PlaceLauncher.ashx?request=RequestGame&placeId=${params.id}${query.jobId ? `&jobId=${encodeURIComponent(query.jobId)}` : ""}`;
+    .get("/:id/launch", async ({ params, query, token, user, status }) => {
+        let launcher = `${SITE_URL}/Game/PlaceLauncher.ashx?request=RequestGame&placeId=${params.id}${query.jobId ? `&jobId=${encodeURIComponent(query.jobId)}` : ""}`;
+        if (query.vipId !== undefined) {
+            const ps = await byVipId(query.vipId);
+            if (!ps || ps.gameId !== params.id || !await canJoin(ps, user)) {
+                return status(403, {
+                    error: "You can't join this VIP server"
+                });
+            }
+            launcher = `${SITE_URL}/Game/PlaceLauncher.ashx?request=RequestPrivateGame&placeId=${params.id}&accessCode=${encodeURIComponent(ps.accessCode)}&linkCode=`;
+        }
         return {
             url: `nonerev-launcher:1+launchmode:play+gameinfo:${encodeURIComponent(token!)}+launchtime:${Date.now()}+placelauncherurl:${encodeURIComponent(launcher)}+browsertrackerid:false+robloxLocale:en_us+gameLocale:en_us`
         };
@@ -474,7 +541,8 @@ export const games = new Elysia({ prefix: "/api/games" })
         auth: true,
         params: id,
         query: t.Object({
-            jobId: t.Optional(t.String({ maxLength: 64 }))
+            jobId: t.Optional(t.String({ maxLength: 64 })),
+            vipId: t.Optional(t.Numeric())
         })
     })
 

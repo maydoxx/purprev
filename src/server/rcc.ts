@@ -18,6 +18,7 @@ export class RccError extends Error {
 export type GameServer = {
     jobId: string;
     placeId: number;
+    key: string;
     port: number;
     address: string;
     ready: boolean;
@@ -62,7 +63,7 @@ const quiet = async <T>(fallback: T, fn: () => Promise<T>) => {
 
 export const rcc = {
 
-    findOrCreate: (placeId: number) => call<GameServer>("POST", `/servers/${placeId}`, undefined, 40000),
+    findOrCreate: (placeId: number, opts?: { key: string; ownerId: number }) => call<GameServer>("POST", `/servers/${placeId}`, opts, 40000),
 
     server: (jobId: string) => quiet<GameServer | null>(null, () => call("GET", `/servers/${jobId}`)),
 
