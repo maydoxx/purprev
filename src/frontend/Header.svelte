@@ -158,11 +158,7 @@
             <li><a href="/games">Games</a></li>
             <li><a href="/catalog">Catalog</a></li>
             <li><a href="/develop/">Develop</a></li>
-            {#if session.me}
-                <li><a href="/forum">Forums</a></li>
-            {:else}
-                <li><a href="/upgrades/nonebux">NONEBUX</a></li>
-            {/if}
+            <li><a href="/upgrades/nonebux">NONEBUX</a></li>
             <li><a href="/download">Download</a></li>
         </ul>
 
@@ -252,11 +248,7 @@
             <li><a href="/games">Games</a></li>
             <li><a href="/catalog">Catalog</a></li>
             <li><a href="/develop/">Develop</a></li>
-            {#if session.me}
-                <li><a href="/forum">Forums</a></li>
-            {:else}
-                <li><a href="/upgrades/nonebux">NONEBUX</a></li>
-            {/if}
+            <li><a href="/upgrades/nonebux">NONEBUX</a></li>
             <li><a href="/download">Download</a></li>
         </ul>
     </div>
