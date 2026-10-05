@@ -53,7 +53,7 @@ const SORTS: Sort[] = [
     {
         id: "top-rated",
         title: "Top Rated",
-        order: sql`rating DESC, games.visits DESC, games.id DESC`
+        order: sql`window_rating DESC, games.visits DESC, games.id DESC`
     },
     {
         id: "recommended",
@@ -67,8 +67,8 @@ const SORTS: Sort[] = [
     },
     {
         id: "top-favorited",
-        title: "Top Favorited",
-        order: sql`favorites DESC, games.visits DESC, games.id DESC`
+        title: "Top Favorite",
+        order: sql`window_favorites DESC, games.visits DESC, games.id DESC`
     },
     {
         id: "recently-updated",
@@ -110,8 +110,13 @@ const publicSorts = (loggedIn: boolean) => SORTS.filter(s => loggedIn || !s.mine
 const byPlaying = (rows: any[], playing: Record<number, number>) =>
     [...rows].sort((a, b) => (playing[Number(b.id)] ?? 0) - (playing[Number(a.id)] ?? 0) || Number(b.visits) - Number(a.visits));
 
-const listGames = async (sort: Sort, userId: number, page: number, limit: number, q = "", genre = "All") => {
+const TIMES = ["day", "week", "all"] as const;
+type Time = typeof TIMES[number];
+
+// the time filter only reorders top rated / top favorite, the counts on the cards stay all time
+const listGames = async (sort: Sort, userId: number, page: number, limit: number, q = "", genre = "All", time: Time = "all") => {
     const like = `%${q.trim()}%`;
+    const since = time === "day" ? now() - DAY : time === "week" ? now() - 7 * DAY : 0;
     const scope = sort.id === "recently-played" ? sql`plays.user_id IS NOT NULL`
         : sort.id === "my-favorites" ? sql`fav.user_id IS NOT NULL`
         : sort.id === "featured" ? sql`games.featured = 1 AND games.title ILIKE ${like}`
@@ -131,7 +136,9 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
             (SELECT COUNT(*)::int FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
             (SELECT COUNT(*)::int FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes,
             (SELECT COALESCE(SUM(p.price), 0) FROM user_game_passes ugp JOIN game_passes p ON p.id = ugp.pass_id WHERE p.game_id = games.id) AS earnings,
-            (SELECT (COUNT(*) FILTER (WHERE v.vote = 1) + 1.0) / (COUNT(*) + 2) FROM game_votes v WHERE v.game_id = games.id)::float8 AS rating
+            (SELECT (COUNT(*) FILTER (WHERE v.vote = 1) + 1.0) / (COUNT(*) + 2) FROM game_votes v WHERE v.game_id = games.id)::float8 AS rating,
+            (SELECT COUNT(*)::int FROM game_favorites f WHERE f.game_id = games.id AND f.created_at > ${since}) AS window_favorites,
+            (SELECT (COUNT(*) FILTER (WHERE v.vote = 1) + 1.0) / (COUNT(*) + 2) FROM game_votes v WHERE v.game_id = games.id AND v.created_at > ${since})::float8 AS window_rating
         FROM games
         LEFT JOIN users ON users.id = games.creator_id
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
@@ -144,9 +151,11 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
     return {
         page: current,
         totalPages,
-        games: await Promise.all(ordered.map((g: any) => withMedia(g, playing[Number(g.id)])))
+        games: await Promise.all(ordered.map(({ window_favorites, window_rating, ...g }: any) => withMedia(g, playing[Number(g.id)])))
     };
 };
+
+const timeOf = (time: unknown): Time => TIMES.includes(time as Time) ? time as Time : "all";
 
 
 const ratio = (up: number, down: number) => up + down > 0 ? Math.round(up / (up + down) * 100) : 0;
@@ -188,13 +197,15 @@ export const games = new Elysia({ prefix: "/api/games" })
             sorts: publicSorts(!!user),
             genres: GENRES,
             genre: isGenre(query.genre) ? query.genre : "All",
-            ...await listGames(sort, user?.id ?? 0, query.page ?? 1, PER_PAGE, query.q ?? "", query.genre ?? "All")
+            time: timeOf(query.time),
+            ...await listGames(sort, user?.id ?? 0, query.page ?? 1, PER_PAGE, query.q ?? "", query.genre ?? "All", timeOf(query.time))
         };
     }, {
         query: t.Object({
             q: t.Optional(t.String()),
             sort: t.Optional(t.String()),
             genre: t.Optional(t.String()),
+            time: t.Optional(t.String()),
             page: t.Optional(t.Numeric())
         })
     })
@@ -206,7 +217,7 @@ export const games = new Elysia({ prefix: "/api/games" })
             if (sort.mine && !user) {
                 continue;
             }
-            const list = await listGames(sort, user?.id ?? 0, 1, ROW, "", query.genre ?? "All");
+            const list = await listGames(sort, user?.id ?? 0, 1, ROW, "", query.genre ?? "All", timeOf(query.time));
             if (list.games.length > 0) {
                 rows.push({
                     id: sort.id,
@@ -219,11 +230,13 @@ export const games = new Elysia({ prefix: "/api/games" })
             rows,
             sorts: publicSorts(!!user),
             genres: GENRES,
-            genre: isGenre(query.genre) ? query.genre : "All"
+            genre: isGenre(query.genre) ? query.genre : "All",
+            time: timeOf(query.time)
         };
     }, {
         query: t.Object({
-            genre: t.Optional(t.String())
+            genre: t.Optional(t.String()),
+            time: t.Optional(t.String())
         })
     })
 
