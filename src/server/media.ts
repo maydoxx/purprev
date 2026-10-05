@@ -5,7 +5,7 @@ import { storage, STORAGE, UPLOADS } from "./storage";
 
 
 
-export type MediaKind = "avatars" | "headshots" | "avatars3d" | "thumbnails" | "icons" | "catalog" | "badges" | "gamepasses" | "blog" | "groups" | "places" | "assets";
+export type MediaKind = "avatars" | "headshots" | "avatars3d" | "thumbnails" | "icons" | "catalog" | "badges" | "gamepasses" | "blog" | "groups" | "places" | "assets" | "ads" | "outfits" | "catalog3d";
 
 export const TYPES: Record<string, string> = {
     png: "image/png",
@@ -26,14 +26,15 @@ export const TYPES: Record<string, string> = {
 
 export const contentType = (ext: string) => TYPES[ext.toLowerCase()] ?? "application/octet-stream";
 
-// headshots and the 3d scene live next to the body under avatars/
-const SUFFIX: Record<string, string> = {
-    headshots: "-headshot",
-    avatars3d: "-3d"
+// headshots and 3d scenes live next to the image they belong to
+const SUFFIX: Record<string, [string, string]> = {
+    headshots: ["avatars", "-headshot"],
+    avatars3d: ["avatars", "-3d"],
+    catalog3d: ["catalog", "-3d"]
 };
 
 export const mediaKey = (kind: string, id: number, ext: string) =>
-    SUFFIX[kind] ? `avatars/${id}${SUFFIX[kind]}.${ext}` : `${kind}/${id}.${ext}`;
+    SUFFIX[kind] ? `${SUFFIX[kind][0]}/${id}${SUFFIX[kind][1]}.${ext}` : `${kind}/${id}.${ext}`;
 
 
 export const parseKey = (key: string) => {
@@ -41,8 +42,12 @@ export const parseKey = (key: string) => {
     if (!m) {
         return null;
     }
+    const kind = m[3] ? Object.keys(SUFFIX).find(k => SUFFIX[k]![0] === m[1] && SUFFIX[k]![1] === m[3]) : m[1];
+    if (!kind) {
+        return null;
+    }
     return {
-        kind: m[3] === "-headshot" ? "headshots" : m[3] === "-3d" ? "avatars3d" : m[1]!,
+        kind,
         id: Number(m[2]),
         ext: m[4]!.toLowerCase()
     };

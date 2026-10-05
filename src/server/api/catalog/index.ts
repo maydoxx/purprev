@@ -3,6 +3,8 @@ import type { SQL } from "bun";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { withThumbnail } from "../../paths";
+import { mediaHas, mediaStream } from "../../media";
+import { GENRES, isGenre } from "../../games";
 
 import { purchase } from "./purchase";
 import { resale, isResellable } from "./resale";
@@ -213,8 +215,23 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             favorited: !!favoriteMine,
             owned: mine !== null && mine !== undefined,
             wearing: !!mine?.wearing,
-            serial_number: mine?.serial_number ?? null
+            serial_number: mine?.serial_number ?? null,
+            has3d: await mediaHas("catalog3d", params.id)
         };
+    }, {
+        params: t.Object({
+            id: t.Numeric()
+        })
+    })
+
+    .get("/:id/3d", async ({ params, status }) => {
+        const scene = await mediaStream("catalog3d", params.id, "public, max-age=60");
+        if (!scene) {
+            return status(404, {
+                error: "No 3D view of this item yet"
+            });
+        }
+        return scene;
     }, {
         params: t.Object({
             id: t.Numeric()
