@@ -104,10 +104,10 @@ export const trade = new Elysia({ prefix: "/api/trade" })
 
         const type = ["inbound", "outbound", "completed", "inactive"].includes(query.type ?? "") ? query.type! : "inbound";
         const where = typeWhere(type, user.id);
-        const [count] = await sql`SELECT COUNT(*) AS n FROM trades WHERE ${where}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM trades WHERE ${where}`;
         const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
-        const [inbound] = await sql`SELECT COUNT(*) AS n FROM trades WHERE ${typeWhere("inbound", user.id)}`;
+        const [inbound] = await sql`SELECT COUNT(*)::int AS n FROM trades WHERE ${typeWhere("inbound", user.id)}`;
 
         return {
             type,
@@ -174,8 +174,8 @@ export const trade = new Elysia({ prefix: "/api/trade" })
                     await tx`UPDATE trades SET status = 'countered' WHERE id = ${counterOf}`;
                 }
 
-                const created = await tx`INSERT INTO trades (sender_id, receiver_id, status, counter_of, created_at, expires_at, completed_at) VALUES (${user.id}, ${receiverId}, 'pending', ${counterOf > 0 ? counterOf : null}, ${now()}, ${now() + EXPIRES_AFTER}, 0)`;
-                const tradeId = Number(created.lastInsertRowid);
+                const created = await tx`INSERT INTO trades (sender_id, receiver_id, status, counter_of, created_at, expires_at, completed_at) VALUES (${user.id}, ${receiverId}, 'pending', ${counterOf > 0 ? counterOf : null}, ${now()}, ${now() + EXPIRES_AFTER}, 0) RETURNING id`;
+                const tradeId = Number(created[0].id);
                 for (const itemId of offer) {
                     await tx`INSERT INTO trade_items (trade_id, side, item_id, original_owner_id) VALUES (${tradeId}, 'offer', ${itemId}, ${user.id})`;
                 }
@@ -226,14 +226,14 @@ export const trade = new Elysia({ prefix: "/api/trade" })
 
                 for (const itemId of offer) {
                     const moved = await tx`UPDATE user_items SET user_id = ${user.id}, wearing = 0, purchased_at = ${now()} WHERE user_id = ${senderId} AND item_id = ${itemId}`;
-                    if (moved.affectedRows !== 1) {
+                    if (moved.count !== 1) {
                         throw new TradeError("An offered item is no longer available.");
                     }
                     await tx`DELETE FROM resale_listings WHERE user_id = ${senderId} AND item_id = ${itemId}`;
                 }
                 for (const itemId of request) {
                     const moved = await tx`UPDATE user_items SET user_id = ${senderId}, wearing = 0, purchased_at = ${now()} WHERE user_id = ${user.id} AND item_id = ${itemId}`;
-                    if (moved.affectedRows !== 1) {
+                    if (moved.count !== 1) {
                         throw new TradeError("A requested item is no longer available.");
                     }
                     await tx`DELETE FROM resale_listings WHERE user_id = ${user.id} AND item_id = ${itemId}`;
@@ -253,7 +253,7 @@ export const trade = new Elysia({ prefix: "/api/trade" })
 
     .post("/:id/decline", async ({ params, user, status }) => {
         const done = await sql`UPDATE trades SET status = 'declined' WHERE id = ${params.id} AND receiver_id = ${user.id} AND status = 'pending'`;
-        if (done.affectedRows !== 1) {
+        if (done.count !== 1) {
             return status(400, {
                 error: "That trade can no longer be declined."
             });
@@ -268,7 +268,7 @@ export const trade = new Elysia({ prefix: "/api/trade" })
 
     .post("/:id/cancel", async ({ params, user, status }) => {
         const done = await sql`UPDATE trades SET status = 'cancelled' WHERE id = ${params.id} AND sender_id = ${user.id} AND status = 'pending'`;
-        if (done.affectedRows !== 1) {
+        if (done.count !== 1) {
             return status(400, {
                 error: "That trade can no longer be cancelled."
             });

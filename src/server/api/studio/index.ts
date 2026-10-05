@@ -371,9 +371,9 @@ export const studio = new Elysia()
                 error: "name the place"
             });
         }
-        const created = await sql`INSERT INTO games (creator_id, title, created_at, updated_at) VALUES (${user.id}, ${title}, ${now()}, ${now()})`;
+        const created = await sql`INSERT INTO games (creator_id, title, created_at, updated_at) VALUES (${user.id}, ${title}, ${now()}, ${now()}) RETURNING id`;
         return {
-            id: Number(created.lastInsertRowid)
+            id: Number(created[0].id)
         };
     }, {
         body: t.Object({
@@ -435,8 +435,8 @@ export const studio = new Elysia()
         }
         const name = cleanName(query.Name ?? query.name ?? "") || `Untitled ${type}`;
         const extension = extensionFor(type, bytes);
-        const created = await sql`INSERT INTO assets (creator_id, type, name, extension, parent_id, created_at) VALUES (${user.id}, ${type}, ${name}, ${extension}, ${null}, ${now()})`;
-        const id = Number(created.lastInsertRowid);
+        const created = await sql`INSERT INTO assets (creator_id, type, name, extension, parent_id, created_at) VALUES (${user.id}, ${type}, ${name}, ${extension}, ${null}, ${now()}) RETURNING id`;
+        const id = Number(created[0].id);
         await mediaPut("assets", id, extension, bytes);
         console.log(`publish: ${type} ${id} (${name}) by ${user.username}, ${bytes.byteLength} bytes`);
         return text(String(id));

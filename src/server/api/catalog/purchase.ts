@@ -48,14 +48,14 @@ export const purchase = new Elysia()
                     const debit = method === "tix"
                         ? await tx`UPDATE users SET tix = tix - ${price} WHERE id = ${user.id} AND tix >= ${price}`
                         : await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id} AND currency >= ${price}`;
-                    if (!debit.affectedRows) {
+                    if (!debit.count) {
                         throw new PurchaseError("Your balance changed. Please try again.");
                     }
                     if (item.creator_id && item.creator_id !== user.id) {
                         if (method === "tix") {
-                            await tx`UPDATE users SET tix = LEAST(tix + ${price}, 2147483647) WHERE id = ${item.creator_id}`;
+                            await tx`UPDATE users SET tix = LEAST(tix::bigint + ${price}, 2147483647) WHERE id = ${item.creator_id}`;
                         } else {
-                            await tx`UPDATE users SET currency = currency + ${price} WHERE id = ${item.creator_id}`;
+                            await tx`UPDATE users SET currency = LEAST(currency::bigint + ${price}, 2147483647) WHERE id = ${item.creator_id}`;
                         }
                     }
                 }

@@ -25,7 +25,7 @@ const ownedSet = async (setId: number, userId: number) => {
 };
 
 const setRow = async (set: any) => {
-    const [count] = await sql`SELECT COUNT(*) AS n FROM set_items WHERE set_id = ${set.id}`;
+    const [count] = await sql`SELECT COUNT(*)::int AS n FROM set_items WHERE set_id = ${set.id}`;
     const [first] = await sql`SELECT asset_id FROM set_items WHERE set_id = ${set.id} ORDER BY position, id LIMIT 1`;
     return {
         id: Number(set.id),
@@ -96,7 +96,7 @@ export const sets = new Elysia({ prefix: "/api/sets" })
         const like = `%${q.replace(/[%_]/g, "")}%`;
         const rows = await sql`
             SELECT id, name, type, created_at FROM assets
-            WHERE creator_id = ${user.id} AND parent_id IS NULL AND type IN ${sql(SET_TYPES)} AND name LIKE ${like}
+            WHERE creator_id = ${user.id} AND parent_id IS NULL AND type IN ${sql(SET_TYPES)} AND name ILIKE ${like}
             ORDER BY id DESC LIMIT 200
         `;
         return {
@@ -136,7 +136,7 @@ export const sets = new Elysia({ prefix: "/api/sets" })
             if (name === "") {
                 throw new SetError("Give the set a name.");
             }
-            const [count] = await sql`SELECT COUNT(*) AS n FROM sets WHERE user_id = ${user.id}`;
+            const [count] = await sql`SELECT COUNT(*)::int AS n FROM sets WHERE user_id = ${user.id}`;
             if (Number(count.n) >= SETS_MAX) {
                 throw new SetError(`You can have up to ${SETS_MAX} sets.`);
             }
@@ -146,11 +146,10 @@ export const sets = new Elysia({ prefix: "/api/sets" })
             }
             const created = await sql`
                 INSERT INTO sets (user_id, name, description, created_at, updated_at)
-                VALUES (${user.id}, ${name}, ${cleanDescription(body.description ?? "")}, ${now()}, ${now()})
-            `;
+                VALUES (${user.id}, ${name}, ${cleanDescription(body.description ?? "")}, ${now()}, ${now()}) RETURNING id`;
             return {
                 ok: true,
-                id: Number(created.lastInsertRowid)
+                id: Number(created[0].id)
             };
         } catch (err) {
             return handle(err, status);
@@ -224,16 +223,15 @@ export const sets = new Elysia({ prefix: "/api/sets" })
             if (!asset || !SET_TYPES.includes(asset.type)) {
                 throw new SetError("You can only add your own models and decals.");
             }
-            const [count] = await sql`SELECT COUNT(*) AS n FROM set_items WHERE set_id = ${params.id}`;
+            const [count] = await sql`SELECT COUNT(*)::int AS n FROM set_items WHERE set_id = ${params.id}`;
             if (Number(count.n) >= ITEMS_MAX) {
                 throw new SetError(`A set can hold up to ${ITEMS_MAX} items.`);
             }
             const [last] = await sql`SELECT MAX(position) AS p FROM set_items WHERE set_id = ${params.id}`;
             const added = await sql`
-                INSERT IGNORE INTO set_items (set_id, asset_id, position, added_at)
-                VALUES (${params.id}, ${body.assetId}, ${Number(last?.p ?? 0) + 1}, ${now()})
-            `;
-            if (!added.affectedRows) {
+                INSERT INTO set_items (set_id, asset_id, position, added_at)
+                VALUES (${params.id}, ${body.assetId}, ${Number(last?.p ?? 0) + 1}, ${now()}) ON CONFLICT DO NOTHING`;
+            if (!added.count) {
                 throw new SetError("That item is already in this set.");
             }
             await sql`UPDATE sets SET updated_at = ${now()} WHERE id = ${params.id}`;
@@ -268,7 +266,7 @@ export const sets = new Elysia({ prefix: "/api/sets" })
                 UPDATE IGNORE set_items SET set_id = ${target.id}, position = ${Number(last?.p ?? 0) + 1}
                 WHERE id = ${body.itemId}
             `;
-            if (!moved.affectedRows) {
+            if (!moved.count) {
                 throw new SetError("That item is already in the other set.");
             }
             await sql`UPDATE sets SET updated_at = ${now()} WHERE id IN (${params.id}, ${target.id})`;

@@ -80,8 +80,10 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         }
 
         await sql`
-            REPLACE INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, updated_at)
+            INSERT INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, updated_at)
             VALUES (${user.id}, ${colors.head_color}, ${colors.torso_color}, ${colors.left_arm_color}, ${colors.right_arm_color}, ${colors.left_leg_color}, ${colors.right_leg_color}, ${now()})
+            ON CONFLICT (user_id) DO UPDATE SET head_color = EXCLUDED.head_color, torso_color = EXCLUDED.torso_color, left_arm_color = EXCLUDED.left_arm_color,
+                right_arm_color = EXCLUDED.right_arm_color, left_leg_color = EXCLUDED.left_leg_color, right_leg_color = EXCLUDED.right_leg_color, updated_at = EXCLUDED.updated_at
         `;
 
         rcc.render.avatar(user.id);
@@ -160,7 +162,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
         await sql`
             INSERT INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, avatar_type, updated_at)
             VALUES (${user.id}, ${colors.head_color}, ${colors.torso_color}, ${colors.left_arm_color}, ${colors.right_arm_color}, ${colors.left_leg_color}, ${colors.right_leg_color}, ${body.type}, ${now()})
-            ON DUPLICATE KEY UPDATE avatar_type = ${body.type}, updated_at = ${now()}
+            ON CONFLICT (user_id) DO UPDATE SET avatar_type = ${body.type}, updated_at = ${now()}
         `;
         return {
             ok: await rcc.render.avatar(user.id),
@@ -197,7 +199,7 @@ export const avatar = new Elysia({ prefix: "/avatar" })
                 error: "Give the outfit a name"
             });
         }
-        const [count] = await sql`SELECT COUNT(*) AS n FROM avatar_outfits WHERE user_id = ${user.id}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM avatar_outfits WHERE user_id = ${user.id}`;
         if (Number(count.n) >= 50) {
             return status(400, {
                 error: "You can save up to 50 outfits"
@@ -236,8 +238,8 @@ export const avatar = new Elysia({ prefix: "/avatar" })
             await tx`
                 INSERT INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, updated_at)
                 VALUES (${user.id}, ${colors.head_color}, ${colors.torso_color}, ${colors.left_arm_color}, ${colors.right_arm_color}, ${colors.left_leg_color}, ${colors.right_leg_color}, ${now()})
-                ON DUPLICATE KEY UPDATE head_color = VALUES(head_color), torso_color = VALUES(torso_color), left_arm_color = VALUES(left_arm_color),
-                    right_arm_color = VALUES(right_arm_color), left_leg_color = VALUES(left_leg_color), right_leg_color = VALUES(right_leg_color), updated_at = VALUES(updated_at)
+                ON CONFLICT (user_id) DO UPDATE SET head_color = EXCLUDED.head_color, torso_color = EXCLUDED.torso_color, left_arm_color = EXCLUDED.left_arm_color,
+                    right_arm_color = EXCLUDED.right_arm_color, left_leg_color = EXCLUDED.left_leg_color, right_leg_color = EXCLUDED.right_leg_color, updated_at = EXCLUDED.updated_at
             `;
         });
         rcc.render.avatar(user.id);

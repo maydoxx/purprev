@@ -177,7 +177,7 @@ export const abuse = new Elysia()
 
     .get("/api/admin/reports", async ({ query }) => {
         const where = query.status === "closed" ? sql`r.status = 'closed'` : sql`r.status = 'open'`;
-        const [count] = await sql`SELECT COUNT(*) AS n FROM abuse_reports r WHERE ${where}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM abuse_reports r WHERE ${where}`;
         const total = Number(count.n);
         const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), totalPages);

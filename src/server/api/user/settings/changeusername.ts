@@ -43,7 +43,7 @@ export const changeusername = new Elysia()
         }
 
         const paid = await sql`UPDATE users SET username = ${username}, currency = currency - ${USERNAME_PRICE} WHERE id = ${user.id} AND currency >= ${USERNAME_PRICE}`;
-        if (!paid.affectedRows) {
+        if (!paid.count) {
             return status(403, {
                 error: `You need ${USERNAME_PRICE.toLocaleString("en-US")} Nonebux to change your username`
             });

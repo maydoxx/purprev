@@ -46,11 +46,11 @@ export const decideApplication = async (id: number, approve: boolean, by: string
                 error: `Someone took the name ${app.name} in the meantime, deny it and let them apply again.`
             };
         }
-        const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${app.name}, ${app.password}, ${now()})`;
-        userId = Number(created.lastInsertRowid);
+        const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${app.name}, ${app.password}, ${now()}) RETURNING id`;
+        userId = Number(created[0].id);
         await giveStarterItems(userId);
         await sql`
-            INSERT INTO invite_log (inviteKey, created_by, created_at, used_by, used_at, ip, user_agent)
+            INSERT INTO invite_log ("inviteKey", created_by, created_at, used_by, used_at, ip, user_agent)
             VALUES (${app.token}, ${byUserId}, ${app.created_at}, ${userId}, ${now()}, ${app.ip}, ${"application"})
         `;
         rcc.render.avatar(userId);
@@ -154,9 +154,8 @@ export const applications = new Elysia()
         const hash = await Bun.password.hash(body.password, "bcrypt");
         const created = await sql`
             INSERT INTO applications (name, discord, email, found, why, revivals, about, socials, password, ip, token, status, created_at)
-            VALUES (${name}, ${discord}, ${email}, ${found}, ${why}, ${revivals}, ${about}, ${socials}, ${hash}, ${ip}, ${tok}, 'pending', ${now()})
-        `;
-        const id = Number(created.lastInsertRowid);
+            VALUES (${name}, ${discord}, ${email}, ${found}, ${why}, ${revivals}, ${about}, ${socials}, ${hash}, ${ip}, ${tok}, 'pending', ${now()}) RETURNING id`;
+        const id = Number(created[0].id);
         const app = (await load(id))!;
         const messageId = await announceApplication(app);
         if (messageId) {
@@ -205,7 +204,7 @@ export const applications = new Elysia()
     .get("/api/admin/applications", async ({ query }) => {
         const which = query.status ?? "pending";
         const where = which === "all" ? sql`1 = 1` : sql`status = ${which}`;
-        const [count] = await sql`SELECT COUNT(*) AS n FROM applications WHERE ${where}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM applications WHERE ${where}`;
         const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
         const items = await sql`SELECT * FROM applications WHERE ${where} ORDER BY id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}`;

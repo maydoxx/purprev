@@ -22,7 +22,7 @@ export const notifications = new Elysia({ prefix: "/api/notifications" })
     .use(session)
 
     .get("/count", async ({ user }) => {
-        const [row] = await sql`SELECT COUNT(*) AS n FROM notifications WHERE user_id = ${user.id} AND is_read = 0`;
+        const [row] = await sql`SELECT COUNT(*)::int AS n FROM notifications WHERE user_id = ${user.id} AND is_read = 0`;
         return {
             unread: Number(row.n)
         };
@@ -32,7 +32,7 @@ export const notifications = new Elysia({ prefix: "/api/notifications" })
 
     .get("/", async ({ user, query }) => {
         const page = Math.max(1, query.page ?? 1);
-        const [total] = await sql`SELECT COUNT(*) AS n FROM notifications WHERE user_id = ${user.id}`;
+        const [total] = await sql`SELECT COUNT(*)::int AS n FROM notifications WHERE user_id = ${user.id}`;
         const rows = await sql`
             SELECT n.id, n.actor_id, n.kind, n.target_id, n.is_read, n.created_at, u.username AS actor_name
             FROM notifications n LEFT JOIN users u ON u.id = n.actor_id

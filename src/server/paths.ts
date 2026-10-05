@@ -30,7 +30,11 @@ export const saveImage = async (kind: string, id: number, file: File, maxBytes =
 };
 
 
-export const withThumbnail = async <T extends { id: number, thumbnail?: string }>(item: T) => ({
+export const withThumbnail = async <T extends { id: number, thumbnail?: string, asset_id?: unknown }>(item: T) => ({
     ...item,
+    // pg hands bigint back as a string
+    ...(item.asset_id != null ? {
+        asset_id: Number(item.asset_id)
+    } : {}),
     thumbnail: item.thumbnail || await mediaUrl("catalog", item.id)
 });

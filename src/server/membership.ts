@@ -91,6 +91,6 @@ export const claimStipend = async (userId: number) => {
     if (stipend === 0 || Number(row.last_stipend) >= today) {
         return 0;
     }
-    const done = await sql`UPDATE users SET currency = currency + ${stipend}, last_stipend = ${now()} WHERE id = ${userId} AND last_stipend < ${today}`;
-    return done.affectedRows ? stipend : 0;
+    const done = await sql`UPDATE users SET currency = LEAST(currency::bigint + ${stipend}, 2147483647), last_stipend = ${now()} WHERE id = ${userId} AND last_stipend < ${today}`;
+    return done.count ? stipend : 0;
 };

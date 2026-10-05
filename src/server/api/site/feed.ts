@@ -7,7 +7,7 @@ export const feed = new Elysia({ prefix: "/feed" })
     .use(session)
     .get("/", async ({ user }) => {
         const friends = await sql`
-            SELECT IF(requester_id = ${user.id}, target_id, requester_id) AS id FROM friendships
+            SELECT CASE WHEN requester_id = ${user.id} THEN target_id ELSE requester_id END AS id FROM friendships
             WHERE status = 'accepted' AND (requester_id = ${user.id} OR target_id = ${user.id})
         `;
         const ids = [user.id, ...friends.map((f: any) => f.id)];

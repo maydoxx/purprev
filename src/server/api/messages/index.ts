@@ -33,7 +33,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
         const where = TABS[tab as keyof typeof TABS](user.id);
         const other = tab === "sent" ? sql`m.recipient_id` : sql`m.sender_id`;
 
-        const [count] = await sql`SELECT COUNT(*) AS n FROM messages m WHERE ${where}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM messages m WHERE ${where}`;
         const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
 
@@ -46,7 +46,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
         `;
 
         const [news] = await sql`
-            SELECT COUNT(*) AS n FROM messages
+            SELECT COUNT(*)::int AS n FROM messages
             WHERE recipient_id = ${user.id} AND message_type = 'news' AND is_read = 0 AND recipient_archived = 0
         `;
 
@@ -73,7 +73,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
 
     .get("/unread", async ({ user }) => {
         const [count] = await sql`
-            SELECT COUNT(*) AS n FROM messages
+            SELECT COUNT(*)::int AS n FROM messages
             WHERE recipient_id = ${user.id} AND is_read = 0 AND recipient_archived = 0
         `;
         return {
@@ -143,13 +143,12 @@ export const messages = new Elysia({ prefix: "/api/messages" })
 
         const created = await sql`
             INSERT INTO messages (sender_id, recipient_id, subject, body, message_type, is_read, recipient_archived, created_at)
-            VALUES (${user.id}, ${recipient.id}, ${subject}, ${text}, 'message', 0, 0, ${now()})
-        `;
-        await notify(recipient.id, user.id, "message", Number(created.lastInsertRowid));
+            VALUES (${user.id}, ${recipient.id}, ${subject}, ${text}, 'message', 0, 0, ${now()}) RETURNING id`;
+        await notify(recipient.id, user.id, "message", Number(created[0].id));
 
         return {
             ok: true,
-            id: Number(created.lastInsertRowid)
+            id: Number(created[0].id)
         };
     }, {
         auth: true,

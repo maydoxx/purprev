@@ -14,7 +14,7 @@ export const invites = new Elysia({ prefix: "/invites" })
                 error: "Invite keys are turned off right now"
             });
         }
-        const [row] = await sql`SELECT lastInviteKeyCreated FROM users WHERE id = ${user.id}`;
+        const [row] = await sql`SELECT "lastInviteKeyCreated" FROM users WHERE id = ${user.id}`;
         const wait = row.lastInviteKeyCreated + COOLDOWN - now();
 
         if (wait > 0) {
@@ -25,8 +25,8 @@ export const invites = new Elysia({ prefix: "/invites" })
         }
 
         const key = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("hex");
-        await sql`UPDATE users SET lastInviteKeyCreated = ${now()} WHERE id = ${user.id}`;
-        await sql`INSERT INTO invites (createdBy, inviteKey, createdAt) VALUES (${user.id}, ${key}, ${now()})`;
+        await sql`UPDATE users SET "lastInviteKeyCreated" = ${now()} WHERE id = ${user.id}`;
+        await sql`INSERT INTO invites ("createdBy", "inviteKey", "createdAt") VALUES (${user.id}, ${key}, ${now()})`;
 
         return { key };
     }, {

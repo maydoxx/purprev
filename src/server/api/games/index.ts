@@ -53,12 +53,12 @@ const SORTS: Sort[] = [
     {
         id: "top-rated",
         title: "Top Rated",
-        order: sql`(up_votes + 1) / (up_votes + down_votes + 2) DESC, games.visits DESC, games.id DESC`
+        order: sql`rating DESC, games.visits DESC, games.id DESC`
     },
     {
         id: "recommended",
         title: "Recommended",
-        order: sql`RAND() * LOG10(games.visits + 10) DESC`
+        order: sql`random() * LOG10(games.visits + 10) DESC`
     },
     {
         id: "featured",
@@ -114,11 +114,11 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
     const like = `%${q.trim()}%`;
     const scope = sort.id === "recently-played" ? sql`plays.user_id IS NOT NULL`
         : sort.id === "my-favorites" ? sql`fav.user_id IS NOT NULL`
-        : sort.id === "featured" ? sql`games.featured = 1 AND games.title LIKE ${like}`
-        : sql`games.title LIKE ${like}`;
+        : sort.id === "featured" ? sql`games.featured = 1 AND games.title ILIKE ${like}`
+        : sql`games.title ILIKE ${like}`;
     const where = isGenre(genre) && genre !== "All" ? sql`${scope} AND games.genre = ${genre}` : scope;
     const [count] = await sql`
-        SELECT COUNT(*) AS n FROM games
+        SELECT COUNT(*)::int AS n FROM games
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
         LEFT JOIN game_favorites fav ON fav.game_id = games.id AND fav.user_id = ${userId}
         WHERE ${where}
@@ -127,10 +127,11 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
     const current = Math.min(Math.max(1, page), totalPages);
     const rows = await sql`
         SELECT games.*, users.username AS creator_name,
-            (SELECT COUNT(*) FROM game_favorites f WHERE f.game_id = games.id) AS favorites,
-            (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
-            (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes,
-            (SELECT COALESCE(SUM(p.price), 0) FROM user_game_passes ugp JOIN game_passes p ON p.id = ugp.pass_id WHERE p.game_id = games.id) AS earnings
+            (SELECT COUNT(*)::int FROM game_favorites f WHERE f.game_id = games.id) AS favorites,
+            (SELECT COUNT(*)::int FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
+            (SELECT COUNT(*)::int FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes,
+            (SELECT COALESCE(SUM(p.price), 0) FROM user_game_passes ugp JOIN game_passes p ON p.id = ugp.pass_id WHERE p.game_id = games.id) AS earnings,
+            (SELECT (COUNT(*) FILTER (WHERE v.vote = 1) + 1.0) / (COUNT(*) + 2) FROM game_votes v WHERE v.game_id = games.id)::float8 AS rating
         FROM games
         LEFT JOIN users ON users.id = games.creator_id
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
@@ -229,9 +230,9 @@ export const games = new Elysia({ prefix: "/api/games" })
     .get("/:id", async ({ params, user, status }) => {
         const [game] = await sql`
             SELECT games.*, users.username AS creator_name,
-                (SELECT COUNT(*) FROM game_favorites f WHERE f.game_id = games.id) AS favorites,
-                (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
-                (SELECT COUNT(*) FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes
+                (SELECT COUNT(*)::int FROM game_favorites f WHERE f.game_id = games.id) AS favorites,
+                (SELECT COUNT(*)::int FROM game_votes v WHERE v.game_id = games.id AND v.vote = 1) AS up_votes,
+                (SELECT COUNT(*)::int FROM game_votes v WHERE v.game_id = games.id AND v.vote = -1) AS down_votes
             FROM games
             LEFT JOIN users ON users.id = games.creator_id
             WHERE games.id = ${params.id}
@@ -255,7 +256,7 @@ export const games = new Elysia({ prefix: "/api/games" })
 
     .get("/:id/leaderboard", async ({ params }) => {
         const rows = await sql`
-            SELECT u.id, u.username, COUNT(*) AS plays FROM game_visit_sessions v
+            SELECT u.id, u.username, COUNT(*)::int AS plays FROM game_visit_sessions v
             JOIN users u ON u.id = v.user_id
             WHERE v.game_id = ${params.id}
             GROUP BY u.id, u.username
@@ -315,7 +316,7 @@ export const games = new Elysia({ prefix: "/api/games" })
                 error: "Name your VIP server"
             });
         }
-        const [count] = await sql`SELECT COUNT(*) AS n FROM vip_servers WHERE game_id = ${params.id} AND owner_id = ${user.id}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM vip_servers WHERE game_id = ${params.id} AND owner_id = ${user.id}`;
         if (Number(count.n) >= 5) {
             return status(400, {
                 error: "You can create up to five VIP servers per game"
@@ -346,7 +347,7 @@ export const games = new Elysia({ prefix: "/api/games" })
                 error: "User not found"
             });
         }
-        await sql`INSERT IGNORE INTO vip_server_members (vip_id, user_id) VALUES (${params.vipId}, ${invitee.id})`;
+        await sql`INSERT INTO vip_server_members (vip_id, user_id) VALUES (${params.vipId}, ${invitee.id}) ON CONFLICT DO NOTHING`;
         return {
             ok: true
         };
@@ -411,12 +412,12 @@ export const games = new Elysia({ prefix: "/api/games" })
             });
         }
         const gone = await sql`DELETE FROM game_favorites WHERE user_id = ${user.id} AND game_id = ${params.id}`;
-        if (!gone.affectedRows) {
+        if (!gone.count) {
             await sql`INSERT INTO game_favorites (user_id, game_id, created_at) VALUES (${user.id}, ${params.id}, ${now()})`;
         }
-        const [count] = await sql`SELECT COUNT(*) AS n FROM game_favorites WHERE game_id = ${params.id}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM game_favorites WHERE game_id = ${params.id}`;
         return {
-            favorited: !gone.affectedRows,
+            favorited: !gone.count,
             favorites: Number(count.n)
         };
     }, {
@@ -442,11 +443,11 @@ export const games = new Elysia({ prefix: "/api/games" })
         } else {
             await sql`
                 INSERT INTO game_votes (user_id, game_id, vote, created_at) VALUES (${user.id}, ${params.id}, ${wanted}, ${now()})
-                ON DUPLICATE KEY UPDATE vote = ${wanted}, created_at = ${now()}
+                ON CONFLICT (user_id, game_id) DO UPDATE SET vote = ${wanted}, created_at = ${now()}
             `;
         }
         const [counts] = await sql`
-            SELECT SUM(vote = 1) AS up_votes, SUM(vote = -1) AS down_votes FROM game_votes WHERE game_id = ${params.id}
+            SELECT COUNT(*) FILTER (WHERE vote = 1)::int AS up_votes, COUNT(*) FILTER (WHERE vote = -1)::int AS down_votes FROM game_votes WHERE game_id = ${params.id}
         `;
         return {
             my_vote: mine,
@@ -479,11 +480,11 @@ export const games = new Elysia({ prefix: "/api/games" })
 
     .get("/:id/badges", async ({ params }) => {
         const since = now() - DAY;
-        const [visitors] = await sql`SELECT COUNT(*) AS n FROM game_plays WHERE game_id = ${params.id} AND played_at > ${since}`;
+        const [visitors] = await sql`SELECT COUNT(*)::int AS n FROM game_plays WHERE game_id = ${params.id} AND played_at > ${since}`;
         const rows = await sql`
             SELECT b.*,
-                (SELECT COUNT(*) FROM user_badges ub WHERE ub.badge_id = b.id) AS awarded_count,
-                (SELECT COUNT(*) FROM user_badges ub WHERE ub.badge_id = b.id AND ub.awarded_at > ${since}) AS won_yesterday
+                (SELECT COUNT(*)::int FROM user_badges ub WHERE ub.badge_id = b.id) AS awarded_count,
+                (SELECT COUNT(*)::int FROM user_badges ub WHERE ub.badge_id = b.id AND ub.awarded_at > ${since}) AS won_yesterday
             FROM game_badges b
             WHERE b.game_id = ${params.id}
             ORDER BY b.id ASC
@@ -550,7 +551,7 @@ export const games = new Elysia({ prefix: "/api/games" })
                 if (price > 0) {
                     await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id}`;
                     if (pass.creator_id && Number(pass.creator_id) !== user.id) {
-                        await tx`UPDATE users SET currency = currency + ${price} WHERE id = ${pass.creator_id}`;
+                        await tx`UPDATE users SET currency = LEAST(currency::bigint + ${price}, 2147483647) WHERE id = ${pass.creator_id}`;
                     }
                 }
                 await tx`INSERT INTO user_game_passes (user_id, pass_id, purchased_at) VALUES (${user.id}, ${params.id}, ${now()})`;

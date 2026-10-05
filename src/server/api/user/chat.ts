@@ -31,7 +31,7 @@ export const chat = new Elysia({ prefix: "/chat" })
 
     .get("/", async ({ user }) => {
         const latest = await sql`
-            SELECT m.*, IF(m.sender_id = ${user.id}, m.recipient_id, m.sender_id) AS other
+            SELECT m.*, CASE WHEN m.sender_id = ${user.id} THEN m.recipient_id ELSE m.sender_id END AS other
             FROM chat_messages m
             JOIN (
                 SELECT MAX(id) AS id FROM chat_messages
@@ -41,7 +41,7 @@ export const chat = new Elysia({ prefix: "/chat" })
             ORDER BY m.id DESC LIMIT 30
         `;
         const unread = await sql`
-            SELECT sender_id, COUNT(*) AS n FROM chat_messages
+            SELECT sender_id, COUNT(*)::int AS n FROM chat_messages
             WHERE recipient_id = ${user.id} AND is_read = 0
             GROUP BY sender_id
         `;
@@ -54,7 +54,7 @@ export const chat = new Elysia({ prefix: "/chat" })
         const names = new Map<number, Person>(friends.map(f => [f.id, f]));
         for (const m of latest) {
             if (!names.has(Number(m.other))) {
-                const [u] = await sql`SELECT id, username, lastOnlineSite FROM users WHERE id = ${m.other}`;
+                const [u] = await sql`SELECT id, username, "lastOnlineSite" FROM users WHERE id = ${m.other}`;
                 if (u) {
                     names.set(Number(u.id), {
                         id: Number(u.id),
@@ -112,10 +112,9 @@ export const chat = new Elysia({ prefix: "/chat" })
         const filtered = white(text);
         const created = await sql`
             INSERT INTO chat_messages (sender_id, recipient_id, body, is_read, created_at)
-            VALUES (${user.id}, ${params.id}, ${filtered}, 0, ${now()})
-        `;
+            VALUES (${user.id}, ${params.id}, ${filtered}, 0, ${now()}) RETURNING id`;
         return {
-            id: Number(created.lastInsertRowid),
+            id: Number(created[0].id),
             from: user.id,
             mine: true,
             body: filtered,

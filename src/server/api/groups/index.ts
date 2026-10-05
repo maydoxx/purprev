@@ -45,7 +45,7 @@ const handle = (err: unknown, status: any) => {
 const getGroup = async (groupId: number) => {
     const [group] = await sql`
         SELECT g.*, u.username AS owner_username, s.username AS shout_username,
-            (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
+            (SELECT COUNT(*)::int FROM group_members x WHERE x.group_id = g.id) AS member_count
         FROM site_groups g
         LEFT JOIN users u ON u.id = g.owner_id
         LEFT JOIN users s ON s.id = g.shout_by
@@ -105,7 +105,7 @@ const checkRoleName = (name: string) => {
 
 const listGroups = (where = sql``) => sql`
     SELECT g.*, u.username AS owner_username,
-        (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
+        (SELECT COUNT(*)::int FROM group_members x WHERE x.group_id = g.id) AS member_count
     FROM site_groups g LEFT JOIN users u ON u.id = g.owner_id
     ${where}
 `;
@@ -115,7 +115,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
 
     .get("/", async ({ query }) => {
         const like = "%" + (query.q ?? "").trim() + "%";
-        const [count] = await sql`SELECT COUNT(*) AS n FROM site_groups WHERE name LIKE ${like} OR description LIKE ${like}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM site_groups WHERE name ILIKE ${like} OR description ILIKE ${like}`;
         const pages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), pages);
 
@@ -123,8 +123,8 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             page,
             pages,
             list: await listGroups(sql`
-                WHERE g.name LIKE ${like} OR g.description LIKE ${like}
-                ORDER BY (g.name LIKE ${like}) DESC, member_count DESC, g.id ASC
+                WHERE g.name ILIKE ${like} OR g.description ILIKE ${like}
+                ORDER BY (g.name ILIKE ${like}) DESC, member_count DESC, g.id ASC
                 LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
             `)
         };
@@ -137,7 +137,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
 
     .get("/my", async ({ user }) => await sql`
         SELECT g.*, gm.role, gm.rank,
-            (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
+            (SELECT COUNT(*)::int FROM group_members x WHERE x.group_id = g.id) AS member_count
         FROM group_members gm JOIN site_groups g ON g.id = gm.group_id
         WHERE gm.user_id = ${user.id} ORDER BY gm.rank DESC, gm.joined_at DESC
     `, {
@@ -147,7 +147,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
     .get("/of/:userId", async ({ params }) => {
         const rows = await sql`
             SELECT g.id, g.name, g.description, g.icon, gm.role,
-                (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
+                (SELECT COUNT(*)::int FROM group_members x WHERE x.group_id = g.id) AS member_count
             FROM group_members gm
             JOIN site_groups g ON g.id = gm.group_id
             WHERE gm.user_id = ${params.userId}
@@ -180,8 +180,8 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             checkDescription(description);
 
             const groupId = await sql.begin(async tx => {
-                const created = await tx`INSERT INTO site_groups (name, owner_id, description, created_at, updated_at) VALUES (${name}, ${user.id}, ${description}, ${now()}, ${now()})`;
-                const groupId = Number(created.lastInsertRowid);
+                const created = await tx`INSERT INTO site_groups (name, owner_id, description, created_at, updated_at) VALUES (${name}, ${user.id}, ${description}, ${now()}, ${now()}) RETURNING id`;
+                const groupId = Number(created[0].id);
                 await tx`INSERT INTO group_members (group_id, user_id, role, rank, joined_at) VALUES (${groupId}, ${user.id}, 'Owner', ${OWNER_RANK}, ${now()})`;
                 await tx`INSERT INTO group_roles (group_id, name, rank, can_post_wall, can_shout, can_delete_wall, can_manage_members) VALUES (${groupId}, 'Owner', ${OWNER_RANK}, 1, 1, 1, 1)`;
                 await tx`INSERT INTO group_roles (group_id, name, rank, can_post_wall, can_shout, can_delete_wall, can_manage_members) VALUES (${groupId}, 'Member', ${MEMBER_RANK}, 1, 0, 0, 0)`;
@@ -274,7 +274,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
 
             await sql`
                 UPDATE site_groups
-                SET description = ${description}, approval_required = ${approval}, wall_enabled = ${wall}, bc_only = ${bcOnly}, updated_at = ${now()}
+                SET description = ${description}, approval_required = ${approval ? 1 : 0}, wall_enabled = ${wall ? 1 : 0}, bc_only = ${bcOnly ? 1 : 0}, updated_at = ${now()}
                 WHERE id = ${params.id}
             `;
             if (body.icon && body.icon.size > 0) {
@@ -312,13 +312,13 @@ export const groups = new Elysia({ prefix: "/api/groups" })
                 throw new GroupError("Only Builders Club members can join this group.");
             }
             if (group.approval_required) {
-                await sql`INSERT IGNORE INTO group_join_requests (group_id, user_id, created_at) VALUES (${params.id}, ${user.id}, ${now()})`;
+                await sql`INSERT INTO group_join_requests (group_id, user_id, created_at) VALUES (${params.id}, ${user.id}, ${now()}) ON CONFLICT DO NOTHING`;
                 return {
                     ok: true,
                     status: "requested"
                 };
             }
-            await sql`INSERT IGNORE INTO group_members (group_id, user_id, role, rank, joined_at) VALUES (${params.id}, ${user.id}, 'Member', ${MEMBER_RANK}, ${now()})`;
+            await sql`INSERT INTO group_members (group_id, user_id, role, rank, joined_at) VALUES (${params.id}, ${user.id}, 'Member', ${MEMBER_RANK}, ${now()}) ON CONFLICT DO NOTHING`;
             await sql`DELETE FROM group_join_requests WHERE group_id = ${params.id} AND user_id = ${user.id}`;
             return {
                 ok: true,
@@ -377,7 +377,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
     })
 
     .get("/:id/wall", async ({ params, query }) => {
-        const [count] = await sql`SELECT COUNT(*) AS n FROM group_wall_posts WHERE group_id = ${params.id}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM group_wall_posts WHERE group_id = ${params.id}`;
         const pages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), pages);
         return {
@@ -411,10 +411,10 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             if (text.length > 500) {
                 throw new GroupError("Wall posts cannot be longer than 500 characters.");
             }
-            const created = await sql`INSERT INTO group_wall_posts (group_id, user_id, body, created_at) VALUES (${params.id}, ${user.id}, ${text}, ${now()})`;
+            const created = await sql`INSERT INTO group_wall_posts (group_id, user_id, body, created_at) VALUES (${params.id}, ${user.id}, ${text}, ${now()}) RETURNING id`;
             return {
                 ok: true,
-                id: Number(created.lastInsertRowid)
+                id: Number(created[0].id)
             };
         } catch (err) {
             return handle(err, status);
@@ -451,7 +451,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
     .get("/:id/members", async ({ params, query }) => {
         const role = (query.role ?? "").trim();
         const where = sql`WHERE gm.group_id = ${params.id} ${role !== "" ? sql`AND gm.role = ${role}` : sql``}`;
-        const [count] = await sql`SELECT COUNT(*) AS n FROM group_members gm ${where}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM group_members gm ${where}`;
         const pages = Math.max(1, Math.ceil(Number(count.n) / MEMBERS_PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), pages);
 
@@ -565,7 +565,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
                 if (!request) {
                     throw new GroupError("That join request no longer exists.");
                 }
-                await tx`INSERT IGNORE INTO group_members (group_id, user_id, role, rank, joined_at) VALUES (${params.id}, ${params.userId}, 'Member', ${MEMBER_RANK}, ${now()})`;
+                await tx`INSERT INTO group_members (group_id, user_id, role, rank, joined_at) VALUES (${params.id}, ${params.userId}, 'Member', ${MEMBER_RANK}, ${now()}) ON CONFLICT DO NOTHING`;
                 await tx`DELETE FROM group_join_requests WHERE group_id = ${params.id} AND user_id = ${params.userId}`;
             });
             return {
@@ -612,11 +612,10 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             }
             const created = await sql`
                 INSERT INTO group_roles (group_id, name, rank, can_post_wall, can_shout, can_delete_wall, can_manage_members)
-                VALUES (${params.id}, ${name}, ${body.rank}, ${!!body.can_post_wall}, ${!!body.can_shout}, ${!!body.can_delete_wall}, ${!!body.can_manage_members})
-            `;
+                VALUES (${params.id}, ${name}, ${body.rank}, ${body.can_post_wall ? 1 : 0}, ${body.can_shout ? 1 : 0}, ${body.can_delete_wall ? 1 : 0}, ${body.can_manage_members ? 1 : 0}) RETURNING id`;
             return {
                 ok: true,
-                id: Number(created.lastInsertRowid)
+                id: Number(created[0].id)
             };
         } catch (err) {
             return handle(err, status);
@@ -646,8 +645,8 @@ export const groups = new Elysia({ prefix: "/api/groups" })
 
             await sql.begin(async tx => {
                 await tx`
-                    UPDATE group_roles SET name = ${name}, can_post_wall = ${!!body.can_post_wall}, can_shout = ${!!body.can_shout},
-                        can_delete_wall = ${!!body.can_delete_wall}, can_manage_members = ${!!body.can_manage_members}
+                    UPDATE group_roles SET name = ${name}, can_post_wall = ${body.can_post_wall ? 1 : 0}, can_shout = ${body.can_shout ? 1 : 0},
+                        can_delete_wall = ${body.can_delete_wall ? 1 : 0}, can_manage_members = ${body.can_manage_members ? 1 : 0}
                     WHERE id = ${params.roleId} AND group_id = ${params.id}
                 `;
                 await tx`UPDATE group_members SET role = ${name} WHERE group_id = ${params.id} AND rank = ${role.rank}`;
@@ -711,7 +710,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             if (!item) {
                 throw new GroupError("Choose a catalog item you created.");
             }
-            await sql`INSERT IGNORE INTO group_store_items (group_id, item_id, added_at) VALUES (${params.id}, ${body.targetId}, ${now()})`;
+            await sql`INSERT INTO group_store_items (group_id, item_id, added_at) VALUES (${params.id}, ${body.targetId}, ${now()}) ON CONFLICT DO NOTHING`;
             return {
                 ok: true
             };
@@ -768,7 +767,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             if (!game) {
                 throw new GroupError("Choose a game you created.");
             }
-            await sql`INSERT IGNORE INTO group_games (group_id, game_id, added_at) VALUES (${params.id}, ${body.targetId}, ${now()})`;
+            await sql`INSERT INTO group_games (group_id, game_id, added_at) VALUES (${params.id}, ${body.targetId}, ${now()}) ON CONFLICT DO NOTHING`;
             return {
                 ok: true
             };
@@ -813,7 +812,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
         }
         const rows = await sql`
             SELECT a.group_id, a.other_group_id, a.status, g.id, g.name, g.icon FROM group_affiliates a
-            JOIN site_groups g ON g.id = IF(a.group_id = ${groupId}, a.other_group_id, a.group_id)
+            JOIN site_groups g ON g.id = CASE WHEN a.group_id = ${groupId} THEN a.other_group_id ELSE a.group_id END
             WHERE a.group_id = ${groupId} OR a.other_group_id = ${groupId}
             ORDER BY a.requested_at DESC
         `;
@@ -872,7 +871,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
                 UPDATE group_affiliates SET status = 'accepted'
                 WHERE group_id = ${params.targetId} AND other_group_id = ${params.id} AND status = 'pending'
             `;
-            if (!changed.affectedRows) {
+            if (!changed.count) {
                 throw new GroupError("Affiliate request not found.");
             }
             const source = await getGroup(params.targetId);

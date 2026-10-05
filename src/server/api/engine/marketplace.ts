@@ -56,7 +56,7 @@ export const marketplace = new Elysia()
         if (item) {
             sales = Number(item.limited_sold);
         } else if (pass) {
-            const [n] = await sql`SELECT COUNT(*) AS n FROM user_game_passes WHERE pass_id = ${id}`;
+            const [n] = await sql`SELECT COUNT(*)::int AS n FROM user_game_passes WHERE pass_id = ${id}`;
             sales = Number(n.n);
         }
 

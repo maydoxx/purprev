@@ -56,9 +56,9 @@ export const register = new Elysia()
         }
 
         const hash = await Bun.password.hash(body.password, "bcrypt");
-        const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${username}, ${hash}, ${now()})`;
+        const created = await sql`INSERT INTO users (username, password, created_at) VALUES (${username}, ${hash}, ${now()}) RETURNING id`;
 
-        const id = Number(created.lastInsertRowid);
+        const id = Number(created[0].id);
         await logInvite(invite, id, request, server);
         await giveStarterItems(id);
         rcc.render.avatar(id);

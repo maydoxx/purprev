@@ -69,13 +69,22 @@ const item = t.Object({
     creator: t.String(),
     category: t.Optional(t.String()),
     asset_id: t.Optional(t.Numeric()),
-    price: t.Optional(t.Numeric({ minimum: 0 })),
-    tix_price: t.Optional(t.Numeric({ minimum: 0, maximum: 2000000000 })),
+    price: t.Optional(t.Numeric({
+        minimum: 0,
+        maximum: 2147483647
+    })),
+    tix_price: t.Optional(t.Numeric({
+        minimum: 0,
+        maximum: 2000000000
+    })),
     thumbnail: t.Optional(t.String()),
     is_featured: t.Optional(t.Boolean()),
     is_limited: t.Optional(t.Boolean()),
     is_limited_unique: t.Optional(t.Boolean()),
-    limited_stock: t.Optional(t.Numeric({ minimum: 0 })),
+    limited_stock: t.Optional(t.Numeric({
+        minimum: 0,
+        maximum: 2147483647
+    })),
     bc_only: t.Optional(t.Boolean()),
     is_starter: t.Optional(t.Boolean()),
     package_parts: t.Optional(t.String({ maxLength: 255 }))
@@ -290,12 +299,11 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         try {
             const c = cleanBanner(body);
             const created = await sql`
-                INSERT INTO site_banners (message, linkText, linkUrl, style, enabled, dismissible, startsAt, endsAt, createdBy, createdAt, updatedAt)
-                VALUES (${c.message}, ${c.linkText}, ${c.linkUrl}, ${c.style}, ${c.enabled}, ${c.dismissible}, ${c.startsAt}, ${c.endsAt}, ${user.id}, ${now()}, ${now()})
-            `;
+                INSERT INTO site_banners (message, "linkText", "linkUrl", style, enabled, dismissible, "startsAt", "endsAt", "createdBy", "createdAt", "updatedAt")
+                VALUES (${c.message}, ${c.linkText}, ${c.linkUrl}, ${c.style}, ${c.enabled}, ${c.dismissible}, ${c.startsAt}, ${c.endsAt}, ${user.id}, ${now()}, ${now()}) RETURNING id`;
             return {
                 ok: true,
-                id: Number(created.lastInsertRowid)
+                id: Number(created[0].id)
             };
         } catch (err) {
             return handle(err, status);
@@ -309,11 +317,11 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         try {
             const c = cleanBanner(body);
             const done = await sql`
-                UPDATE site_banners SET message = ${c.message}, linkText = ${c.linkText}, linkUrl = ${c.linkUrl}, style = ${c.style},
-                    enabled = ${c.enabled}, dismissible = ${c.dismissible}, startsAt = ${c.startsAt}, endsAt = ${c.endsAt}, updatedAt = ${now()}
+                UPDATE site_banners SET message = ${c.message}, "linkText" = ${c.linkText}, "linkUrl" = ${c.linkUrl}, style = ${c.style},
+                    enabled = ${c.enabled}, dismissible = ${c.dismissible}, "startsAt" = ${c.startsAt}, "endsAt" = ${c.endsAt}, "updatedAt" = ${now()}
                 WHERE id = ${params.id}
             `;
-            if (done.affectedRows !== 1) {
+            if (done.count !== 1) {
                 throw new AdminError("That banner does not exist any more.");
             }
             return {
@@ -337,7 +345,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             });
         }
         const enabled = Number(b.enabled) === 1 ? 0 : 1;
-        await sql`UPDATE site_banners SET enabled = ${enabled}, updatedAt = ${now()} WHERE id = ${params.id}`;
+        await sql`UPDATE site_banners SET enabled = ${enabled}, "updatedAt" = ${now()} WHERE id = ${params.id}`;
         return {
             ok: true,
             enabled
@@ -372,9 +380,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             const p = cleanPost(body);
             const created = await sql`
                 INSERT INTO blog_posts (title, excerpt, body, category, author_id, image, is_published, published_at, created_at, updated_at)
-                VALUES (${p.title}, ${p.excerpt}, ${p.body}, ${p.category}, ${user.id}, '', ${p.published}, ${p.published ? now() : 0}, ${now()}, ${now()})
-            `;
-            const postId = Number(created.lastInsertRowid);
+                VALUES (${p.title}, ${p.excerpt}, ${p.body}, ${p.category}, ${user.id}, '', ${p.published}, ${p.published ? now() : 0}, ${now()}, ${now()}) RETURNING id`;
+            const postId = Number(created[0].id);
             if (body.image && body.image.size > 0) {
                 const image = await saveImage("blog", postId, body.image, BLOG_IMAGE_BYTES);
                 await sql`UPDATE blog_posts SET image = ${image} WHERE id = ${postId}`;
@@ -446,9 +453,9 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .get("/catalog", async ({ query }) => {
         const like = `%${(query.q ?? "").trim()}%`;
-        const where = sql`catalog_items.name LIKE ${like} OR users.username LIKE ${like}`;
+        const where = sql`catalog_items.name ILIKE ${like} OR users.username ILIKE ${like}`;
         const page = await paginate(
-            sql`SELECT COUNT(*) AS n FROM catalog_items LEFT JOIN users ON users.id = catalog_items.creator_id WHERE ${where}`,
+            sql`SELECT COUNT(*)::int AS n FROM catalog_items LEFT JOIN users ON users.id = catalog_items.creator_id WHERE ${where}`,
             query.page,
             limit => sql`
                 SELECT catalog_items.*, users.username AS creator_name FROM catalog_items
@@ -471,9 +478,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             const c = await cleanItem(body, null);
             const created = await sql`
                 INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, tix_price, thumbnail, is_featured, bc_only, is_starter, package_parts, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
-                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.tix_price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_starter}, ${c.package_parts}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()})
-            `;
-            const itemId = Number(created.lastInsertRowid);
+                VALUES (${c.name}, ${c.description}, ${c.creator_id}, ${c.category}, ${c.asset_id}, ${c.price}, ${c.tix_price}, ${c.thumbnail}, ${c.is_featured}, ${c.bc_only}, ${c.is_starter}, ${c.package_parts}, ${c.is_limited}, ${c.is_limited_unique}, ${c.limited_stock}, 0, ${now()}, ${now()}) RETURNING id`;
+            const itemId = Number(created[0].id);
             if (c.remote !== "") {
                 await storeThumbnail(itemId, c.remote);
             }
@@ -571,16 +577,16 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         const today = Math.floor(now() / 86400) * 86400;
         const [[u], [g], [c], [m], [i], [a], [ap], servers, health] = await Promise.all([
             sql`
-                SELECT COUNT(*) AS users, SUM(lastOnlineSite > ${now() - ONLINE_WINDOW}) AS online, SUM(created_at >= ${today}) AS today,
-                    SUM(admin > 0) AS admins, SUM(membership <> 'None' AND (membership_expires = 0 OR membership_expires > ${now()})) AS club
+                SELECT COUNT(*)::int AS users, COUNT(*) FILTER (WHERE "lastOnlineSite" > ${now() - ONLINE_WINDOW})::int AS online, COUNT(*) FILTER (WHERE created_at >= ${today})::int AS today,
+                    COUNT(*) FILTER (WHERE admin > 0)::int AS admins, COUNT(*) FILTER (WHERE membership <> 'None' AND (membership_expires = 0 OR membership_expires > ${now()}))::int AS club
                 FROM users
             `,
-            sql`SELECT COUNT(*) AS games, (SELECT COUNT(*) FROM media WHERE kind = 'places') AS published FROM games`,
-            sql`SELECT COUNT(*) AS n FROM catalog_items`,
-            sql`SELECT COUNT(*) AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
-            sql`SELECT COUNT(*) AS n FROM invites`,
-            sql`SELECT COUNT(*) AS n FROM assets WHERE type = 'Model' AND parent_id IS NULL`,
-            sql`SELECT COUNT(*) AS n FROM applications WHERE status = 'pending'`,
+            sql`SELECT COUNT(*)::int AS games, (SELECT COUNT(*)::int FROM media WHERE kind = 'places') AS published FROM games`,
+            sql`SELECT COUNT(*)::int AS n FROM catalog_items`,
+            sql`SELECT COUNT(*)::int AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
+            sql`SELECT COUNT(*)::int AS n FROM invites`,
+            sql`SELECT COUNT(*)::int AS n FROM assets WHERE type = 'Model' AND parent_id IS NULL`,
+            sql`SELECT COUNT(*)::int AS n FROM applications WHERE status = 'pending'`,
             rcc.servers(),
             rcc.health()
         ]);
@@ -608,9 +614,9 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .get("/games", async ({ query }) => {
         const like = `%${(query.q ?? "").trim()}%`;
-        const where = sql`(games.title LIKE ${like} OR users.username LIKE ${like})`;
+        const where = sql`(games.title ILIKE ${like} OR users.username ILIKE ${like})`;
         const result = await paginate(
-            sql`SELECT COUNT(*) AS n FROM games LEFT JOIN users ON users.id = games.creator_id WHERE ${where}`,
+            sql`SELECT COUNT(*)::int AS n FROM games LEFT JOIN users ON users.id = games.creator_id WHERE ${where}`,
             query.page,
             limit => sql`
                 SELECT games.id, games.title, games.creator_id, games.featured, users.username AS creator_name, media.updated_at AS published_at, media.size AS file_size
@@ -727,7 +733,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
     })
 
     .get("/invitekeys/log", ({ query }) => paginate(
-        sql`SELECT COUNT(*) AS n FROM invite_log`,
+        sql`SELECT COUNT(*)::int AS n FROM invite_log`,
         query.page,
         limit => sql`
             SELECT invite_log.*, maker.username AS creator_name, joiner.username AS user_name FROM invite_log
@@ -743,11 +749,11 @@ export const admin = new Elysia({ prefix: "/api/admin" })
     })
 
     .get("/invitekeys", ({ query }) => paginate(
-        sql`SELECT COUNT(*) AS n FROM invites`,
+        sql`SELECT COUNT(*)::int AS n FROM invites`,
         query.page,
         limit => sql`
             SELECT invites.*, users.username AS creator_name FROM invites
-            LEFT JOIN users ON users.id = invites.createdBy
+            LEFT JOIN users ON users.id = invites."createdBy"
             ORDER BY invites.id DESC ${limit}
         `
     ), {
@@ -759,7 +765,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .post("/invitekeys", async ({ user }) => {
         const key = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("hex");
-        await sql`INSERT INTO invites (createdBy, inviteKey, createdAt) VALUES (${user.id}, ${key}, ${now()})`;
+        await sql`INSERT INTO invites ("createdBy", "inviteKey", "createdAt") VALUES (${user.id}, ${key}, ${now()})`;
         return {
             ok: true,
             key
@@ -781,8 +787,8 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .get("/gamecards", ({ query }) => paginate(
         query.used
-            ? sql`SELECT COUNT(*) AS n FROM game_cards WHERE redeemed_by > 0`
-            : sql`SELECT COUNT(*) AS n FROM game_cards WHERE redeemed_by = 0`,
+            ? sql`SELECT COUNT(*)::int AS n FROM game_cards WHERE redeemed_by > 0`
+            : sql`SELECT COUNT(*)::int AS n FROM game_cards WHERE redeemed_by = 0`,
         query.page,
         limit => query.used
             ? sql`
@@ -849,14 +855,14 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
 
     .get("/moderation", ({ query }) => paginate(
-        sql`SELECT COUNT(*) AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
+        sql`SELECT COUNT(*)::int AS n FROM users WHERE ongoing_action_id IS NOT NULL`,
         query.page,
         limit => sql`
             SELECT users.id, users.username, moderation_actions.action, moderation_actions.reason,
-                moderation_actions.moderatedBy, moderation_actions.expiresAt, moderator.username AS moderator_name
+                moderation_actions."moderatedBy", moderation_actions."expiresAt", moderator.username AS moderator_name
             FROM users
             LEFT JOIN moderation_actions ON moderation_actions.id = users.ongoing_action_id
-            LEFT JOIN users AS moderator ON moderator.id = moderation_actions.moderatedBy
+            LEFT JOIN users AS moderator ON moderator.id = moderation_actions."moderatedBy"
             WHERE users.ongoing_action_id IS NOT NULL
             ORDER BY users.id DESC ${limit}
         `
@@ -885,10 +891,9 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             const [action, seconds] = MODERATION[body.type]!;
             const expiresAt = seconds > 0 ? now() + seconds : 0;
             const created = await sql`
-                INSERT INTO moderation_actions (user_id, action, reason, moderatedBy, expiresAt)
-                VALUES (${target.id}, ${action}, ${reason}, ${user.id}, ${expiresAt})
-            `;
-            await sql`UPDATE users SET ongoing_action_id = ${Number(created.lastInsertRowid)} WHERE id = ${target.id}`;
+                INSERT INTO moderation_actions (user_id, action, reason, "moderatedBy", "expiresAt")
+                VALUES (${target.id}, ${action}, ${reason}, ${user.id}, ${expiresAt}) RETURNING id`;
+            await sql`UPDATE users SET ongoing_action_id = ${Number(created[0].id)} WHERE id = ${target.id}`;
             return {
                 ok: true
             };
@@ -926,14 +931,14 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .get("/users", ({ query }) => {
         const like = `%${(query.q ?? "").trim()}%`;
-        const where = sql`(users.username LIKE ${like} OR users.email LIKE ${like})`;
+        const where = sql`(users.username ILIKE ${like} OR users.email ILIKE ${like})`;
         return paginate(
-            sql`SELECT COUNT(*) AS n FROM users WHERE ${where}`,
+            sql`SELECT COUNT(*)::int AS n FROM users WHERE ${where}`,
             query.page,
             limit => sql`
                 SELECT users.id, users.username, users.email, users.admin, users.currency, users.tix, users.ongoing_action_id, users.created_at, users.membership, users.membership_expires,
                     joined.created_by AS invited_by_id, maker.username AS invited_by,
-                    (SELECT COUNT(*) FROM invite_log l WHERE l.created_by = users.id) AS invited
+                    (SELECT COUNT(*)::int FROM invite_log l WHERE l.created_by = users.id) AS invited
                 FROM users
                 LEFT JOIN invite_log joined ON joined.used_by = users.id
                 LEFT JOIN users maker ON maker.id = joined.created_by

@@ -146,7 +146,7 @@ export const resale = new Elysia()
 
     .post("/:id/unsell", async ({ params, user, status }) => {
         const removed = await sql`DELETE FROM resale_listings WHERE user_id = ${user.id} AND item_id = ${params.id}`;
-        if (!removed.affectedRows) {
+        if (!removed.count) {
             return status(400, {
                 error: "This item is not for sale"
             });
@@ -195,11 +195,11 @@ export const resale = new Elysia()
                     throw new ResaleError("You do not have enough Nonebux for this item");
                 }
                 const debit = await tx`UPDATE users SET currency = currency - ${price} WHERE id = ${user.id} AND currency >= ${price}`;
-                if (!debit.affectedRows) {
+                if (!debit.count) {
                     throw new ResaleError("Your balance changed. Please try again.");
                 }
                 const fee = marketplaceFee(price);
-                await tx`UPDATE users SET currency = LEAST(currency + ${price - fee}, 2147483647) WHERE id = ${listing.user_id}`;
+                await tx`UPDATE users SET currency = LEAST(currency::bigint + ${price - fee}, 2147483647) WHERE id = ${listing.user_id}`;
 
                 await tx`
                     UPDATE user_items SET user_id = ${user.id}, wearing = 0, purchased_at = ${now()}

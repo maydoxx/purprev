@@ -46,7 +46,7 @@ export const inventory = new Elysia({ prefix: "/inventory" })
                     LIMIT ${PER_PAGE} OFFSET ${offset}
                 `,
                 sql`
-                    SELECT COUNT(*) AS n FROM user_items JOIN catalog_items ON catalog_items.id = user_items.item_id
+                    SELECT COUNT(*)::int AS n FROM user_items JOIN catalog_items ON catalog_items.id = user_items.item_id
                     WHERE user_items.user_id = ${user.id} AND catalog_items.category = ${type}
                 `
             ])
@@ -58,7 +58,7 @@ export const inventory = new Elysia({ prefix: "/inventory" })
                     LEFT JOIN users ON users.id = b.creator_id LEFT JOIN games ON games.id = b.game_id
                     WHERE ub.user_id = ${user.id} ORDER BY ub.awarded_at DESC LIMIT ${PER_PAGE} OFFSET ${offset}
                 `,
-                sql`SELECT COUNT(*) AS n FROM user_badges WHERE user_id = ${user.id}`
+                sql`SELECT COUNT(*)::int AS n FROM user_badges WHERE user_id = ${user.id}`
             ])
             : category === "places"
             ? await Promise.all([
@@ -66,7 +66,7 @@ export const inventory = new Elysia({ prefix: "/inventory" })
                     SELECT id, id AS game_id, title AS name, creator_id, ${user.username} AS creator_name FROM games
                     WHERE creator_id = ${user.id} ORDER BY id DESC LIMIT ${PER_PAGE} OFFSET ${offset}
                 `,
-                sql`SELECT COUNT(*) AS n FROM games WHERE creator_id = ${user.id}`
+                sql`SELECT COUNT(*)::int AS n FROM games WHERE creator_id = ${user.id}`
             ])
             : await Promise.all([
                 sql`
@@ -75,7 +75,7 @@ export const inventory = new Elysia({ prefix: "/inventory" })
                     LEFT JOIN users ON users.id = p.creator_id LEFT JOIN games ON games.id = p.game_id
                     WHERE up.user_id = ${user.id} ORDER BY up.purchased_at DESC LIMIT ${PER_PAGE} OFFSET ${offset}
                 `,
-                sql`SELECT COUNT(*) AS n FROM user_game_passes WHERE user_id = ${user.id}`
+                sql`SELECT COUNT(*)::int AS n FROM user_game_passes WHERE user_id = ${user.id}`
             ]);
 
         return {

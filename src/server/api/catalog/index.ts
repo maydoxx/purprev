@@ -52,8 +52,8 @@ const available = sql`(catalog_items.price IS NOT NULL OR catalog_items.tix_pric
 
 const columns = sql`
     catalog_items.*, users.username AS creator_name,
-    (SELECT COUNT(*) FROM user_items WHERE user_items.item_id = catalog_items.id) AS owners,
-    (SELECT COUNT(*) FROM catalog_favorites WHERE catalog_favorites.item_id = catalog_items.id) AS favorites,
+    (SELECT COUNT(*)::int FROM user_items WHERE user_items.item_id = catalog_items.id) AS owners,
+    (SELECT COUNT(*)::int FROM catalog_favorites WHERE catalog_favorites.item_id = catalog_items.id) AS favorites,
     (
         SELECT MIN(resale_listings.price) FROM resale_listings
         JOIN user_items ON user_items.user_id = resale_listings.user_id AND user_items.item_id = resale_listings.item_id
@@ -128,7 +128,7 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
         const unavailable = query.unavailable === "1" || query.unavailable === "true";
 
         const where = sql`
-            ${q !== "" ? sql`catalog_items.name LIKE ${"%" + q + "%"}` : sql`1 = 1`}
+            ${q !== "" ? sql`catalog_items.name ILIKE ${"%" + q + "%"}` : sql`1 = 1`}
             AND ${categoryWhere(category)}
             AND ${CURRENCIES[currency]}
             AND ${creator !== "" ? sql`users.username = ${creator}` : sql`1 = 1`}
@@ -136,7 +136,7 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
         `;
 
         const [count] = await sql`
-            SELECT COUNT(*) AS n
+            SELECT COUNT(*)::int AS n
             FROM catalog_items LEFT JOIN users ON users.id = catalog_items.creator_id
             WHERE ${where}
         `;
@@ -195,7 +195,7 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             : [null];
         const [resellers] = isResellable(item)
             ? await sql`
-                SELECT COUNT(*) AS n FROM resale_listings
+                SELECT COUNT(*)::int AS n FROM resale_listings
                 JOIN user_items ON user_items.user_id = resale_listings.user_id AND user_items.item_id = resale_listings.item_id
                 WHERE resale_listings.item_id = ${params.id}
             `
@@ -227,18 +227,18 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             SELECT ${columns}
             FROM catalog_items LEFT JOIN users ON users.id = catalog_items.creator_id
             WHERE catalog_items.category = ${item.category} AND catalog_items.id != ${params.id} AND ${available}
-            ORDER BY RAND()
+            ORDER BY random()
             LIMIT 6
         `;
         const others = await sql`
             SELECT games.id, games.title AS name FROM games
-            ORDER BY RAND()
+            ORDER BY random()
             LIMIT 3
         `;
         const otherItems = await sql`
             SELECT catalog_items.id, catalog_items.name FROM catalog_items
             WHERE catalog_items.id != ${params.id} AND catalog_items.price = 0
-            ORDER BY RAND()
+            ORDER BY random()
             LIMIT 3
         `;
         return {
@@ -270,12 +270,12 @@ export const catalog = new Elysia({ prefix: "/api/catalog" })
             });
         }
         const removed = await sql`DELETE FROM catalog_favorites WHERE user_id = ${user.id} AND item_id = ${params.id}`;
-        if (!removed.affectedRows) {
+        if (!removed.count) {
             await sql`INSERT INTO catalog_favorites (user_id, item_id, created_at) VALUES (${user.id}, ${params.id}, ${now()})`;
         }
-        const [count] = await sql`SELECT COUNT(*) AS n FROM catalog_favorites WHERE item_id = ${params.id}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM catalog_favorites WHERE item_id = ${params.id}`;
         return {
-            favorited: !removed.affectedRows,
+            favorited: !removed.count,
             favorites: Number(count.n)
         };
     }, {

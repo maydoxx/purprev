@@ -20,7 +20,7 @@ export const money = new Elysia({ prefix: "/api/money" })
             WHERE id = ${user.id} AND tix >= ${amount} AND currency <= ${2147483647 - credit}
         `;
 
-        if (!exchanged.affectedRows) {
+        if (!exchanged.count) {
             const [balance] = await sql`SELECT tix, currency FROM users WHERE id = ${user.id}`;
             if (Number(balance?.tix ?? 0) < amount) {
                 return status(400, {

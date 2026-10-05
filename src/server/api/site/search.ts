@@ -30,7 +30,7 @@ const withMedia = async (game: any) => ({
 });
 
 const paginate = async (from: any, page: number) => {
-    const [count] = await sql`SELECT COUNT(*) AS n FROM ${from}`;
+    const [count] = await sql`SELECT COUNT(*)::int AS n FROM ${from}`;
     const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
     return {
         page: Math.min(Math.max(1, page), totalPages),
@@ -47,11 +47,11 @@ export const search = new Elysia({ prefix: "/search" })
         const type = query.type ?? "games";
 
         if (type === "games") {
-            const { page, totalPages } = await paginate(sql`games WHERE title LIKE ${like}`, query.page ?? 1);
+            const { page, totalPages } = await paginate(sql`games WHERE title ILIKE ${like}`, query.page ?? 1);
             const rows = await sql`
                 SELECT games.*, users.username AS creator_name FROM games
                 LEFT JOIN users ON users.id = games.creator_id
-                WHERE games.title LIKE ${like}
+                WHERE games.title ILIKE ${like}
                 ORDER BY games.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
             `;
             return {
@@ -63,12 +63,12 @@ export const search = new Elysia({ prefix: "/search" })
         }
 
         if (type === "groups") {
-            const { page, totalPages } = await paginate(sql`site_groups WHERE name LIKE ${like}`, query.page ?? 1);
+            const { page, totalPages } = await paginate(sql`site_groups WHERE name ILIKE ${like}`, query.page ?? 1);
             const rows = await sql`
                 SELECT g.*, users.username AS owner_username,
-                (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count
+                (SELECT COUNT(*)::int FROM group_members m WHERE m.group_id = g.id) AS member_count
                 FROM site_groups g LEFT JOIN users ON users.id = g.owner_id
-                WHERE g.name LIKE ${like}
+                WHERE g.name ILIKE ${like}
                 ORDER BY g.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
             `;
             return {
@@ -84,11 +84,11 @@ export const search = new Elysia({ prefix: "/search" })
         }
 
         if (type === "catalog") {
-            const { page, totalPages } = await paginate(sql`catalog_items WHERE name LIKE ${like}`, query.page ?? 1);
+            const { page, totalPages } = await paginate(sql`catalog_items WHERE name ILIKE ${like}`, query.page ?? 1);
             const rows = await sql`
                 SELECT c.*, u.username AS creator_name FROM catalog_items c
                 LEFT JOIN users u ON u.id = c.creator_id
-                WHERE c.name LIKE ${like}
+                WHERE c.name ILIKE ${like}
                 ORDER BY c.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
             `;
             return {
@@ -100,11 +100,11 @@ export const search = new Elysia({ prefix: "/search" })
         }
 
         if (type === "library") {
-            const { page, totalPages } = await paginate(sql`assets WHERE name LIKE ${like} AND type IN ('Model', 'Decal')`, query.page ?? 1);
+            const { page, totalPages } = await paginate(sql`assets WHERE name ILIKE ${like} AND type IN ('Model', 'Decal')`, query.page ?? 1);
             const rows = await sql`
                 SELECT a.id, a.name, a.type, a.creator_id, u.username AS creator_name
                 FROM assets a LEFT JOIN users u ON u.id = a.creator_id
-                WHERE a.name LIKE ${like} AND a.type IN ('Model', 'Decal')
+                WHERE a.name ILIKE ${like} AND a.type IN ('Model', 'Decal')
                 ORDER BY a.id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
             `;
             return {
@@ -115,10 +115,10 @@ export const search = new Elysia({ prefix: "/search" })
             };
         }
 
-        const { page, totalPages } = await paginate(sql`users WHERE username LIKE ${like}`, query.page ?? 1);
+        const { page, totalPages } = await paginate(sql`users WHERE username ILIKE ${like}`, query.page ?? 1);
         const rows = await sql`
-            SELECT id, username, lastOnlineSite FROM users
-            WHERE username LIKE ${like}
+            SELECT id, username, "lastOnlineSite" FROM users
+            WHERE username ILIKE ${like}
             ORDER BY id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
         `;
         return {

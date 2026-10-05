@@ -14,9 +14,14 @@ const DOWNLOADS = [
         fileUrl: "/api/setup/download"
     },
     {
-        title: "None 2016 Client (Linux)",
+        title: "None 2016 Client (Linux, Proton)",
         description: "Runs the client through Proton, no Steam needed. Save it, then run: chmod +x nonerev && ./nonerev install",
         fileUrl: "/api/setup/download?os=linux"
+    },
+    {
+        title: "None 2016 Client (Linux, native)",
+        description: "Native Linux build, no Proton. Extract it into a folder, then run ./NoneRevPlayer --register once so the Play button opens it.",
+        fileUrl: "/api/setup/download?os=linux-native"
     },
     {
         title: "None 2016 Client (Android)",
@@ -25,8 +30,8 @@ const DOWNLOADS = [
     },
     {
         title: "None 2016 Studio",
-        description: "not released",
-        fileUrl: ""
+        description: "Build your own games. Extract the zip anywhere and run RobloxStudioBeta.exe.",
+        fileUrl: "/api/setup/download?os=studio"
     }
 ];
 
@@ -38,10 +43,10 @@ export const site = new Elysia({ prefix: "/api/site" })
 
     .get("/banners", async () => {
         const rows = await sql`
-            SELECT id, message, linkText, linkUrl, style, dismissible, updatedAt FROM site_banners
+            SELECT id, message, "linkText", "linkUrl", style, dismissible, "updatedAt" FROM site_banners
             WHERE enabled = 1
-            AND (startsAt = 0 OR startsAt <= ${now()})
-            AND (endsAt = 0 OR endsAt >= ${now()})
+            AND ("startsAt" = 0 OR "startsAt" <= ${now()})
+            AND ("endsAt" = 0 OR "endsAt" >= ${now()})
             ORDER BY id ASC
         `;
         return rows.map((b: any) => ({

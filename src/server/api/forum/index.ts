@@ -52,7 +52,7 @@ const firstPostId = async (threadId: number) => {
 
 const threadRows = (extra = sql``) => sql`
     SELECT t.*, u.username AS author_username,
-        (SELECT COUNT(*) FROM forum_posts pc WHERE pc.thread_id = t.id) AS post_count,
+        (SELECT COUNT(*)::int FROM forum_posts pc WHERE pc.thread_id = t.id) AS post_count,
         lp.created_at AS last_post_at, lpu.username AS last_post_username
     FROM forum_threads t
     LEFT JOIN users u ON u.id = t.author_id
@@ -82,8 +82,8 @@ export const forum = new Elysia({ prefix: "/api/forum" })
             for (const forum of forums) {
                 const [stats] = await sql`
                     SELECT
-                        (SELECT COUNT(*) FROM forum_threads WHERE forum_id = ${forum.id}) AS threads,
-                        (SELECT COUNT(*) FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE t.forum_id = ${forum.id}) AS posts
+                        (SELECT COUNT(*)::int FROM forum_threads WHERE forum_id = ${forum.id}) AS threads,
+                        (SELECT COUNT(*)::int FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE t.forum_id = ${forum.id}) AS posts
                 `;
                 const [last] = await sql`
                     SELECT p.created_at, u.username FROM forum_posts p
@@ -118,9 +118,9 @@ export const forum = new Elysia({ prefix: "/api/forum" })
             };
         }
         const like = "%" + q + "%";
-        const match = sql`t.subject LIKE ${like} OR EXISTS (SELECT 1 FROM forum_posts p2 WHERE p2.thread_id = t.id AND p2.body LIKE ${like})`;
+        const match = sql`t.subject ILIKE ${like} OR EXISTS (SELECT 1 FROM forum_posts p2 WHERE p2.thread_id = t.id AND p2.body ILIKE ${like})`;
 
-        const [count] = await sql`SELECT COUNT(*) AS n FROM forum_threads t WHERE ${match}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM forum_threads t WHERE ${match}`;
         const total = pages(Number(count.n), SEARCH_PER_PAGE);
         const current = Math.min(Math.max(1, query.page ?? 1), total);
 
@@ -154,9 +154,9 @@ export const forum = new Elysia({ prefix: "/api/forum" })
             });
         }
         const q = (query.q ?? "").trim();
-        const where = sql`WHERE t.forum_id = ${params.id} ${q !== "" ? sql`AND t.subject LIKE ${"%" + q + "%"}` : sql``}`;
+        const where = sql`WHERE t.forum_id = ${params.id} ${q !== "" ? sql`AND t.subject ILIKE ${"%" + q + "%"}` : sql``}`;
 
-        const [count] = await sql`SELECT COUNT(*) AS n FROM forum_threads t ${where}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM forum_threads t ${where}`;
         const total = pages(Number(count.n), THREADS_PER_PAGE);
         const current = Math.min(Math.max(1, query.page ?? 1), total);
 
@@ -186,10 +186,10 @@ export const forum = new Elysia({ prefix: "/api/forum" })
             const locked = !!body.locked && user.admin > 0;
 
             const threadId = await sql.begin(async tx => {
-                const thread = await tx`INSERT INTO forum_threads (forum_id, author_id, subject, created_at, updated_at, views, is_locked, is_pinned) VALUES (${params.id}, ${user.id}, ${subject}, ${now()}, ${now()}, 0, ${locked}, 0)`;
-                const threadId = Number(thread.lastInsertRowid);
-                const post = await tx`INSERT INTO forum_posts (thread_id, author_id, body, created_at, updated_at) VALUES (${threadId}, ${user.id}, ${text}, ${now()}, 0)`;
-                await tx`UPDATE forum_threads SET last_post_id = ${Number(post.lastInsertRowid)} WHERE id = ${threadId}`;
+                const thread = await tx`INSERT INTO forum_threads (forum_id, author_id, subject, created_at, updated_at, views, is_locked, is_pinned) VALUES (${params.id}, ${user.id}, ${subject}, ${now()}, ${now()}, 0, ${locked ? 1 : 0}, 0) RETURNING id`;
+                const threadId = Number(thread[0].id);
+                const post = await tx`INSERT INTO forum_posts (thread_id, author_id, body, created_at, updated_at) VALUES (${threadId}, ${user.id}, ${text}, ${now()}, 0) RETURNING id`;
+                await tx`UPDATE forum_threads SET last_post_id = ${Number(post[0].id)} WHERE id = ${threadId}`;
                 return threadId;
             });
 
@@ -218,14 +218,14 @@ export const forum = new Elysia({ prefix: "/api/forum" })
         }
         await sql`UPDATE forum_threads SET views = views + 1 WHERE id = ${params.id}`;
 
-        const [count] = await sql`SELECT COUNT(*) AS n FROM forum_posts WHERE thread_id = ${params.id}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM forum_posts WHERE thread_id = ${params.id}`;
         const total = pages(Number(count.n), POSTS_PER_PAGE);
         const current = Math.min(Math.max(1, query.page ?? 1), total);
         const newest = query.sort === "newest";
 
         const posts = await sql`
             SELECT p.*, u.username, u.admin, u.created_at AS user_created_at,
-                (SELECT COUNT(*) FROM forum_posts up WHERE up.author_id = p.author_id) AS total_posts
+                (SELECT COUNT(*)::int FROM forum_posts up WHERE up.author_id = p.author_id) AS total_posts
             FROM forum_posts p LEFT JOIN users u ON u.id = p.author_id
             WHERE p.thread_id = ${params.id}
             ORDER BY ${newest ? sql`p.created_at DESC, p.id DESC` : sql`p.created_at ASC, p.id ASC`}
@@ -275,9 +275,9 @@ export const forum = new Elysia({ prefix: "/api/forum" })
             const locked = (!!body.locked && (user.admin > 0 || Number(thread.author_id) === user.id)) || !!thread.is_locked;
 
             const postId = await sql.begin(async tx => {
-                const post = await tx`INSERT INTO forum_posts (thread_id, author_id, body, created_at, updated_at) VALUES (${params.id}, ${user.id}, ${text}, ${now()}, 0)`;
-                await tx`UPDATE forum_threads SET updated_at = ${now()}, last_post_id = ${Number(post.lastInsertRowid)}, is_locked = ${locked} WHERE id = ${params.id}`;
-                return Number(post.lastInsertRowid);
+                const post = await tx`INSERT INTO forum_posts (thread_id, author_id, body, created_at, updated_at) VALUES (${params.id}, ${user.id}, ${text}, ${now()}, 0) RETURNING id`;
+                await tx`UPDATE forum_threads SET updated_at = ${now()}, last_post_id = ${Number(post[0].id)}, is_locked = ${locked ? 1 : 0} WHERE id = ${params.id}`;
+                return Number(post[0].id);
             });
 
             return {
@@ -297,7 +297,7 @@ export const forum = new Elysia({ prefix: "/api/forum" })
 
     .post("/threads/:id/track", async ({ params, body, user }) => {
         if (body.tracked) {
-            await sql`INSERT IGNORE INTO forum_subscriptions (user_id, thread_id, created_at) VALUES (${user.id}, ${params.id}, ${now()})`;
+            await sql`INSERT INTO forum_subscriptions (user_id, thread_id, created_at) VALUES (${user.id}, ${params.id}, ${now()}) ON CONFLICT DO NOTHING`;
         } else {
             await sql`DELETE FROM forum_subscriptions WHERE user_id = ${user.id} AND thread_id = ${params.id}`;
         }
@@ -320,9 +320,9 @@ export const forum = new Elysia({ prefix: "/api/forum" })
             });
         }
         if (body.action === "pin") {
-            await sql`UPDATE forum_threads SET is_pinned = ${!thread.is_pinned} WHERE id = ${params.id}`;
+            await sql`UPDATE forum_threads SET is_pinned = ${thread.is_pinned ? 0 : 1} WHERE id = ${params.id}`;
         } else if (body.action === "lock") {
-            await sql`UPDATE forum_threads SET is_locked = ${!thread.is_locked} WHERE id = ${params.id}`;
+            await sql`UPDATE forum_threads SET is_locked = ${thread.is_locked ? 0 : 1} WHERE id = ${params.id}`;
         } else {
             await sql.begin(async tx => {
                 await tx`DELETE FROM forum_subscriptions WHERE thread_id = ${params.id}`;
@@ -352,7 +352,7 @@ export const forum = new Elysia({ prefix: "/api/forum" })
             });
         }
         const moved = await sql`UPDATE forum_threads SET forum_id = ${body.forum_id} WHERE id = ${params.id}`;
-        if (!moved.affectedRows && !(await getThread(params.id))) {
+        if (!moved.count && !(await getThread(params.id))) {
             return status(404, {
                 error: "That thread does not exist."
             });

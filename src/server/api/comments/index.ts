@@ -40,7 +40,7 @@ export const comments = new Elysia({ prefix: "/api/comments" })
     .get("/", async ({ query, user }) => {
         const start = Math.max(0, query.start ?? 0);
         const [count] = await sql`
-            SELECT COUNT(*) AS n FROM comments
+            SELECT COUNT(*)::int AS n FROM comments
             WHERE kind = ${query.kind} AND target_id = ${query.id}
         `;
         const total = Number(count.n);
@@ -109,13 +109,12 @@ export const comments = new Elysia({ prefix: "/api/comments" })
         const filtered = white(text);
         const created = await sql`
             INSERT INTO comments (kind, target_id, user_id, body, created_at)
-            VALUES (${body.kind}, ${body.id}, ${user.id}, ${filtered}, ${now()})
-        `;
+            VALUES (${body.kind}, ${body.id}, ${user.id}, ${filtered}, ${now()}) RETURNING id`;
         const [owned] = body.kind === "item"
             ? await sql`SELECT 1 FROM user_items WHERE user_id = ${user.id} AND item_id = ${body.id} LIMIT 1`
             : [null];
         return row({
-            id: created.lastInsertRowid,
+            id: created[0].id,
             user_id: user.id,
             username: user.username,
             body: filtered,

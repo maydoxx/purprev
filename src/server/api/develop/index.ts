@@ -265,8 +265,8 @@ const checkTexture = async (category: string, file: File) => {
 
 
 const reserveAsset = async (tx: any, userId: number, type: string, name: string, extension: string, parentId: number | null = null) => {
-    const created = await tx`INSERT INTO assets (creator_id, type, name, extension, parent_id, created_at) VALUES (${userId}, ${type}, ${name.trim().slice(0, 100) || "Untitled"}, ${extension}, ${parentId}, ${now()})`;
-    return Number(created.lastInsertRowid);
+    const created = await tx`INSERT INTO assets (creator_id, type, name, extension, parent_id, created_at) VALUES (${userId}, ${type}, ${name.trim().slice(0, 100) || "Untitled"}, ${extension}, ${parentId}, ${now()}) RETURNING id`;
+    return Number(created[0].id);
 };
 
 
@@ -465,8 +465,8 @@ export const develop = new Elysia({ prefix: "/api/develop" })
                 }
             }
 
-            const created = await sql`INSERT INTO games (creator_id, title, description, created_at, updated_at) VALUES (${user.id}, ${title}, '', ${now()}, ${now()})`;
-            const id = Number(created.lastInsertRowid);
+            const created = await sql`INSERT INTO games (creator_id, title, description, created_at, updated_at) VALUES (${user.id}, ${title}, '', ${now()}, ${now()}) RETURNING id`;
+            const id = Number(created[0].id);
             if (file) {
                 await savePlace(id, user.id, file);
                 rcc.render.place(id);
@@ -753,9 +753,8 @@ export const develop = new Elysia({ prefix: "/api/develop" })
 
             const created = await sql`
                 INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, created_at, updated_at)
-                VALUES (${name}, ${description}, ${user.id}, ${category}, ${assetId}, ${price}, '', 0, ${now()}, ${now()})
-            `;
-            const itemId = Number(created.lastInsertRowid);
+                VALUES (${name}, ${description}, ${user.id}, ${category}, ${assetId}, ${price}, '', 0, ${now()}, ${now()}) RETURNING id`;
+            const itemId = Number(created[0].id);
             rcc.render.item(itemId, assetId);
 
             return {
@@ -917,7 +916,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
 
     .get("/badges", async ({ user }) => {
         const rows = await sql`
-            SELECT b.*, g.title AS game_title, (SELECT COUNT(*) FROM user_badges ub WHERE ub.badge_id = b.id) AS awarded_count
+            SELECT b.*, g.title AS game_title, (SELECT COUNT(*)::int FROM user_badges ub WHERE ub.badge_id = b.id) AS awarded_count
             FROM game_badges b LEFT JOIN games g ON g.id = b.game_id
             WHERE b.creator_id = ${user.id} ORDER BY b.id DESC
         `;
@@ -937,9 +936,8 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             const { name, description } = cleanGameAsset("Badge", body.name, body.description);
             const created = await sql`
                 INSERT INTO game_badges (game_id, creator_id, name, description, enabled, created_at, updated_at)
-                VALUES (${body.game_id}, ${user.id}, ${name}, ${description}, ${!!body.enabled}, ${now()}, ${now()})
-            `;
-            const id = Number(created.lastInsertRowid);
+                VALUES (${body.game_id}, ${user.id}, ${name}, ${description}, ${body.enabled ? 1 : 0}, ${now()}, ${now()}) RETURNING id`;
+            const id = Number(created[0].id);
 
             if (hasFile(body.icon)) {
                 try {
@@ -977,7 +975,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
 
             await sql`
                 UPDATE game_badges SET game_id = ${body.game_id}, name = ${name}, description = ${description},
-                    enabled = ${!!body.enabled}, icon = ${icon}, updated_at = ${now()}
+                    enabled = ${body.enabled ? 1 : 0}, icon = ${icon}, updated_at = ${now()}
                 WHERE id = ${params.id} AND creator_id = ${user.id}
             `;
             return {
@@ -1040,9 +1038,8 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             const price = passPrice(body.price);
             const created = await sql`
                 INSERT INTO game_passes (game_id, creator_id, name, description, price, created_at, updated_at)
-                VALUES (${body.game_id}, ${user.id}, ${name}, ${description}, ${price}, ${now()}, ${now()})
-            `;
-            const id = Number(created.lastInsertRowid);
+                VALUES (${body.game_id}, ${user.id}, ${name}, ${description}, ${price}, ${now()}, ${now()}) RETURNING id`;
+            const id = Number(created[0].id);
 
             if (hasFile(body.icon)) {
                 try {

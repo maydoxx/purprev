@@ -28,12 +28,12 @@ export const claimDailyLoginRewards = async (userId: number) => {
     const day = Math.floor(now() / 86400);
     await sql`
         UPDATE users
-        SET tix = LEAST(tix + 10, 2147483647), last_tix_day = ${day}
+        SET tix = LEAST(tix::bigint + 10, 2147483647), last_tix_day = ${day}
         WHERE id = ${userId} AND last_tix_day < ${day}
     `;
     await sql`
         UPDATE users
-        SET currency = LEAST(currency + 5, 2147483647), last_nonebux_day = ${day}
+        SET currency = LEAST(currency::bigint + 5, 2147483647), last_nonebux_day = ${day}
         WHERE id = ${userId} AND last_nonebux_day < ${day}
     `;
 };

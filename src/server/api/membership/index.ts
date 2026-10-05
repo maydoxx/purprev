@@ -100,14 +100,14 @@ export const membership = new Elysia({ prefix: "/api/membership" })
             SET redeemed_by = ${user.id}, redeemed_at = ${now()}
             WHERE code = ${pretty} AND redeemed_by = 0
         `;
-        if (!claimed.affectedRows) {
+        if (!claimed.count) {
             return status(400, {
                 error: "That code is not valid or has already been redeemed."
             });
         }
         const [card] = await sql`SELECT amount FROM game_cards WHERE code = ${pretty}`;
         const amount = Number(card.amount);
-        await sql`UPDATE users SET currency = currency + ${amount} WHERE id = ${user.id}`;
+        await sql`UPDATE users SET currency = LEAST(currency::bigint + ${amount}, 2147483647) WHERE id = ${user.id}`;
         return {
             ok: true,
             amount,

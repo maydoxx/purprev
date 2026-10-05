@@ -60,8 +60,8 @@ const itemCard = async (i: any) => ({
 
 const findUser = async (id?: number, username?: string) => {
     const [row] = id
-        ? await sql`SELECT id, username, about, admin, created_at, lastOnlineSite, ongoing_action_id, membership, membership_expires FROM users WHERE id = ${id}`
-        : await sql`SELECT id, username, about, admin, created_at, lastOnlineSite, ongoing_action_id, membership, membership_expires FROM users WHERE username = ${username ?? ""}`;
+        ? await sql`SELECT id, username, about, admin, created_at, "lastOnlineSite", ongoing_action_id, membership, membership_expires FROM users WHERE id = ${id}`
+        : await sql`SELECT id, username, about, admin, created_at, "lastOnlineSite", ongoing_action_id, membership, membership_expires FROM users WHERE username = ${username ?? ""}`;
     if (!row) {
         return null;
     }
@@ -77,9 +77,9 @@ const findUser = async (id?: number, username?: string) => {
 const userProfile = async (row: any) => {
     const id = Number(row.id);
     const [[games], [favorites], [posts], badges, friends, history] = await Promise.all([
-        sql`SELECT COUNT(*) AS n FROM games WHERE creator_id = ${id}`,
-        sql`SELECT COUNT(*) AS n FROM game_favorites WHERE user_id = ${id}`,
-        sql`SELECT COUNT(*) AS n FROM forum_posts WHERE author_id = ${id}`,
+        sql`SELECT COUNT(*)::int AS n FROM games WHERE creator_id = ${id}`,
+        sql`SELECT COUNT(*)::int AS n FROM game_favorites WHERE user_id = ${id}`,
+        sql`SELECT COUNT(*)::int AS n FROM forum_posts WHERE author_id = ${id}`,
         siteBadges(row),
         friendCount(id),
         sql`SELECT DISTINCT old_username FROM username_history WHERE user_id = ${id} AND old_username != ${row.username} ORDER BY old_username`
@@ -109,9 +109,9 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
 
     .get("/stats", async () => {
         const [[u], [g], [c], servers] = await Promise.all([
-            sql`SELECT COUNT(*) AS users, SUM(lastOnlineSite > ${now() - ONLINE_WINDOW}) AS online FROM users`,
-            sql`SELECT COUNT(*) AS n FROM games`,
-            sql`SELECT COUNT(*) AS n FROM catalog_items`,
+            sql`SELECT COUNT(*)::int AS users, COUNT(*) FILTER (WHERE "lastOnlineSite" > ${now() - ONLINE_WINDOW})::int AS online FROM users`,
+            sql`SELECT COUNT(*)::int AS n FROM games`,
+            sql`SELECT COUNT(*)::int AS n FROM catalog_items`,
             rcc.servers()
         ]);
         return cached({
@@ -136,7 +136,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
 
 
     .get("/users/search", async ({ query }) => {
-        const rows = await sql`SELECT id, username FROM users WHERE username LIKE ${like(query.q)} ORDER BY username = ${query.q.trim()} DESC, username ASC LIMIT ${size(query.limit)}`;
+        const rows = await sql`SELECT id, username FROM users WHERE username ILIKE ${like(query.q)} ORDER BY username = ${query.q.trim()} DESC, username ASC LIMIT ${size(query.limit)}`;
         return cached(await Promise.all(rows.map(userCard)));
     }, {
         query: t.Object({
@@ -189,7 +189,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
         const rows = await sql`
             SELECT games.id, games.title, games.visits, games.creator_id, users.username AS creator_name FROM games
             LEFT JOIN users ON users.id = games.creator_id
-            WHERE games.title LIKE ${like(query.q)} ORDER BY games.id DESC LIMIT ${size(query.limit)}
+            WHERE games.title ILIKE ${like(query.q)} ORDER BY games.id DESC LIMIT ${size(query.limit)}
         `;
         const playing = await rcc.players(rows.map((g: any) => Number(g.id)));
         return cached(await Promise.all(rows.map((g: any) => gameCard(g, playing))));
@@ -212,7 +212,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
             });
         }
         const [[fav], servers, playing] = await Promise.all([
-            sql`SELECT COUNT(*) AS n FROM game_favorites WHERE game_id = ${params.id}`,
+            sql`SELECT COUNT(*)::int AS n FROM game_favorites WHERE game_id = ${params.id}`,
             rcc.servers(),
             rcc.players([params.id])
         ]);
@@ -240,7 +240,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
         const rows = await sql`
             SELECT catalog_items.*, users.username AS creator_name FROM catalog_items
             LEFT JOIN users ON users.id = catalog_items.creator_id
-            WHERE catalog_items.name LIKE ${like(query.q)} ORDER BY catalog_items.id DESC LIMIT ${size(query.limit)}
+            WHERE catalog_items.name ILIKE ${like(query.q)} ORDER BY catalog_items.id DESC LIMIT ${size(query.limit)}
         `;
         return cached(await Promise.all(rows.map(itemCard)));
     }, {
@@ -261,7 +261,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
                 error: "unknown item"
             });
         }
-        const [owners] = await sql`SELECT COUNT(*) AS n FROM user_items WHERE item_id = ${params.id}`;
+        const [owners] = await sql`SELECT COUNT(*)::int AS n FROM user_items WHERE item_id = ${params.id}`;
         return cached({
             ...await itemCard(i),
             description: i.description ?? "",

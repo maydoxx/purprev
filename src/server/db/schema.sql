@@ -1,723 +1,706 @@
-
-
-SET NAMES utf8mb4;
-
-SET time_zone = "+00:00";
-
-CREATE TABLE IF NOT EXISTS `blog_posts` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `title` varchar(180) NOT NULL,
-    `excerpt` varchar(320) NOT NULL DEFAULT '',
-    `body` mediumtext NOT NULL,
-    `category` varchar(32) NOT NULL DEFAULT 'news',
-    `author_id` int(10) UNSIGNED NOT NULL,
-    `image` varchar(255) NOT NULL DEFAULT '',
-    `is_published` tinyint(1) NOT NULL DEFAULT 0,
-    `published_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `category` (`category`),
-    KEY `author_id` (`author_id`),
-    KEY `published_at` (`published_at`),
-    KEY `is_published` (`is_published`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `catalog_items` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `name` varchar(80) NOT NULL,
-    `description` text NOT NULL,
-    `creator_id` int(11) NOT NULL,
-    `category` enum(
-        'Hat',
-        'Face',
-        'T-Shirt',
-        'Shirt',
-        'Pants',
-        'Gear',
-        'Package'
-    ) NOT NULL,
-    `asset_id` bigint(20) UNSIGNED DEFAULT NULL,
-    `price` int(10) UNSIGNED DEFAULT NULL,
-    `tix_price` int(10) UNSIGNED DEFAULT NULL,
-    `thumbnail` varchar(255) NOT NULL DEFAULT '',
-    `is_featured` tinyint(1) NOT NULL DEFAULT 0,
-    `is_limited` tinyint(1) NOT NULL DEFAULT 0,
-    `is_limited_unique` tinyint(1) NOT NULL DEFAULT 0,
-    `limited_stock` int(10) UNSIGNED DEFAULT NULL,
-    `limited_sold` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `bc_only` tinyint(1) NOT NULL DEFAULT 0,
-    `is_starter` tinyint(1) NOT NULL DEFAULT 0,
-    `package_parts` varchar(255) NOT NULL DEFAULT '',
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `creator_id` (`creator_id`),
-    KEY `category` (`category`),
-    KEY `asset_id` (`asset_id`),
-    KEY `is_featured` (`is_featured`),
-    KEY `price` (`price`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
-CREATE TABLE IF NOT EXISTS `catalog_favorites` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `item_id` int(11) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`user_id`,`item_id`),
-    KEY `item_id` (`item_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `games` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `creator_id` int(10) UNSIGNED NOT NULL,
-    `title` varchar(100) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `updated_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `visits` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `avatar_type` enum('R6','R15') NOT NULL DEFAULT 'R6',
-    PRIMARY KEY (`id`),
-    KEY `idx_games_creator` (`creator_id`),
-    KEY `idx_games_title` (`title`)
-) ENGINE = MyISAM DEFAULT CHARSET = latin1 COLLATE = latin1_swedish_ci;
-
-CREATE TABLE IF NOT EXISTS `invites` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `createdBy` int(10) UNSIGNED NOT NULL,
-    `inviteKey` char(32) NOT NULL,
-    `createdAt` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_invites_key` (`inviteKey`),
-    KEY `idx_invites_creator` (`createdBy`)
-) ENGINE = MyISAM DEFAULT CHARSET = latin1 COLLATE = latin1_swedish_ci;
-
-CREATE TABLE IF NOT EXISTS `messages` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `sender_id` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `recipient_id` int(10) UNSIGNED NOT NULL,
-    `subject` varchar(120) NOT NULL DEFAULT '',
-    `body` text NOT NULL,
-    `message_type` varchar(16) NOT NULL DEFAULT 'message',
-    `is_read` tinyint(1) NOT NULL DEFAULT 0,
-    `recipient_archived` tinyint(1) NOT NULL DEFAULT 0,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `idx_messages_recipient` (`recipient_id`, `message_type`, `recipient_archived`, `created_at`),
-    KEY `idx_messages_sender` (`sender_id`, `created_at`),
-    KEY `idx_messages_unread` (`recipient_id`, `is_read`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `notifications` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `actor_id` int(10) UNSIGNED NOT NULL,
-    `kind` varchar(32) NOT NULL,
-    `target_id` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
-    `is_read` tinyint(1) NOT NULL DEFAULT 0,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `user_unread` (`user_id`,`is_read`,`created_at`),
-    KEY `user_created` (`user_id`,`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `moderation_actions` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `action` int(11) NOT NULL,
-    `reason` text NOT NULL,
-    `moderatedBy` int(10) UNSIGNED NOT NULL,
-    `expiresAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_moderation_user` (`user_id`)
-) ENGINE = MyISAM DEFAULT CHARSET = latin1 COLLATE = latin1_swedish_ci;
-
-CREATE TABLE IF NOT EXISTS `tokens` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `token` char(64) NOT NULL,
-    `expires` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_tokens_token` (`token`),
-    KEY `idx_tokens_user` (`user_id`)
-) ENGINE = MyISAM DEFAULT CHARSET = latin1 COLLATE = latin1_swedish_ci;
-
-CREATE TABLE IF NOT EXISTS `users` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `username` varchar(32) NOT NULL,
-    `password` varchar(255) NOT NULL,
-    `email` varchar(255) DEFAULT NULL,
-    `about` text DEFAULT NULL,
-    `admin` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
-    `currency` int(11) NOT NULL DEFAULT 0,
-    `tix` int(11) NOT NULL DEFAULT 0,
-    `last_tix_day` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `last_nonebux_day` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `ongoing_action_id` int(10) UNSIGNED DEFAULT NULL,
-    `lastInviteKeyCreated` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `lastOnlineSite` int(10) UNSIGNED DEFAULT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `membership` enum('None','BC','TBC','OBC') NOT NULL DEFAULT 'None',
-    `membership_expires` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `last_stipend` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `social_discord` varchar(40) NOT NULL DEFAULT '',
-    `social_twitter` varchar(60) NOT NULL DEFAULT '',
-    `social_youtube` varchar(120) NOT NULL DEFAULT '',
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_users_username` (`username`),
-    UNIQUE KEY `uq_users_email` (`email`)
-) ENGINE = MyISAM DEFAULT CHARSET = latin1 COLLATE = latin1_swedish_ci;
-CREATE TABLE IF NOT EXISTS `site_groups` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `name` varchar(60) NOT NULL,
-    `owner_id` int(10) UNSIGNED NOT NULL,
-    `description` text NOT NULL,
-    `shout` varchar(255) NOT NULL DEFAULT '',
-    `icon` varchar(255) NOT NULL DEFAULT '',
-    `approval_required` tinyint(1) NOT NULL DEFAULT 0,
-    `wall_enabled` tinyint(1) NOT NULL DEFAULT 1,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `owner_id` (`owner_id`),
-    KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `group_members` (
-    `group_id` int(10) UNSIGNED NOT NULL,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `role` varchar(32) NOT NULL DEFAULT 'Member',
-    `rank` int(10) UNSIGNED NOT NULL DEFAULT 1,
-    `joined_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`group_id`,`user_id`),
-    KEY `user_id` (`user_id`),
-    KEY `role` (`group_id`,`role`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `group_roles` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `group_id` int(10) UNSIGNED NOT NULL,
-    `name` varchar(32) NOT NULL,
-    `rank` int(10) UNSIGNED NOT NULL,
-    `can_post_wall` tinyint(1) NOT NULL DEFAULT 0,
-    `can_shout` tinyint(1) NOT NULL DEFAULT 0,
-    `can_delete_wall` tinyint(1) NOT NULL DEFAULT 0,
-    `can_manage_members` tinyint(1) NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_group_rank` (`group_id`,`rank`),
-    KEY `group_name` (`group_id`,`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `group_join_requests` (
-    `group_id` int(10) UNSIGNED NOT NULL,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`group_id`,`user_id`),
-    KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `group_wall_posts` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `group_id` int(10) UNSIGNED NOT NULL,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `body` varchar(500) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `group_id` (`group_id`,`created_at`),
-    KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `group_store_items` (
-    `group_id` int(10) UNSIGNED NOT NULL,
-    `item_id` int(11) NOT NULL,
-    `added_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`group_id`,`item_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `group_games` (
-    `group_id` int(10) UNSIGNED NOT NULL,
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `added_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`group_id`,`game_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `group_affiliates` (
-    `group_id` int(10) UNSIGNED NOT NULL,
-    `other_group_id` int(10) UNSIGNED NOT NULL,
-    `status` enum('pending','accepted') NOT NULL DEFAULT 'pending',
-    `requested_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`group_id`,`other_group_id`),
-    KEY `other_group_id` (`other_group_id`,`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `trades` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `sender_id` int(10) UNSIGNED NOT NULL,
-    `receiver_id` int(10) UNSIGNED NOT NULL,
-    `status` varchar(16) NOT NULL DEFAULT 'pending',
-    `counter_of` bigint(20) UNSIGNED DEFAULT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `expires_at` int(10) UNSIGNED NOT NULL,
-    `completed_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `sender_status` (`sender_id`,`status`,`created_at`),
-    KEY `receiver_status` (`receiver_id`,`status`,`created_at`),
-    KEY `counter_of` (`counter_of`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `trade_items` (
-    `trade_id` bigint(20) UNSIGNED NOT NULL,
-    `side` varchar(8) NOT NULL,
-    `item_id` int(11) NOT NULL,
-    `original_owner_id` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`trade_id`,`side`,`item_id`),
-    KEY `item_id` (`item_id`),
-    KEY `original_owner_id` (`original_owner_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE IF NOT EXISTS `game_passes` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `creator_id` int(10) UNSIGNED NOT NULL,
-    `name` varchar(100) NOT NULL,
-    `description` text NOT NULL,
-    `price` int(10) UNSIGNED DEFAULT NULL,
-    `icon` varchar(255) NOT NULL DEFAULT '',
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `game_id` (`game_id`),
-    KEY `creator_id` (`creator_id`),
-    KEY `price` (`price`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=4000000000;
-
-CREATE TABLE IF NOT EXISTS `user_game_passes` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `pass_id` bigint(20) UNSIGNED NOT NULL,
-    `purchased_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`user_id`,`pass_id`),
-    KEY `pass_id` (`pass_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `game_badges` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `creator_id` int(10) UNSIGNED NOT NULL,
-    `name` varchar(100) NOT NULL,
-    `description` text NOT NULL,
-    `icon` varchar(255) NOT NULL DEFAULT '',
-    `enabled` tinyint(1) NOT NULL DEFAULT 1,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `game_id` (`game_id`),
-    KEY `creator_id` (`creator_id`),
-    KEY `enabled` (`enabled`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=5000000000;
-
-CREATE TABLE IF NOT EXISTS `game_favorites` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`user_id`, `game_id`),
-    KEY `game_id` (`game_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `game_votes` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `vote` tinyint(4) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`user_id`, `game_id`),
-    KEY `game_id` (`game_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `game_plays` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `played_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`user_id`, `game_id`),
-    KEY `played_at` (`played_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `user_badges` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `badge_id` bigint(20) UNSIGNED NOT NULL,
-    `awarded_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`user_id`,`badge_id`),
-    KEY `badge_id` (`badge_id`),
-    KEY `awarded_at` (`awarded_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `forum_threads` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `forum_id` smallint(5) UNSIGNED NOT NULL,
-    `author_id` int(10) UNSIGNED NOT NULL,
-    `subject` varchar(120) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    `views` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `is_locked` tinyint(1) NOT NULL DEFAULT 0,
-    `is_pinned` tinyint(1) NOT NULL DEFAULT 0,
-    `last_post_id` bigint(20) UNSIGNED DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `idx_forum_threads_forum` (`forum_id`,`is_pinned`,`updated_at`),
-    KEY `idx_forum_threads_author` (`author_id`),
-    KEY `idx_forum_threads_last_post` (`last_post_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `forum_posts` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `thread_id` bigint(20) UNSIGNED NOT NULL,
-    `author_id` int(10) UNSIGNED NOT NULL,
-    `body` text NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_forum_posts_thread` (`thread_id`,`created_at`,`id`),
-    KEY `idx_forum_posts_author` (`author_id`,`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `forum_subscriptions` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `thread_id` bigint(20) UNSIGNED NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`user_id`,`thread_id`),
-    KEY `idx_forum_subscriptions_thread` (`thread_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-
-CREATE TABLE IF NOT EXISTS `user_avatar` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `head_color` int(11) NOT NULL DEFAULT 24,
-    `torso_color` int(11) NOT NULL DEFAULT 23,
-    `left_arm_color` int(11) NOT NULL DEFAULT 24,
-    `right_arm_color` int(11) NOT NULL DEFAULT 24,
-    `left_leg_color` int(11) NOT NULL DEFAULT 119,
-    `right_leg_color` int(11) NOT NULL DEFAULT 119,
-    `avatar_type` enum('R6','R15') NOT NULL DEFAULT 'R6',
-    `updated_at` int(11) NOT NULL DEFAULT 0,
-    PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `avatar_outfits` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `name` varchar(60) NOT NULL,
-    `colors` text NOT NULL,
-    `items` text NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `user_id` (`user_id`,`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `user_items` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `item_id` int(11) NOT NULL,
-    `wearing` tinyint(1) NOT NULL DEFAULT 0,
-    `purchased_at` int(11) NOT NULL DEFAULT 0,
-    `serial_number` int(10) UNSIGNED DEFAULT NULL,
-    PRIMARY KEY (`user_id`, `item_id`),
-    KEY `item_id` (`item_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `chat_messages` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `sender_id` int(10) UNSIGNED NOT NULL,
-    `recipient_id` int(10) UNSIGNED NOT NULL,
-    `body` varchar(500) NOT NULL,
-    `is_read` tinyint(1) NOT NULL DEFAULT 0,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `unread` (`recipient_id`, `is_read`),
-    KEY `pair` (`sender_id`, `recipient_id`, `id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `friendships` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `requester_id` int(10) UNSIGNED NOT NULL,
-    `target_id` int(10) UNSIGNED NOT NULL,
-    `status` enum('pending', 'accepted') NOT NULL DEFAULT 'pending',
-    `created_at` int(11) NOT NULL DEFAULT 0,
-    `accepted_at` int(11) NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `pair` (`requester_id`, `target_id`),
-    KEY `target` (`target_id`, `status`),
-    KEY `requester` (`requester_id`, `status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `user_follows` (
-    `follower_id` int(10) UNSIGNED NOT NULL,
-    `followed_id` int(10) UNSIGNED NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`follower_id`,`followed_id`),
-    KEY `followed_id` (`followed_id`,`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `status_updates` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `body` varchar(254) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `user_id` (`user_id`),
-    KEY `created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `site_banners` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `message` text NOT NULL,
-    `linkText` varchar(120) NOT NULL DEFAULT '',
-    `linkUrl` varchar(255) NOT NULL DEFAULT '',
-    `style` varchar(16) NOT NULL DEFAULT 'info',
-    `enabled` tinyint(1) NOT NULL DEFAULT 1,
-    `dismissible` tinyint(1) NOT NULL DEFAULT 0,
-    `startsAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `endsAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `createdBy` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `createdAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `updatedAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `idx_banners_live` (`enabled`, `startsAt`, `endsAt`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE IF NOT EXISTS `assets` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `creator_id` int(10) UNSIGNED NOT NULL,
-    `type` varchar(20) NOT NULL,
-    `name` varchar(100) NOT NULL,
-    `extension` varchar(10) NOT NULL,
-    `parent_id` bigint(20) UNSIGNED DEFAULT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `creator_type` (`creator_id`, `type`),
-    KEY `parent_id` (`parent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=3000000000;
-
-
-CREATE TABLE IF NOT EXISTS `game_servers` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `placeId` int(10) UNSIGNED NOT NULL,
-    `jobId` varchar(64) NOT NULL,
-    `port` int(10) UNSIGNED NOT NULL,
-    `ready` tinyint(1) NOT NULL DEFAULT 0,
-    `closed` tinyint(1) NOT NULL DEFAULT 0,
-    `createdAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `lastSeenAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `playerCount` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `playersCheckedAt` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_job` (`jobId`),
-    KEY `idx_place_open` (`placeId`, `closed`),
-    KEY `idx_port_open` (`port`, `closed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `game_visit_sessions` (
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `job_id` varchar(64) NOT NULL,
-    `started_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`job_id`,`user_id`),
-    KEY `game_id` (`game_id`,`user_id`),
-    KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `vip_servers` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `game_id` int(10) UNSIGNED NOT NULL,
-    `owner_id` int(10) UNSIGNED NOT NULL,
-    `name` varchar(60) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `game_id` (`game_id`),
-    KEY `owner_id` (`owner_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `vip_server_members` (
-    `vip_id` int(10) UNSIGNED NOT NULL,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`vip_id`,`user_id`),
-    KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE IF NOT EXISTS `media` (
-    `kind` varchar(32) NOT NULL,
-    `id` bigint(20) UNSIGNED NOT NULL,
-    `ext` varchar(10) NOT NULL,
-    `size` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`kind`, `id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `applications` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `name` varchar(20) NOT NULL,
-    `discord` varchar(40) NOT NULL,
-    `email` varchar(120) NOT NULL DEFAULT '',
-    `found` varchar(200) NOT NULL DEFAULT '',
-    `why` text NOT NULL,
-    `revivals` varchar(500) NOT NULL DEFAULT '',
-    `about` text NOT NULL,
-    `socials` varchar(500) NOT NULL DEFAULT '',
-    `password` varchar(255) NOT NULL DEFAULT '',
-    `ip` varchar(45) NOT NULL DEFAULT '',
-    `token` char(32) NOT NULL,
-    `status` enum('pending','approved','denied') NOT NULL DEFAULT 'pending',
-    `decided_by` varchar(60) NOT NULL DEFAULT '',
-    `decided_by_discord` varchar(32) NOT NULL DEFAULT '',
-    `decided_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `reason` varchar(500) NOT NULL DEFAULT '',
-    `user_id` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `invite_key` char(32) NOT NULL DEFAULT '',
-    `discord_message_id` varchar(32) NOT NULL DEFAULT '',
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `token` (`token`),
-    KEY `status` (`status`),
-    KEY `ip` (`ip`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `site_settings` (
-    `name` varchar(32) NOT NULL,
-    `value` varchar(255) NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    `updated_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `invite_log` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `inviteKey` char(32) NOT NULL,
-    `created_by` int(10) UNSIGNED NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `used_by` int(10) UNSIGNED NOT NULL,
-    `used_at` int(10) UNSIGNED NOT NULL,
-    `ip` varchar(45) NOT NULL DEFAULT '',
-    `user_agent` varchar(255) NOT NULL DEFAULT '',
-    PRIMARY KEY (`id`),
-    KEY `created_by` (`created_by`),
-    KEY `used_by` (`used_by`),
-    KEY `ip` (`ip`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `username_history` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `old_username` varchar(32) NOT NULL,
-    `new_username` varchar(32) NOT NULL,
-    `changed_at` int(10) UNSIGNED NOT NULL,
-    `ip` varchar(45) NOT NULL DEFAULT '',
-    PRIMARY KEY (`id`),
-    KEY `user_id` (`user_id`),
-    KEY `old_username` (`old_username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `game_cards` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `code` char(19) NOT NULL,
-    `amount` int(10) UNSIGNED NOT NULL,
-    `created_by` int(10) UNSIGNED NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `redeemed_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `redeemed_at` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `code` (`code`),
-    KEY `redeemed_by` (`redeemed_by`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `sets` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `name` varchar(50) NOT NULL,
-    `description` varchar(500) NOT NULL DEFAULT '',
-    `created_at` int(10) UNSIGNED NOT NULL,
-    `updated_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=1000;
-
-CREATE TABLE IF NOT EXISTS `set_items` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `set_id` int(10) UNSIGNED NOT NULL,
-    `asset_id` bigint(20) UNSIGNED NOT NULL,
-    `position` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `added_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `set_asset` (`set_id`, `asset_id`),
-    KEY `asset_id` (`asset_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `user_collections` (
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `item_id` int(11) NOT NULL,
-    `position` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`user_id`, `item_id`),
-    KEY `item_id` (`item_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `abuse_reports` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `reporter_id` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `type` varchar(16) NOT NULL,
-    `target_id` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
-    `reason` varchar(80) NOT NULL DEFAULT '',
-    `comment` text NOT NULL,
-    `source` enum('site','game') NOT NULL DEFAULT 'site',
-    `place_id` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `job_id` varchar(64) NOT NULL DEFAULT '',
-    `chat_log` mediumtext NOT NULL,
-    `status` enum('open','closed') NOT NULL DEFAULT 'open',
-    `closed_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `status` (`status`, `id`),
-    KEY `reporter_id` (`reporter_id`),
-    KEY `target` (`type`, `target_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `place_versions` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `place_id` int(10) UNSIGNED NOT NULL,
-    `version` int(10) UNSIGNED NOT NULL,
-    `size` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `uploaded_by` int(10) UNSIGNED NOT NULL DEFAULT 0,
-    `uploaded_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `place_version` (`place_id`, `version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `comments` (
-    `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `kind` enum('game','item') NOT NULL,
-    `target_id` int(10) UNSIGNED NOT NULL,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `body` varchar(200) NOT NULL,
-    `created_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `target` (`kind`, `target_id`, `id`),
-    KEY `user_id` (`user_id`, `id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `resale_listings` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `user_id` int(10) UNSIGNED NOT NULL,
-    `item_id` int(11) NOT NULL,
-    `price` int(10) UNSIGNED NOT NULL,
-    `listed_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `copy` (`user_id`, `item_id`),
-    KEY `item_price` (`item_id`, `price`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `resale_sales` (
-    `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `item_id` int(11) NOT NULL,
-    `seller_id` int(10) UNSIGNED NOT NULL,
-    `buyer_id` int(10) UNSIGNED NOT NULL,
-    `price` int(10) UNSIGNED NOT NULL,
-    `sold_at` int(10) UNSIGNED NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `item_sold` (`item_id`, `sold_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE EXTENSION IF NOT EXISTS citext;
+
+CREATE TABLE IF NOT EXISTS blog_posts (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    title varchar(180) NOT NULL,
+    excerpt varchar(320) NOT NULL DEFAULT '',
+    body text NOT NULL,
+    category varchar(32) NOT NULL DEFAULT 'news',
+    author_id integer NOT NULL,
+    image varchar(255) NOT NULL DEFAULT '',
+    is_published smallint NOT NULL DEFAULT 0,
+    published_at integer NOT NULL DEFAULT 0,
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS blog_posts_category ON blog_posts (category);
+CREATE INDEX IF NOT EXISTS blog_posts_author_id ON blog_posts (author_id);
+CREATE INDEX IF NOT EXISTS blog_posts_published_at ON blog_posts (published_at);
+CREATE INDEX IF NOT EXISTS blog_posts_is_published ON blog_posts (is_published);
+
+CREATE TABLE IF NOT EXISTS catalog_items (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    name varchar(80) NOT NULL,
+    description text NOT NULL,
+    creator_id integer NOT NULL,
+    category varchar(8) NOT NULL CHECK (category IN ('Hat', 'Face', 'T-Shirt', 'Shirt', 'Pants', 'Gear', 'Package')),
+    asset_id bigint DEFAULT NULL,
+    price integer DEFAULT NULL,
+    tix_price integer DEFAULT NULL,
+    thumbnail varchar(255) NOT NULL DEFAULT '',
+    is_featured smallint NOT NULL DEFAULT 0,
+    is_limited smallint NOT NULL DEFAULT 0,
+    is_limited_unique smallint NOT NULL DEFAULT 0,
+    limited_stock integer DEFAULT NULL,
+    limited_sold integer NOT NULL DEFAULT 0,
+    bc_only smallint NOT NULL DEFAULT 0,
+    is_starter smallint NOT NULL DEFAULT 0,
+    package_parts varchar(255) NOT NULL DEFAULT '',
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS catalog_items_creator_id ON catalog_items (creator_id);
+CREATE INDEX IF NOT EXISTS catalog_items_category ON catalog_items (category);
+CREATE INDEX IF NOT EXISTS catalog_items_asset_id ON catalog_items (asset_id);
+CREATE INDEX IF NOT EXISTS catalog_items_is_featured ON catalog_items (is_featured);
+CREATE INDEX IF NOT EXISTS catalog_items_price ON catalog_items (price);
+
+CREATE TABLE IF NOT EXISTS catalog_favorites (
+    user_id integer NOT NULL,
+    item_id integer NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (user_id, item_id)
+);
+CREATE INDEX IF NOT EXISTS catalog_favorites_item_id ON catalog_favorites (item_id);
+
+CREATE TABLE IF NOT EXISTS games (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    creator_id integer NOT NULL,
+    title varchar(100) NOT NULL,
+    created_at integer NOT NULL DEFAULT 0,
+    updated_at integer NOT NULL DEFAULT 0,
+    visits integer NOT NULL DEFAULT 0,
+    avatar_type varchar(8) NOT NULL DEFAULT 'R6' CHECK (avatar_type IN ('R6', 'R15')),
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_games_creator ON games (creator_id);
+CREATE INDEX IF NOT EXISTS idx_games_title ON games (title);
+
+CREATE TABLE IF NOT EXISTS invites (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    "createdBy" integer NOT NULL,
+    "inviteKey" char(32) NOT NULL,
+    "createdAt" integer NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE ("inviteKey")
+);
+CREATE INDEX IF NOT EXISTS idx_invites_creator ON invites ("createdBy");
+
+CREATE TABLE IF NOT EXISTS messages (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    sender_id integer NOT NULL DEFAULT 0,
+    recipient_id integer NOT NULL,
+    subject varchar(120) NOT NULL DEFAULT '',
+    body text NOT NULL,
+    message_type varchar(16) NOT NULL DEFAULT 'message',
+    is_read smallint NOT NULL DEFAULT 0,
+    recipient_archived smallint NOT NULL DEFAULT 0,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages (recipient_id, message_type, recipient_archived, created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages (sender_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages (recipient_id, is_read);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    actor_id integer NOT NULL,
+    kind varchar(32) NOT NULL,
+    target_id integer NOT NULL DEFAULT 0,
+    is_read smallint NOT NULL DEFAULT 0,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS notifications_user_unread ON notifications (user_id, is_read, created_at);
+CREATE INDEX IF NOT EXISTS notifications_user_created ON notifications (user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS moderation_actions (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    action integer NOT NULL,
+    reason text NOT NULL,
+    "moderatedBy" integer NOT NULL,
+    "expiresAt" integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS moderation_actions_moderation_user ON moderation_actions (user_id);
+
+CREATE TABLE IF NOT EXISTS tokens (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    token char(64) NOT NULL,
+    expires integer NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (token)
+);
+CREATE INDEX IF NOT EXISTS idx_tokens_user ON tokens (user_id);
+
+CREATE TABLE IF NOT EXISTS users (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    username citext NOT NULL,
+    password varchar(255) NOT NULL,
+    email citext DEFAULT NULL,
+    about text DEFAULT NULL,
+    admin smallint NOT NULL DEFAULT 0,
+    currency integer NOT NULL DEFAULT 0,
+    tix integer NOT NULL DEFAULT 0,
+    last_tix_day integer NOT NULL DEFAULT 0,
+    last_nonebux_day integer NOT NULL DEFAULT 0,
+    ongoing_action_id integer DEFAULT NULL,
+    "lastInviteKeyCreated" integer NOT NULL DEFAULT 0,
+    "lastOnlineSite" integer DEFAULT NULL,
+    created_at integer NOT NULL DEFAULT 0,
+    membership varchar(8) NOT NULL DEFAULT 'None' CHECK (membership IN ('None', 'BC', 'TBC', 'OBC')),
+    membership_expires integer NOT NULL DEFAULT 0,
+    last_stipend integer NOT NULL DEFAULT 0,
+    social_discord varchar(40) NOT NULL DEFAULT '',
+    social_twitter varchar(60) NOT NULL DEFAULT '',
+    social_youtube varchar(120) NOT NULL DEFAULT '',
+    PRIMARY KEY (id),
+    UNIQUE (username),
+    UNIQUE (email)
+);
+
+CREATE TABLE IF NOT EXISTS site_groups (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    name varchar(60) NOT NULL,
+    owner_id integer NOT NULL,
+    description text NOT NULL,
+    shout varchar(255) NOT NULL DEFAULT '',
+    icon varchar(255) NOT NULL DEFAULT '',
+    approval_required smallint NOT NULL DEFAULT 0,
+    wall_enabled smallint NOT NULL DEFAULT 1,
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS site_groups_owner_id ON site_groups (owner_id);
+CREATE INDEX IF NOT EXISTS site_groups_name ON site_groups (name);
+
+CREATE TABLE IF NOT EXISTS group_members (
+    group_id integer NOT NULL,
+    user_id integer NOT NULL,
+    role varchar(32) NOT NULL DEFAULT 'Member',
+    rank integer NOT NULL DEFAULT 1,
+    joined_at integer NOT NULL,
+    PRIMARY KEY (group_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS group_members_user_id ON group_members (user_id);
+CREATE INDEX IF NOT EXISTS group_members_role ON group_members (group_id, role);
+
+CREATE TABLE IF NOT EXISTS group_roles (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    group_id integer NOT NULL,
+    name varchar(32) NOT NULL,
+    rank integer NOT NULL,
+    can_post_wall smallint NOT NULL DEFAULT 0,
+    can_shout smallint NOT NULL DEFAULT 0,
+    can_delete_wall smallint NOT NULL DEFAULT 0,
+    can_manage_members smallint NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE (group_id, rank)
+);
+CREATE INDEX IF NOT EXISTS group_roles_group_name ON group_roles (group_id, name);
+
+CREATE TABLE IF NOT EXISTS group_join_requests (
+    group_id integer NOT NULL,
+    user_id integer NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (group_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS group_join_requests_user_id ON group_join_requests (user_id);
+
+CREATE TABLE IF NOT EXISTS group_wall_posts (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    group_id integer NOT NULL,
+    user_id integer NOT NULL,
+    body varchar(500) NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS group_wall_posts_group_id ON group_wall_posts (group_id, created_at);
+CREATE INDEX IF NOT EXISTS group_wall_posts_user_id ON group_wall_posts (user_id);
+
+CREATE TABLE IF NOT EXISTS group_store_items (
+    group_id integer NOT NULL,
+    item_id integer NOT NULL,
+    added_at integer NOT NULL,
+    PRIMARY KEY (group_id, item_id)
+);
+
+CREATE TABLE IF NOT EXISTS group_games (
+    group_id integer NOT NULL,
+    game_id integer NOT NULL,
+    added_at integer NOT NULL,
+    PRIMARY KEY (group_id, game_id)
+);
+
+CREATE TABLE IF NOT EXISTS group_affiliates (
+    group_id integer NOT NULL,
+    other_group_id integer NOT NULL,
+    status varchar(8) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
+    requested_at integer NOT NULL,
+    PRIMARY KEY (group_id, other_group_id)
+);
+CREATE INDEX IF NOT EXISTS group_affiliates_other_group_id ON group_affiliates (other_group_id, status);
+
+CREATE TABLE IF NOT EXISTS trades (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    sender_id integer NOT NULL,
+    receiver_id integer NOT NULL,
+    status varchar(16) NOT NULL DEFAULT 'pending',
+    counter_of integer DEFAULT NULL,
+    created_at integer NOT NULL,
+    expires_at integer NOT NULL,
+    completed_at integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS trades_sender_status ON trades (sender_id, status, created_at);
+CREATE INDEX IF NOT EXISTS trades_receiver_status ON trades (receiver_id, status, created_at);
+CREATE INDEX IF NOT EXISTS trades_counter_of ON trades (counter_of);
+
+CREATE TABLE IF NOT EXISTS trade_items (
+    trade_id integer NOT NULL,
+    side varchar(8) NOT NULL,
+    item_id integer NOT NULL,
+    original_owner_id integer NOT NULL,
+    PRIMARY KEY (trade_id, side, item_id)
+);
+CREATE INDEX IF NOT EXISTS trade_items_item_id ON trade_items (item_id);
+CREATE INDEX IF NOT EXISTS trade_items_original_owner_id ON trade_items (original_owner_id);
+
+CREATE TABLE IF NOT EXISTS game_passes (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    game_id integer NOT NULL,
+    creator_id integer NOT NULL,
+    name varchar(100) NOT NULL,
+    description text NOT NULL,
+    price integer DEFAULT NULL,
+    icon varchar(255) NOT NULL DEFAULT '',
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS game_passes_game_id ON game_passes (game_id);
+CREATE INDEX IF NOT EXISTS game_passes_creator_id ON game_passes (creator_id);
+CREATE INDEX IF NOT EXISTS game_passes_price ON game_passes (price);
+
+CREATE TABLE IF NOT EXISTS user_game_passes (
+    user_id integer NOT NULL,
+    pass_id integer NOT NULL,
+    purchased_at integer NOT NULL,
+    PRIMARY KEY (user_id, pass_id)
+);
+CREATE INDEX IF NOT EXISTS user_game_passes_pass_id ON user_game_passes (pass_id);
+
+CREATE TABLE IF NOT EXISTS game_badges (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    game_id integer NOT NULL,
+    creator_id integer NOT NULL,
+    name varchar(100) NOT NULL,
+    description text NOT NULL,
+    icon varchar(255) NOT NULL DEFAULT '',
+    enabled smallint NOT NULL DEFAULT 1,
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS game_badges_game_id ON game_badges (game_id);
+CREATE INDEX IF NOT EXISTS game_badges_creator_id ON game_badges (creator_id);
+CREATE INDEX IF NOT EXISTS game_badges_enabled ON game_badges (enabled);
+
+CREATE TABLE IF NOT EXISTS game_favorites (
+    user_id integer NOT NULL,
+    game_id integer NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (user_id, game_id)
+);
+CREATE INDEX IF NOT EXISTS game_favorites_game_id ON game_favorites (game_id);
+
+CREATE TABLE IF NOT EXISTS game_votes (
+    user_id integer NOT NULL,
+    game_id integer NOT NULL,
+    vote smallint NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (user_id, game_id)
+);
+CREATE INDEX IF NOT EXISTS game_votes_game_id ON game_votes (game_id);
+
+CREATE TABLE IF NOT EXISTS game_plays (
+    user_id integer NOT NULL,
+    game_id integer NOT NULL,
+    played_at integer NOT NULL,
+    PRIMARY KEY (user_id, game_id)
+);
+CREATE INDEX IF NOT EXISTS game_plays_played_at ON game_plays (played_at);
+
+CREATE TABLE IF NOT EXISTS user_badges (
+    user_id integer NOT NULL,
+    badge_id integer NOT NULL,
+    awarded_at integer NOT NULL,
+    PRIMARY KEY (user_id, badge_id)
+);
+CREATE INDEX IF NOT EXISTS user_badges_badge_id ON user_badges (badge_id);
+CREATE INDEX IF NOT EXISTS user_badges_awarded_at ON user_badges (awarded_at);
+
+CREATE TABLE IF NOT EXISTS forum_threads (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    forum_id integer NOT NULL,
+    author_id integer NOT NULL,
+    subject varchar(120) NOT NULL,
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL,
+    views integer NOT NULL DEFAULT 0,
+    is_locked smallint NOT NULL DEFAULT 0,
+    is_pinned smallint NOT NULL DEFAULT 0,
+    last_post_id integer DEFAULT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_forum ON forum_threads (forum_id, is_pinned, updated_at);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_author ON forum_threads (author_id);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_last_post ON forum_threads (last_post_id);
+
+CREATE TABLE IF NOT EXISTS forum_posts (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    thread_id integer NOT NULL,
+    author_id integer NOT NULL,
+    body text NOT NULL,
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_forum_posts_thread ON forum_posts (thread_id, created_at, id);
+CREATE INDEX IF NOT EXISTS idx_forum_posts_author ON forum_posts (author_id, created_at);
+
+CREATE TABLE IF NOT EXISTS forum_subscriptions (
+    user_id integer NOT NULL,
+    thread_id integer NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (user_id, thread_id)
+);
+CREATE INDEX IF NOT EXISTS idx_forum_subscriptions_thread ON forum_subscriptions (thread_id);
+
+CREATE TABLE IF NOT EXISTS user_avatar (
+    user_id integer NOT NULL,
+    head_color integer NOT NULL DEFAULT 24,
+    torso_color integer NOT NULL DEFAULT 23,
+    left_arm_color integer NOT NULL DEFAULT 24,
+    right_arm_color integer NOT NULL DEFAULT 24,
+    left_leg_color integer NOT NULL DEFAULT 119,
+    right_leg_color integer NOT NULL DEFAULT 119,
+    avatar_type varchar(8) NOT NULL DEFAULT 'R6' CHECK (avatar_type IN ('R6', 'R15')),
+    updated_at integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS avatar_outfits (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    name varchar(60) NOT NULL,
+    colors text NOT NULL,
+    items text NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS avatar_outfits_user_id ON avatar_outfits (user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS user_items (
+    user_id integer NOT NULL,
+    item_id integer NOT NULL,
+    wearing smallint NOT NULL DEFAULT 0,
+    purchased_at integer NOT NULL DEFAULT 0,
+    serial_number integer DEFAULT NULL,
+    PRIMARY KEY (user_id, item_id)
+);
+CREATE INDEX IF NOT EXISTS user_items_item_id ON user_items (item_id);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    sender_id integer NOT NULL,
+    recipient_id integer NOT NULL,
+    body varchar(500) NOT NULL,
+    is_read smallint NOT NULL DEFAULT 0,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS chat_messages_unread ON chat_messages (recipient_id, is_read);
+CREATE INDEX IF NOT EXISTS chat_messages_pair ON chat_messages (sender_id, recipient_id, id);
+
+CREATE TABLE IF NOT EXISTS friendships (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    requester_id integer NOT NULL,
+    target_id integer NOT NULL,
+    status varchar(8) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted')),
+    created_at integer NOT NULL DEFAULT 0,
+    accepted_at integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE (requester_id, target_id)
+);
+CREATE INDEX IF NOT EXISTS friendships_target ON friendships (target_id, status);
+CREATE INDEX IF NOT EXISTS friendships_requester ON friendships (requester_id, status);
+
+CREATE TABLE IF NOT EXISTS user_follows (
+    follower_id integer NOT NULL,
+    followed_id integer NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (follower_id, followed_id)
+);
+CREATE INDEX IF NOT EXISTS user_follows_followed_id ON user_follows (followed_id, created_at);
+
+CREATE TABLE IF NOT EXISTS status_updates (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    body varchar(254) NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS status_updates_user_id ON status_updates (user_id);
+CREATE INDEX IF NOT EXISTS status_updates_created_at ON status_updates (created_at);
+
+CREATE TABLE IF NOT EXISTS site_banners (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    message text NOT NULL,
+    "linkText" varchar(120) NOT NULL DEFAULT '',
+    "linkUrl" varchar(255) NOT NULL DEFAULT '',
+    style varchar(16) NOT NULL DEFAULT 'info',
+    enabled smallint NOT NULL DEFAULT 1,
+    dismissible smallint NOT NULL DEFAULT 0,
+    "startsAt" integer NOT NULL DEFAULT 0,
+    "endsAt" integer NOT NULL DEFAULT 0,
+    "createdBy" integer NOT NULL DEFAULT 0,
+    "createdAt" integer NOT NULL DEFAULT 0,
+    "updatedAt" integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS site_banners_banners_live ON site_banners (enabled, "startsAt", "endsAt");
+
+CREATE TABLE IF NOT EXISTS assets (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    creator_id integer NOT NULL,
+    type varchar(20) NOT NULL,
+    name varchar(100) NOT NULL,
+    extension varchar(10) NOT NULL,
+    parent_id integer DEFAULT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS assets_creator_type ON assets (creator_id, type);
+CREATE INDEX IF NOT EXISTS assets_parent_id ON assets (parent_id);
+
+CREATE TABLE IF NOT EXISTS game_servers (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    "placeId" integer NOT NULL,
+    "jobId" varchar(64) NOT NULL,
+    port integer NOT NULL,
+    ready smallint NOT NULL DEFAULT 0,
+    closed smallint NOT NULL DEFAULT 0,
+    "createdAt" integer NOT NULL DEFAULT 0,
+    "lastSeenAt" integer NOT NULL DEFAULT 0,
+    "playerCount" integer NOT NULL DEFAULT 0,
+    "playersCheckedAt" integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE ("jobId")
+);
+CREATE INDEX IF NOT EXISTS game_servers_place_open ON game_servers ("placeId", closed);
+CREATE INDEX IF NOT EXISTS game_servers_port_open ON game_servers (port, closed);
+
+CREATE TABLE IF NOT EXISTS game_visit_sessions (
+    game_id integer NOT NULL,
+    user_id integer NOT NULL,
+    job_id varchar(64) NOT NULL,
+    started_at integer NOT NULL,
+    PRIMARY KEY (job_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS game_visit_sessions_game_id ON game_visit_sessions (game_id, user_id);
+CREATE INDEX IF NOT EXISTS game_visit_sessions_user_id ON game_visit_sessions (user_id);
+
+CREATE TABLE IF NOT EXISTS vip_servers (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    game_id integer NOT NULL,
+    owner_id integer NOT NULL,
+    name varchar(60) NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS vip_servers_game_id ON vip_servers (game_id);
+CREATE INDEX IF NOT EXISTS vip_servers_owner_id ON vip_servers (owner_id);
+
+CREATE TABLE IF NOT EXISTS vip_server_members (
+    vip_id integer NOT NULL,
+    user_id integer NOT NULL,
+    PRIMARY KEY (vip_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS vip_server_members_user_id ON vip_server_members (user_id);
+
+CREATE TABLE IF NOT EXISTS media (
+    kind varchar(32) NOT NULL,
+    id bigint NOT NULL,
+    ext varchar(10) NOT NULL,
+    size integer NOT NULL DEFAULT 0,
+    updated_at integer NOT NULL,
+    PRIMARY KEY (kind, id)
+);
+
+CREATE TABLE IF NOT EXISTS applications (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    name citext NOT NULL,
+    discord varchar(40) NOT NULL,
+    email citext NOT NULL DEFAULT '',
+    found varchar(200) NOT NULL DEFAULT '',
+    why text NOT NULL,
+    revivals varchar(500) NOT NULL DEFAULT '',
+    about text NOT NULL,
+    socials varchar(500) NOT NULL DEFAULT '',
+    password varchar(255) NOT NULL DEFAULT '',
+    ip varchar(45) NOT NULL DEFAULT '',
+    token char(32) NOT NULL,
+    status varchar(8) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'denied')),
+    decided_by varchar(60) NOT NULL DEFAULT '',
+    decided_by_discord varchar(32) NOT NULL DEFAULT '',
+    decided_at integer NOT NULL DEFAULT 0,
+    reason varchar(500) NOT NULL DEFAULT '',
+    user_id integer NOT NULL DEFAULT 0,
+    invite_key char(32) NOT NULL DEFAULT '',
+    discord_message_id varchar(32) NOT NULL DEFAULT '',
+    created_at integer NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (token)
+);
+CREATE INDEX IF NOT EXISTS applications_status ON applications (status);
+CREATE INDEX IF NOT EXISTS applications_ip ON applications (ip);
+
+CREATE TABLE IF NOT EXISTS site_settings (
+    name varchar(32) NOT NULL,
+    value varchar(255) NOT NULL,
+    updated_at integer NOT NULL,
+    updated_by integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (name)
+);
+
+CREATE TABLE IF NOT EXISTS invite_log (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    "inviteKey" char(32) NOT NULL,
+    created_by integer NOT NULL,
+    created_at integer NOT NULL,
+    used_by integer NOT NULL,
+    used_at integer NOT NULL,
+    ip varchar(45) NOT NULL DEFAULT '',
+    user_agent varchar(255) NOT NULL DEFAULT '',
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS invite_log_created_by ON invite_log (created_by);
+CREATE INDEX IF NOT EXISTS invite_log_used_by ON invite_log (used_by);
+CREATE INDEX IF NOT EXISTS invite_log_ip ON invite_log (ip);
+
+CREATE TABLE IF NOT EXISTS username_history (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    old_username citext NOT NULL,
+    new_username citext NOT NULL,
+    changed_at integer NOT NULL,
+    ip varchar(45) NOT NULL DEFAULT '',
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS username_history_user_id ON username_history (user_id);
+CREATE INDEX IF NOT EXISTS username_history_old_username ON username_history (old_username);
+
+CREATE TABLE IF NOT EXISTS game_cards (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    code char(19) NOT NULL,
+    amount integer NOT NULL,
+    created_by integer NOT NULL,
+    created_at integer NOT NULL,
+    redeemed_by integer NOT NULL DEFAULT 0,
+    redeemed_at integer NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE (code)
+);
+CREATE INDEX IF NOT EXISTS game_cards_redeemed_by ON game_cards (redeemed_by);
+
+CREATE TABLE IF NOT EXISTS sets (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    name varchar(50) NOT NULL,
+    description varchar(500) NOT NULL DEFAULT '',
+    created_at integer NOT NULL,
+    updated_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS sets_user_id ON sets (user_id);
+
+CREATE TABLE IF NOT EXISTS set_items (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    set_id integer NOT NULL,
+    asset_id bigint NOT NULL,
+    position integer NOT NULL DEFAULT 0,
+    added_at integer NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (set_id, asset_id)
+);
+CREATE INDEX IF NOT EXISTS set_items_asset_id ON set_items (asset_id);
+
+CREATE TABLE IF NOT EXISTS user_collections (
+    user_id integer NOT NULL,
+    item_id integer NOT NULL,
+    position smallint NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, item_id)
+);
+CREATE INDEX IF NOT EXISTS user_collections_item_id ON user_collections (item_id);
+
+CREATE TABLE IF NOT EXISTS abuse_reports (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    reporter_id integer NOT NULL DEFAULT 0,
+    type varchar(16) NOT NULL,
+    target_id integer NOT NULL DEFAULT 0,
+    reason varchar(80) NOT NULL DEFAULT '',
+    comment text NOT NULL,
+    source varchar(8) NOT NULL DEFAULT 'site' CHECK (source IN ('site', 'game')),
+    place_id integer NOT NULL DEFAULT 0,
+    job_id varchar(64) NOT NULL DEFAULT '',
+    chat_log text NOT NULL,
+    status varchar(8) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+    closed_by integer NOT NULL DEFAULT 0,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS abuse_reports_status ON abuse_reports (status, id);
+CREATE INDEX IF NOT EXISTS abuse_reports_reporter_id ON abuse_reports (reporter_id);
+CREATE INDEX IF NOT EXISTS abuse_reports_target ON abuse_reports (type, target_id);
+
+CREATE TABLE IF NOT EXISTS place_versions (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    place_id integer NOT NULL,
+    version integer NOT NULL,
+    size integer NOT NULL DEFAULT 0,
+    uploaded_by integer NOT NULL DEFAULT 0,
+    uploaded_at integer NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (place_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    kind varchar(8) NOT NULL CHECK (kind IN ('game', 'item')),
+    target_id integer NOT NULL,
+    user_id integer NOT NULL,
+    body varchar(200) NOT NULL,
+    created_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS comments_target ON comments (kind, target_id, id);
+CREATE INDEX IF NOT EXISTS comments_user_id ON comments (user_id, id);
+
+CREATE TABLE IF NOT EXISTS resale_listings (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    user_id integer NOT NULL,
+    item_id integer NOT NULL,
+    price integer NOT NULL,
+    listed_at integer NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE (user_id, item_id)
+);
+CREATE INDEX IF NOT EXISTS resale_listings_item_price ON resale_listings (item_id, price);
+
+CREATE TABLE IF NOT EXISTS resale_sales (
+    id integer NOT NULL GENERATED BY DEFAULT AS IDENTITY,
+    item_id integer NOT NULL,
+    seller_id integer NOT NULL,
+    buyer_id integer NOT NULL,
+    price integer NOT NULL,
+    sold_at integer NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS resale_sales_item_sold ON resale_sales (item_id, sold_at);

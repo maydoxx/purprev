@@ -50,9 +50,9 @@ export const item = (id: number, name: string, creator: string, created: string,
 export const searchOwn = async (kind: "Model" | "Decal", q: string, page: number, per: number, userId: number | null) => {
     const like = `%${q.replace(/[%_]/g, "")}%`;
     const where = userId === null
-        ? sql`a.type = ${kind} AND a.parent_id IS NULL AND a.name LIKE ${like}`
-        : sql`a.type = ${kind} AND a.parent_id IS NULL AND a.creator_id = ${userId} AND a.name LIKE ${like}`;
-    const [count] = await sql`SELECT COUNT(*) AS n FROM assets a WHERE ${where}`;
+        ? sql`a.type = ${kind} AND a.parent_id IS NULL AND a.name ILIKE ${like}`
+        : sql`a.type = ${kind} AND a.parent_id IS NULL AND a.creator_id = ${userId} AND a.name ILIKE ${like}`;
+    const [count] = await sql`SELECT COUNT(*)::int AS n FROM assets a WHERE ${where}`;
     const rows = await sql`
         SELECT a.id, a.name, a.created_at, users.username FROM assets a
         LEFT JOIN users ON users.id = a.creator_id

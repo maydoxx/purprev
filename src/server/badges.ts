@@ -22,9 +22,9 @@ const YEAR = 365 * 86400;
 
 export const siteBadges = async (user: { id: number, admin: number, created_at: number | string, membership?: string | null, membership_expires?: number | string | null }) => {
     const [places, models, invited, friends] = await Promise.all([
-        sql`SELECT COUNT(*) AS n FROM games JOIN media ON media.kind = 'places' AND media.id = games.id WHERE games.creator_id = ${user.id}`,
-        sql`SELECT COUNT(*) AS n FROM assets WHERE creator_id = ${user.id} AND type = 'Model' AND parent_id IS NULL`,
-        sql`SELECT COUNT(*) AS n FROM invite_log WHERE created_by = ${user.id} AND used_by > 0`,
+        sql`SELECT COUNT(*)::int AS n FROM games JOIN media ON media.kind = 'places' AND media.id = games.id WHERE games.creator_id = ${user.id}`,
+        sql`SELECT COUNT(*)::int AS n FROM assets WHERE creator_id = ${user.id} AND type = 'Model' AND parent_id IS NULL`,
+        sql`SELECT COUNT(*)::int AS n FROM invite_log WHERE created_by = ${user.id} AND used_by > 0`,
         friendCount(user.id)
     ]);
     const published = Number(places[0].n);

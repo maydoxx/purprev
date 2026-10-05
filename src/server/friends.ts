@@ -30,7 +30,7 @@ export const friendStatus = async (me: number, other: number): Promise<FriendSta
 
 export const friendCount = async (userId: number): Promise<number> => {
     const [row] = await sql`
-        SELECT COUNT(*) AS n FROM friendships
+        SELECT COUNT(*)::int AS n FROM friendships
         WHERE status = 'accepted' AND (requester_id = ${userId} OR target_id = ${userId})
     `;
     return Number(row.n);
@@ -39,12 +39,12 @@ export const friendCount = async (userId: number): Promise<number> => {
 
 export const friendsOf = async (userId: number, limit: number, offset = 0) => {
     const rows = await sql`
-        SELECT users.id, users.username, users.lastOnlineSite
+        SELECT users.id, users.username, users."lastOnlineSite"
         FROM friendships
-        JOIN users ON users.id = IF(friendships.requester_id = ${userId}, friendships.target_id, friendships.requester_id)
+        JOIN users ON users.id = CASE WHEN friendships.requester_id = ${userId} THEN friendships.target_id ELSE friendships.requester_id END
         WHERE friendships.status = 'accepted'
         AND (friendships.requester_id = ${userId} OR friendships.target_id = ${userId})
-        ORDER BY users.lastOnlineSite DESC
+        ORDER BY users."lastOnlineSite" DESC
         LIMIT ${limit} OFFSET ${offset}
     `;
 

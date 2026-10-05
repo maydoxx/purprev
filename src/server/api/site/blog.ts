@@ -23,7 +23,7 @@ export const blog = new Elysia({ prefix: "/blog" })
             AND ${category in CATEGORIES ? sql`blog_posts.category = ${category}` : sql`1 = 1`}
         `;
 
-        const [count] = await sql`SELECT COUNT(*) AS n FROM blog_posts WHERE ${where}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM blog_posts WHERE ${where}`;
         const totalPages = Math.max(1, Math.ceil(Number(count.n) / PER_PAGE));
         const page = Math.min(Math.max(1, query.page ?? 1), totalPages);
 

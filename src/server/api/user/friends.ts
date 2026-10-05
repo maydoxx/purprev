@@ -5,7 +5,7 @@ import { isOnline, friendStatus, friendCount, friendsOf } from "../../friends";
 import { notify } from "../../notifications";
 
 const pendingCount = async (userId: number) => {
-    const [row] = await sql`SELECT COUNT(*) AS n FROM friendships WHERE status = 'pending' AND target_id = ${userId}`;
+    const [row] = await sql`SELECT COUNT(*)::int AS n FROM friendships WHERE status = 'pending' AND target_id = ${userId}`;
     return Number(row.n);
 };
 
@@ -13,13 +13,13 @@ const pendingCount = async (userId: number) => {
 const pending = async (userId: number, direction: "requests" | "sent") => {
     const rows = direction === "requests"
         ? await sql`
-            SELECT users.id, users.username, users.lastOnlineSite, friendships.created_at
+            SELECT users.id, users.username, users."lastOnlineSite", friendships.created_at
             FROM friendships JOIN users ON users.id = friendships.requester_id
             WHERE friendships.status = 'pending' AND friendships.target_id = ${userId}
             ORDER BY friendships.created_at DESC
         `
         : await sql`
-            SELECT users.id, users.username, users.lastOnlineSite, friendships.created_at
+            SELECT users.id, users.username, users."lastOnlineSite", friendships.created_at
             FROM friendships JOIN users ON users.id = friendships.target_id
             WHERE friendships.status = 'pending' AND friendships.requester_id = ${userId}
             ORDER BY friendships.created_at DESC
@@ -36,13 +36,13 @@ const pending = async (userId: number, direction: "requests" | "sent") => {
 const follows = async (userId: number, direction: "following" | "followers") => {
     const rows = direction === "following"
         ? await sql`
-            SELECT u.id, u.username, u.lastOnlineSite
+            SELECT u.id, u.username, u."lastOnlineSite"
             FROM user_follows f JOIN users u ON u.id = f.followed_id
             WHERE f.follower_id = ${userId}
             ORDER BY f.created_at DESC
         `
         : await sql`
-            SELECT u.id, u.username, u.lastOnlineSite
+            SELECT u.id, u.username, u."lastOnlineSite"
             FROM user_follows f JOIN users u ON u.id = f.follower_id
             WHERE f.followed_id = ${userId}
             ORDER BY f.created_at DESC
@@ -94,14 +94,14 @@ export const friends = new Elysia({ prefix: "/friends" })
             });
         }
         if (body.follow) {
-            const inserted = await sql`INSERT IGNORE INTO user_follows (follower_id, followed_id, created_at) VALUES (${user.id}, ${body.userId}, ${now()})`;
-            if (inserted.affectedRows) {
+            const inserted = await sql`INSERT INTO user_follows (follower_id, followed_id, created_at) VALUES (${user.id}, ${body.userId}, ${now()}) ON CONFLICT DO NOTHING`;
+            if (inserted.count) {
                 await notify(body.userId, user.id, "follow", user.id);
             }
         } else {
             await sql`DELETE FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${body.userId}`;
         }
-        const [count] = await sql`SELECT COUNT(*) AS n FROM user_follows WHERE followed_id = ${body.userId}`;
+        const [count] = await sql`SELECT COUNT(*)::int AS n FROM user_follows WHERE followed_id = ${body.userId}`;
         return {
             following: body.follow,
             followers: Number(count.n)

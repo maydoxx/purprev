@@ -80,7 +80,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         const placeId = server.placeId;
         const appearance = appearanceUrl(who.id);
         await sql`UPDATE games SET visits = visits + 1 WHERE id = ${placeId}`;
-        await sql`INSERT INTO game_plays (user_id, game_id, played_at) VALUES (${who.id}, ${placeId}, ${now()}) ON DUPLICATE KEY UPDATE played_at = ${now()}`;
+        await sql`INSERT INTO game_plays (user_id, game_id, played_at) VALUES (${who.id}, ${placeId}, ${now()}) ON CONFLICT (user_id, game_id) DO UPDATE SET played_at = ${now()}`;
         const time = String(now());
 
 
@@ -198,9 +198,8 @@ const routes = (prefix: string) => new Elysia({ prefix })
         }
 
         await sql`
-            INSERT IGNORE INTO game_visit_sessions (game_id, user_id, job_id, started_at)
-            VALUES (${placeId}, ${user.id}, ${server.jobId}, ${now()})
-        `;
+            INSERT INTO game_visit_sessions (game_id, user_id, job_id, started_at)
+            VALUES (${placeId}, ${user.id}, ${server.jobId}, ${now()}) ON CONFLICT DO NOTHING`;
 
         console.log(`PlaceLauncher: ${user.username} -> ${server.jobId} on ${server.address}:${server.port}`);
         return {
@@ -319,7 +318,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
         if (!exists) {
             return bool(false);
         }
-        await sql`INSERT IGNORE INTO user_badges (user_id, badge_id, awarded_at) VALUES (${query.UserID}, ${query.BadgeID}, ${now()})`;
+        await sql`INSERT INTO user_badges (user_id, badge_id, awarded_at) VALUES (${query.UserID}, ${query.BadgeID}, ${now()}) ON CONFLICT DO NOTHING`;
         return bool(true);
     }, {
         query: t.Object({

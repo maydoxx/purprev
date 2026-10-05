@@ -38,7 +38,7 @@ export const setSiteSetting = async (name: keyof typeof DEFAULTS, on: boolean, b
     const value = on ? "1" : "0";
     await sql`
         INSERT INTO site_settings (name, value, updated_at, updated_by) VALUES (${name}, ${value}, ${now()}, ${by})
-        ON DUPLICATE KEY UPDATE value = ${value}, updated_at = ${now()}, updated_by = ${by}
+        ON CONFLICT (name) DO UPDATE SET value = ${value}, updated_at = ${now()}, updated_by = ${by}
     `;
     (await load())[name] = value;
 };

@@ -101,14 +101,15 @@ export const mediaUrl = async (kind: string, id: number) => {
 
 
 export const mediaRecord = async (kind: string, id: number, ext: string, size: number) => {
-    const old = await mediaEntry(kind, id);
+    // not mediaEntry, probe calls us
+    const old = (await load()).get(`${kind}/${id}`);
     if (old && old.ext !== ext) {
         await storage.remove(mediaKey(kind, id, old.ext));
     }
     const at = now();
     await sql`
         INSERT INTO media (kind, id, ext, size, updated_at) VALUES (${kind}, ${id}, ${ext}, ${size}, ${at})
-        ON DUPLICATE KEY UPDATE ext = ${ext}, size = ${size}, updated_at = ${at}
+        ON CONFLICT (kind, id) DO UPDATE SET ext = ${ext}, size = ${size}, updated_at = ${at}
     `;
     (await load()).set(`${kind}/${id}`, {
         ext,

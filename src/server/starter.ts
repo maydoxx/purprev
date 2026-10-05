@@ -42,9 +42,8 @@ const pick = <T>(list: T[]) => list[Math.floor(Math.random() * list.length)] as 
 const starterColors = async (userId: number) => {
     const skin = pick(SKIN);
     await sql`
-        INSERT IGNORE INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, updated_at)
-        VALUES (${userId}, ${skin}, ${pick(TORSO)}, ${skin}, ${skin}, ${LEGS}, ${LEGS}, ${now()})
-    `;
+        INSERT INTO user_avatar (user_id, head_color, torso_color, left_arm_color, right_arm_color, left_leg_color, right_leg_color, updated_at)
+        VALUES (${userId}, ${skin}, ${pick(TORSO)}, ${skin}, ${skin}, ${LEGS}, ${LEGS}, ${now()}) ON CONFLICT DO NOTHING`;
 };
 
 export const giveStarterItems = async (userId: number) => {
@@ -57,7 +56,7 @@ export const giveStarterItems = async (userId: number) => {
         ORDER BY id
     `;
     for (const i of items) {
-        await sql`INSERT IGNORE INTO user_items (user_id, item_id, wearing, purchased_at) VALUES (${userId}, ${i.id}, 1, ${now()})`;
+        await sql`INSERT INTO user_items (user_id, item_id, wearing, purchased_at) VALUES (${userId}, ${i.id}, 1, ${now()}) ON CONFLICT DO NOTHING`;
     }
 };
 
@@ -76,9 +75,8 @@ type Seed = {
 const create = async (creator: number, i: Seed) => {
     const created = await sql`
         INSERT INTO catalog_items (name, description, creator_id, category, asset_id, price, thumbnail, is_featured, bc_only, is_starter, package_parts, is_limited, is_limited_unique, limited_stock, limited_sold, created_at, updated_at)
-        VALUES (${i.name}, ${i.description}, ${creator}, ${i.category}, ${i.assetId}, 0, '', 0, 0, 0, ${i.parts.join(";")}, 0, 0, NULL, 0, ${now()}, ${now()})
-    `;
-    const id = Number(created.lastInsertRowid);
+        VALUES (${i.name}, ${i.description}, ${creator}, ${i.category}, ${i.assetId}, 0, '', 0, 0, 0, ${i.parts.join(";")}, 0, 0, NULL, 0, ${now()}, ${now()}) RETURNING id`;
+    const id = Number(created[0].id);
     if (i.thumbnail !== "") {
         await storeThumbnail(id, i.thumbnail);
     }

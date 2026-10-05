@@ -12,7 +12,7 @@ const pair = t.Object({
 });
 
 const request = (from: number, to: number) =>
-    sql`INSERT IGNORE INTO friendships (requester_id, target_id, status, created_at) VALUES (${from}, ${to}, 'pending', ${now()})`;
+    sql`INSERT INTO friendships (requester_id, target_id, status, created_at) VALUES (${from}, ${to}, 'pending', ${now()}) ON CONFLICT DO NOTHING`;
 
 const accept = (from: number, to: number) =>
     sql`UPDATE friendships SET status = 'accepted', accepted_at = ${now()} WHERE requester_id = ${from} AND target_id = ${to} AND status = 'pending'`;

@@ -15,7 +15,7 @@ export const profile = new Elysia({ prefix: "/profile" })
     .use(session)
     .get("/:id", async ({ params, user, status }) => {
         const [row] = await sql`
-            SELECT id, username, about, admin, created_at, lastOnlineSite, ongoing_action_id, membership, membership_expires, social_discord, social_twitter, social_youtube
+            SELECT id, username, about, admin, created_at, "lastOnlineSite", ongoing_action_id, membership, membership_expires, social_discord, social_twitter, social_youtube
             FROM users WHERE id = ${params.id}
         `;
 
@@ -44,8 +44,8 @@ export const profile = new Elysia({ prefix: "/profile" })
             `,
             sql`
                 SELECT
-                    (SELECT COUNT(*) FROM user_badges WHERE user_id = ${row.id}) AS badges,
-                    (SELECT COUNT(*) FROM forum_posts WHERE author_id = ${row.id}) AS posts
+                    (SELECT COUNT(*)::int FROM user_badges WHERE user_id = ${row.id}) AS badges,
+                    (SELECT COUNT(*)::int FROM forum_posts WHERE author_id = ${row.id}) AS posts
             `,
             sql`
                 SELECT catalog_items.id, catalog_items.name, catalog_items.category, catalog_items.thumbnail FROM user_items
@@ -66,7 +66,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             collectionOf(row.id),
             sql`
                 SELECT g.id, g.name, g.description, g.icon, gm.role,
-                    (SELECT COUNT(*) FROM group_members x WHERE x.group_id = g.id) AS member_count
+                    (SELECT COUNT(*)::int FROM group_members x WHERE x.group_id = g.id) AS member_count
                 FROM group_members gm
                 JOIN site_groups g ON g.id = gm.group_id
                 WHERE gm.user_id = ${row.id}
@@ -76,8 +76,8 @@ export const profile = new Elysia({ prefix: "/profile" })
 
         const playing = await rcc.players(favorites.map((g: any) => Number(g.id)));
         const [followCounts] = await sql`
-            SELECT (SELECT COUNT(*) FROM user_follows WHERE followed_id = ${row.id}) AS followers,
-                (SELECT COUNT(*) FROM user_follows WHERE follower_id = ${row.id}) AS following
+            SELECT (SELECT COUNT(*)::int FROM user_follows WHERE followed_id = ${row.id}) AS followers,
+                (SELECT COUNT(*)::int FROM user_follows WHERE follower_id = ${row.id}) AS following
         `;
         const [followed] = user ? await sql`SELECT 1 FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${row.id}` : [null];
 
