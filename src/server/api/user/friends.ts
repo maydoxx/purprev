@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
-import { isOnline, friendStatus, friendCount, friendsOf } from "../../friends";
+import { isOnline, friendStatus, friendCount, friendsOf, presenceOf } from "../../friends";
 import { notify } from "../../notifications";
 
 const pendingCount = async (userId: number) => {
@@ -24,16 +24,18 @@ const pending = async (userId: number, direction: "requests" | "sent") => {
             WHERE friendships.status = 'pending' AND friendships.requester_id = ${userId}
             ORDER BY friendships.created_at DESC
         `;
+    const presence = await presenceOf(rows, userId);
 
     return rows.map((r: any) => ({
         id: r.id,
         username: r.username,
         online: isOnline(r.lastOnlineSite),
+        presence: presence(r),
         requestedAt: r.created_at
     }));
 };
 
-const follows = async (userId: number, direction: "following" | "followers") => {
+const follows = async (userId: number, direction: "following" | "followers", viewer = userId) => {
     const rows = direction === "following"
         ? await sql`
             SELECT u.id, u.username, u."lastOnlineSite"
@@ -47,11 +49,13 @@ const follows = async (userId: number, direction: "following" | "followers") => 
             WHERE f.followed_id = ${userId}
             ORDER BY f.created_at DESC
         `;
+    const presence = await presenceOf(rows, viewer);
 
     return rows.map((r: any) => ({
         id: Number(r.id),
         username: r.username,
-        online: isOnline(r.lastOnlineSite)
+        online: isOnline(r.lastOnlineSite),
+        presence: presence(r)
     }));
 };
 
@@ -114,7 +118,7 @@ export const friends = new Elysia({ prefix: "/friends" })
         })
     })
 
-    .get("/:id", async ({ params, query, status }) => {
+    .get("/:id", async ({ params, query, user, status }) => {
         const [owner] = await sql`SELECT id, username FROM users WHERE id = ${params.id}`;
         if (!owner) {
             return status(404, {
@@ -125,7 +129,7 @@ export const friends = new Elysia({ prefix: "/friends" })
         return {
             username: owner.username,
             tab,
-            list: tab === "friends" ? await friendsOf(owner.id, 200) : await follows(owner.id, tab)
+            list: tab === "friends" ? await friendsOf(owner.id, 200, 0, user?.id ?? 0) : await follows(owner.id, tab, user?.id ?? 0)
         };
     }, {
         params: t.Object({

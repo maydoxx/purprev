@@ -126,6 +126,18 @@ export const studio = new Elysia()
     .get("/game/GetCurrentUser.ashx", ({ user }) => text(user ? String(user.id) : "null"))
     .get("/Game/GetCurrentUser.ashx", ({ user }) => text(user ? String(user.id) : "null"))
 
+    // edit.ashx starts the loop that calls this, nothing else says studio is open
+    .get("/Game/Studio/Presence.ashx", async ({ query, user }) => {
+        if (user) {
+            await sql`UPDATE users SET last_studio = ${now()}, studio_place_id = ${num(query.placeId)} WHERE id = ${user.id}`;
+        }
+        return text("");
+    }, {
+        query: t.Object({
+            placeId: t.Optional(t.String())
+        })
+    })
+
     .get("/login/RequestAuth.ashx", ({ user, token, status }) => user && token ? text(`${SITE_URL}/Login/Negotiate.ashx?suggest=${token}`) : status(403, ""))
     .get("/Login/RequestAuth.ashx", ({ user, token, status }) => user && token ? text(`${SITE_URL}/Login/Negotiate.ashx?suggest=${token}`) : status(403, ""))
 
@@ -173,6 +185,7 @@ export const studio = new Elysia()
             await mediaHas("places", placeId) ? `game:Load("${site}/asset/?id=${placeId}")` : `print("edit: nothing published for this place yet")`,
             `game:GetService("ChangeHistoryService"):SetEnabled(true)`,
             `game:GetService("ChangeHistoryService"):ResetWaypoints()`,
+            `spawn(function() while true do pcall(function() game:HttpGet("${site}/Game/Studio/Presence.ashx?placeId=${placeId}", true) end) wait(60) end end)`,
             ""
         ].join("\n");
         console.log(`edit: place ${placeId} for ${user ? user.username : "nobody"}`);
