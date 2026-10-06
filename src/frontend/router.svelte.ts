@@ -4,6 +4,7 @@ const routes: [string, string][] = [
     ["/signup", "signup"],
     ["/register", "signup"],
     ["/apply", "apply"],
+    ["/about", "about"],
     ["/home", "home"],
     ["/user", "user"],
     ["/my/settings", "settings"],

@@ -8,6 +8,7 @@
     import Banners from "./Banners.svelte";
     import ChatBar from "./ChatBar.svelte";
     import Footer from "./Footer.svelte";
+    import Warning, { warning } from "./Warning.svelte";
     import Landing from "./pages/Landing.svelte";
     import Login from "./pages/Login.svelte";
     import Signup from "./pages/Signup.svelte";
@@ -84,6 +85,7 @@
         login: Login,
         signup: Signup,
         apply: Apply,
+        about: Warning,
         home: Home,
         user: Profile,
         settings: Settings,
@@ -151,6 +153,7 @@
 
     const landing = ["landing", "login", "signup", "apply"];
     const bare = ["blog", "download"];
+    const free = ["tos", "privacy"];
 
     const needsLogin = [
         "create-user-ad",
@@ -198,6 +201,11 @@
 
     const inApp = /ROBLOX (Android|iOS) App/i.test(navigator.userAgent);
 
+    const gate = $derived(
+        router.name === "about" ||
+        (session.loaded && !session.me && !warning.seen && !free.includes(router.name))
+    );
+
     $effect(() => {
         if (!session.loaded) return;
 
@@ -218,7 +226,7 @@
     $effect(() => {
         document.body.className = inApp
             ? "in-app"
-            : landing.includes(router.name)
+            : gate || landing.includes(router.name)
               ? "none-landing"
               : router.name === "blog"
                 ? "none-blog"
@@ -241,6 +249,8 @@
     {#if inApp}
         <Banners />
         <Page />
+    {:else if gate}
+        <Warning />
     {:else if landing.includes(router.name) || bare.includes(router.name)}
         <Page />
         {#if router.name === "landing"}
