@@ -154,6 +154,7 @@ body.none-landing:has(.landing-navbar) {
     height: 100vh;
     min-height: 840px;
     overflow: hidden;
+    background-color: #191919;
 }
 
 .landing-hero-tall {
@@ -161,16 +162,19 @@ body.none-landing:has(.landing-navbar) {
     min-height: max(100vh, 840px);
 }
 
-.landing-hero-image {
+/* the recording has a browser bar on top and a taskbar at the bottom, the scale also keeps the blurred edges out of view */
+.landing-hero-video {
     position: absolute;
-    top: 0;
+    top: -8.3%;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 113.3%;
     object-fit: cover;
+    filter: blur(6px) brightness(.45);
+    transform: scale(1.08);
 }
 
-.landing-hero-tall .landing-hero-image {
+.landing-hero-tall .landing-hero-video {
     position: fixed;
 }
 

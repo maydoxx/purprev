@@ -51,6 +51,15 @@
         });
     };
 
+    // the recording shows other windows before 7s and after 87s
+    const rewind = (e: Event) => {
+        const video = e.currentTarget as HTMLVideoElement;
+        if (video.ended || video.currentTime < 7 || video.currentTime > 86.5) {
+            video.currentTime = 7;
+            video.play().catch(() => {});
+        }
+    };
+
     const login = async (e: Event) => {
         e.preventDefault();
         tried = true;
@@ -97,7 +106,9 @@
 </div>
 
 <section class="landing-hero" class:landing-hero-tall={tall} id="play">
-    <img class="landing-hero-image" src="/img/hello.png" alt="" aria-hidden="true">
+    <video class="landing-hero-video" autoplay muted playsinline aria-hidden="true" ontimeupdate={rewind} onended={rewind}>
+        <source src="https://cdn.mrrpmeowfurry.dev/uploads/2026-09-07%2022-07-03.mp4#t=7" type="video/mp4">
+    </video>
     <div class="landing-hero-row">
         <div class="landing-hero-half">
             <div class="landing-logo">
