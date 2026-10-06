@@ -11,7 +11,6 @@
 
     let name = $state("");
     let discord = $state("");
-    let email = $state("");
     let found = $state("");
     let why = $state("");
     let revivals = $state("");
@@ -88,7 +87,6 @@
             const d = await api("/applications", {
                 name,
                 discord,
-                email,
                 found,
                 why,
                 revivals,
@@ -197,8 +195,6 @@
                         <p class="auth-input-message">{errors.password ?? ""}</p>
                         <input id="confirmpassword" class="auth-input" class:auth-input-error={errors.confirmpassword} type="password" required autocomplete="new-password" aria-label="Confirm Password" placeholder="Confirm Password" bind:value={confirmpassword}>
                         <p class="auth-input-message">{errors.confirmpassword ?? ""}</p>
-                        <input id="email" class="auth-input" type="email" maxlength="120" autocomplete="email" aria-label="Email" placeholder="Email (optional)" bind:value={email}>
-                        <p class="auth-input-message"></p>
                         <input id="socials" class="auth-input" class:auth-input-error={errors.socials} type="text" required maxlength="500" aria-label="Your socials" placeholder="Your socials (reddit, roblox profile, anything)" bind:value={socials}>
                         <p class="auth-input-message">{errors.socials ?? ""}</p>
 
