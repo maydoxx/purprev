@@ -276,6 +276,7 @@
             });
             await load();
             wearPage = Math.min(wearPage, Math.max(1, wearPages));
+            watchRender();
         } catch (err: any) {
             statusError = true;
             status = err.message;
