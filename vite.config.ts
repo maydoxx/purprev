@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { defineConfig, type Plugin } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { readThemeMeta, syncSiteThemes, themeSource } from "./opsec/scripts/site-themes.ts";
+import { readThemeMeta, syncSiteThemes, themeSource } from "./scripts/site-themes.ts";
 
 syncSiteThemes();
 

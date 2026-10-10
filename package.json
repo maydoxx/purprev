@@ -8,7 +8,7 @@
     "dev": "bun --watch src/server/index.ts",
     "dev:web": "vite",
     "build": "vite build",
-    "themes:sync": "bun opsec/scripts/site-themes.ts",
+    "themes:sync": "bun scripts/site-themes.ts",
     "start": "bun run src/server/index.ts",
     "db:migrate": "bun run src/server/db/migrate.ts",
     "db:seed": "bun run src/server/db/seed.ts",
