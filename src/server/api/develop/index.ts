@@ -5,7 +5,7 @@ import { mkdir, rm } from "fs/promises";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { saveImage, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
-import { mediaPut, mediaCopy, mediaEntry, mediaKey, contentType } from "../../media";
+import { mediaPut, mediaEntry, mediaKey, contentType } from "../../media";
 import { storage } from "../../storage";
 import { imageSize } from "../../image";
 import { rcc } from "../../rcc";
@@ -136,6 +136,7 @@ const keepVersion = async (placeId: number, userId: number) => {
 };
 
 const savePlace = async (placeId: number, userId: number, file: Blob | Uint8Array) => {
+    await rcc.closePlace(placeId);
     await keepVersion(placeId, userId);
     await mediaPut("places", placeId, "rbxl", file);
     await sql`UPDATE games SET updated_at = ${now()} WHERE id = ${placeId}`;
@@ -360,6 +361,27 @@ const cleanGameAsset = (kind: string, name: string, description?: string) => {
     };
 };
 
+const placeImage = async (image: File, label: string) => {
+    if (image.size <= 0) {
+        throw new DevelopError("That image is empty.");
+    }
+    if (image.size > IMAGE_MAX) {
+        throw new DevelopError(`${label} can be up to 5 MB.`);
+    }
+    const ext = THUMBNAIL_TYPES[image.type];
+    if (!ext) {
+        throw new DevelopError("Use a PNG, JPG or GIF.");
+    }
+    const info = imageSize(await image.bytes());
+    if (!info || info.type !== ext) {
+        throw new DevelopError("That file is not an image.");
+    }
+    if (info.width < 64 || info.height < 64) {
+        throw new DevelopError("That image is too small, use at least 64x64.");
+    }
+    return info;
+};
+
 const storeIcon = async (kind: string, dir: string, id: number, file: File) => {
     if (file.size <= 0 || file.size > IMAGE_MAX) {
         throw new DevelopError(`${kind} icons can be up to 5 MB.`);
@@ -551,6 +573,7 @@ export const develop = new Elysia({ prefix: "/api/develop" })
     .delete("/places/:id", async ({ params, user, status }) => {
         try {
             await ownedGame(params.id, user.id);
+            await rcc.closePlace(params.id);
             await sql`DELETE FROM games WHERE id = ${params.id} AND creator_id = ${user.id}`;
             for (const v of await placeVersions(params.id)) {
                 await storage.remove(versionKey(params.id, v.version));
@@ -656,33 +679,32 @@ export const develop = new Elysia({ prefix: "/api/develop" })
     .post("/places/:id/thumbnail", async ({ params, body, user, status }) => {
         try {
             await ownedGame(params.id, user.id);
-            const image = body.image;
-            if (image.size <= 0) {
-                throw new DevelopError("That image is empty.");
-            }
-            if (image.size > IMAGE_MAX) {
-                throw new DevelopError("Thumbnails can be up to 5 MB.");
-            }
-            const ext = THUMBNAIL_TYPES[image.type];
-            if (!ext) {
-                throw new DevelopError("Use a PNG, JPG or GIF.");
-            }
-            const info = imageSize(await image.bytes());
-            if (!info || info.type !== ext) {
-                throw new DevelopError("That file is not an image.");
-            }
-            if (info.width < 64 || info.height < 64) {
-                throw new DevelopError("That image is too small, use at least 64x64.");
-            }
-
-            const thumbnail = await saveImage("thumbnails", params.id, image, IMAGE_MAX);
-
-            const icon = await mediaCopy("thumbnails", "icons", params.id);
-
+            await placeImage(body.image, "Thumbnails");
             return {
                 ok: true,
-                thumbnail,
-                icon
+                thumbnail: await saveImage("thumbnails", params.id, body.image, IMAGE_MAX)
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        auth: true,
+        params: id,
+        body: t.Object({
+            image: t.File({ type: "image" })
+        })
+    })
+
+    .post("/places/:id/icon", async ({ params, body, user, status }) => {
+        try {
+            await ownedGame(params.id, user.id);
+            const info = await placeImage(body.image, "Icons");
+            if (info.width !== info.height) {
+                throw new DevelopError("Icons must be square.");
+            }
+            return {
+                ok: true,
+                icon: await saveImage("icons", params.id, body.image, IMAGE_MAX)
             };
         } catch (err) {
             return handle(err, status);

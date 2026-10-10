@@ -204,7 +204,7 @@
         uploadLabel = "";
     };
 
-    const image = async (e: Event, files: FileList | null, done: string) => {
+    const image = async (e: Event, kind: "thumbnail" | "icon", files: FileList | null, done: string) => {
         e.preventDefault();
         const file = files?.[0];
         if (!file) {
@@ -214,7 +214,7 @@
         try {
             const form = new FormData();
             form.append("image", file);
-            const d = await postForm(`/develop/places/${id}/thumbnail`, form);
+            const d = await postForm(`/develop/places/${id}/${kind}`, form);
             if (d.thumbnail) {
                 place.thumbnail = d.thumbnail;
             }
@@ -314,7 +314,7 @@
                         {@render buttons()}
                     </form>
                 {:else if tab === "icon"}
-                    <form onsubmit={e => image(e, iconFiles, "Icon updated.")}>
+                    <form onsubmit={e => image(e, "icon", iconFiles, "Icon updated.")}>
                         <h2 class="develop-heading">Game Icon</h2>
                         {@render messages()}
                         <div class="develop-icon">
@@ -324,12 +324,11 @@
                                 <input id="icon_file" class="develop-file" name="icon_file" type="file" accept="image/png,image/jpeg,image/gif" bind:files={iconFiles} required>
                                 <button class="develop-btn develop-btn-neutral" type="submit">Upload Image</button>
                                 <div class="develop-icon-note">Icon must be square.</div>
-                                <div class="develop-icon-help">The same image is used for the place thumbnail.</div>
                             </div>
                         </div>
                     </form>
                 {:else if tab === "thumbnail"}
-                    <form onsubmit={e => image(e, thumbFiles, "Thumbnail updated.")}>
+                    <form onsubmit={e => image(e, "thumbnail", thumbFiles, "Thumbnail updated.")}>
                         <h2 class="develop-heading">Thumbnails</h2>
                         {@render messages()}
                         <div class="develop-icon">

@@ -417,6 +417,7 @@ export const studio = new Elysia()
         if (bytes.byteLength > placeLimit(user)) {
             return status(413, `place files can be up to ${placeLimitLabel(user)}`);
         }
+        await rcc.closePlace(placeId);
         await mediaPut("places", placeId, "rbxl", bytes);
         await sql`UPDATE games SET updated_at = ${now()} WHERE id = ${placeId}`;
         rcc.render.place(placeId);

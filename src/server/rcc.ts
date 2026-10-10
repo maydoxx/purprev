@@ -71,6 +71,13 @@ export const rcc = {
 
     close: (jobId: string) => call<void>("DELETE", `/servers/${jobId}`),
 
+    // running servers keep the old place file
+    closePlace: async (placeId: number) => {
+        const jobs = (await rcc.servers()).filter(s => Number(s.placeId) === placeId);
+        await Promise.all(jobs.map(s => rcc.close(s.jobId).catch(() => {})));
+        return jobs.length;
+    },
+
     players: async (placeIds: number[]) => {
         const counts: Record<number, number> = {};
         for (const id of placeIds) {
