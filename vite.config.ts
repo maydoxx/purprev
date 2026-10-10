@@ -66,6 +66,8 @@ const api = {
     xfwd: true
 };
 
+const previewBots = /discordbot|twitterbot|facebookexternalhit|facebot|slackbot|telegrambot|whatsapp|linkedinbot|redditbot|embedly|skypeuripreview|mastodon|pleroma|misskey|cardyb|iframely|vkshare|pinterestbot/i;
+
 export default defineConfig({
     plugins: [
         siteThemes,
@@ -81,7 +83,14 @@ export default defineConfig({
             "^/+(Game|game|Asset|asset|Setting|Error|error|user|users|userblock|Friend|marketplace|ownership|currency|gametransactions|points|reservedservers|persistence|thumbs|Thumbs|moderation|AbuseReport|adimpression|mobileapi|UserCheck|Login|login|device|notifications|sponsoredpage|client-status|v1\\.0|v1\\.1|my/account|IDE|ide|Data|UI|universes|developerproducts|setup|openapi)/": api,
             "^/+(Asset|asset|my/friendsonline|My/Places\\.aspx|my/places\\.aspx|discord|games/start|pe\\.png|openapi)(\\?|$)": api,
             "^/+(groups|assets)/[0-9]+(/|\\?|$)": api,
-            "^/+GetAllowed": api
+            "^/+GetAllowed": api,
+
+            "^/+(?!@)[^.?]*(\\?|$)": {
+                ...api,
+                changeOrigin: true,
+                bypass: req => previewBots.test(req.headers["user-agent"] ?? "") ? undefined : req.url,
+                rewrite: url => `/api/embed${url}`
+            }
         }
     }
 });

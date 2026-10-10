@@ -38,6 +38,15 @@ nonerev.de {
         reverse_proxy 127.0.0.1:3000
     }
 
+    @preview {
+        header_regexp User-Agent (?i)(discordbot|twitterbot|facebookexternalhit|facebot|slackbot|telegrambot|whatsapp|linkedinbot|redditbot|embedly|skypeuripreview|mastodon|pleroma|misskey|cardyb|iframely|vkshare|pinterestbot)
+        not path /assets/* /css/* /img/* /vendor/* *.*
+    }
+    handle @preview {
+        rewrite * /api/embed{uri}
+        reverse_proxy 127.0.0.1:3000
+    }
+
     handle {
         @bundles path /assets/*
         header @bundles Cache-Control "public, max-age=31536000, immutable"
