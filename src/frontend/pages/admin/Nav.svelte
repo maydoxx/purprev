@@ -20,7 +20,8 @@
             ["/admi/blog", "Blog", ["/admi/blog"]],
             ["/admi/banners", "Banners", ["/admi/banners"]],
             ["/admi/user-ads", "User Ads", ["/admi/user-ads"]],
-            ["/admi/gamecards", "Game Cards", ["/admi/gamecards"]]
+            ["/admi/gamecards", "Game Cards", ["/admi/gamecards"]],
+            ["/admi/promocodes", "Promo Codes", ["/admi/promocodes"]]
         ]],
         ["System", [
             ["/admi/settings", "Settings", ["/admi/settings"]]

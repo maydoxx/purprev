@@ -10,6 +10,7 @@ import { siteSettings, setSiteSetting } from "../../settings";
 import { isTier } from "../../membership";
 import { ONLINE_WINDOW } from "../../friends";
 import { GENRES, isGenre } from "../../games";
+import { cleanPromo, promoItems, PROMO_CODE } from "../../promo";
 
 const PER_PAGE = 20;
 const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
@@ -38,6 +39,19 @@ const MODERATION: Record<string, [number, number]> = {
 
 const id = t.Object({
     id: t.Numeric()
+});
+const promoBody = t.Object({
+    code: t.String({
+        maxLength: 60
+    }),
+    items: t.Array(t.Integer(), {
+        maxItems: 10
+    }),
+    nonebux: t.Optional(t.Integer()),
+    tix: t.Optional(t.Integer()),
+    maxUses: t.Optional(t.Integer()),
+    startsAt: t.Optional(t.String()),
+    expiresAt: t.Optional(t.String())
 });
 const list = t.Object({
     q: t.Optional(t.String()),
@@ -134,6 +148,65 @@ const bannerState = (b: any) => {
 const toStamp = (value?: string) => {
     const ms = Date.parse((value ?? "").trim());
     return Number.isNaN(ms) ? 0 : Math.floor(ms / 1000);
+};
+
+const promoState = (p: any) => {
+    if (Number(p.active) !== 1) {
+        return "Off";
+    }
+    if (Number(p.starts_at) > now()) {
+        return "Scheduled";
+    }
+    if (Number(p.expires_at) > 0 && Number(p.expires_at) <= now()) {
+        return "Expired";
+    }
+    if (Number(p.max_uses) > 0 && Number(p.uses) >= Number(p.max_uses)) {
+        return "Used up";
+    }
+    return "Live";
+};
+
+const cleanPromoBody = async (body: typeof promoBody.static) => {
+    const code = cleanPromo(body.code);
+    if (!PROMO_CODE.test(code)) {
+        throw new AdminError("Codes are 3 to 40 letters, numbers, !, _ or -.");
+    }
+    const items = [...new Set(body.items)];
+    const nonebux = body.nonebux ?? 0;
+    const tix = body.tix ?? 0;
+    const maxUses = body.maxUses ?? 0;
+    for (const [label, value] of [["Nonebux", nonebux], ["Tix", tix], ["Max uses", maxUses]] as const) {
+        if (!Number.isInteger(value) || value < 0 || value > 1000000) {
+            throw new AdminError(`${label} must be between 0 and 1,000,000.`);
+        }
+    }
+    if (!items.length && !nonebux && !tix) {
+        throw new AdminError("A promo code needs at least one item, or some Nonebux or Tix.");
+    }
+    if (items.length) {
+        const found = await sql`SELECT id, name, is_limited, is_limited_unique FROM catalog_items WHERE id IN ${sql(items)}`;
+        if (found.length !== items.length) {
+            throw new AdminError("One of those items does not exist.");
+        }
+        const limited = found.find((item: any) => item.is_limited || item.is_limited_unique);
+        if (limited) {
+            throw new AdminError(`${limited.name} is a Limited item, so a code can't give it.`);
+        }
+    }
+    const startsAt = toStamp(body.startsAt);
+    const expiresAt = toStamp(body.expiresAt);
+    if (expiresAt > 0 && expiresAt <= Math.max(startsAt, now())) {
+        throw new AdminError("The end time has to be in the future and after the start time.");
+    }
+    return {
+        code,
+        items,
+        nonebux,
+        tix,
+        maxUses,
+        startsAt,
+        expiresAt
+    };
 };
 
 const cleanBanner = (body: typeof banner.static) => {
@@ -706,6 +779,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
                 error: "Game not found."
             });
         }
+        await rcc.closePlace(params.id);
         await sql`DELETE FROM games WHERE id = ${params.id}`;
         await sql`DELETE FROM game_favorites WHERE game_id = ${params.id}`;
         await Promise.all(["places", "thumbnails", "icons"].map(kind => clearMedia(kind, params.id)));
@@ -856,6 +930,88 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
     .delete("/gamecards/:id", async ({ params }) => {
         await sql`DELETE FROM game_cards WHERE id = ${params.id} AND redeemed_by = 0`;
+        return {
+            ok: true
+        };
+    }, {
+        admin: true,
+        params: id
+    })
+
+
+    .get("/promocodes", async ({ query }) => {
+        const page = await paginate(
+            sql`SELECT COUNT(*)::int AS n FROM promo_codes`,
+            query.page,
+            limit => sql`
+                SELECT promo_codes.*, maker.username AS creator_name FROM promo_codes
+                LEFT JOIN users maker ON maker.id = promo_codes.created_by
+                ORDER BY promo_codes.id DESC ${limit}
+            `
+        );
+        const items = await promoItems(page.items.map((row: any) => Number(row.id)));
+        for (const row of page.items) {
+            row.items = items.get(Number(row.id)) ?? [];
+            row.state = promoState(row);
+        }
+        return page;
+    }, {
+        admin: true,
+        query: t.Object({
+            page: t.Optional(t.Numeric())
+        })
+    })
+
+    .post("/promocodes", async ({ body, user, status }) => {
+        try {
+            const c = await cleanPromoBody(body);
+            const [taken] = await sql`SELECT 1 FROM promo_codes WHERE code = ${c.code}`;
+            if (taken) {
+                throw new AdminError("That code already exists.");
+            }
+            const created = await sql.begin(async tx => {
+                const [row] = await tx`
+                    INSERT INTO promo_codes (code, nonebux, tix, max_uses, starts_at, expires_at, active, created_by, created_at)
+                    VALUES (${c.code}, ${c.nonebux}, ${c.tix}, ${c.maxUses}, ${c.startsAt}, ${c.expiresAt}, 1, ${user.id}, ${now()}) RETURNING id`;
+                for (const itemId of c.items) {
+                    await tx`INSERT INTO promo_code_items (code_id, item_id) VALUES (${row.id}, ${itemId})`;
+                }
+                return row;
+            });
+            console.log(`admin: ${user.username} made promo code ${c.code}`);
+            return {
+                ok: true,
+                id: created.id,
+                code: c.code
+            };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        admin: true,
+        body: promoBody
+    })
+
+    .post("/promocodes/:id/active", async ({ params, body }) => {
+        await sql`UPDATE promo_codes SET active = ${body.active ? 1 : 0} WHERE id = ${params.id}`;
+        return {
+            ok: true
+        };
+    }, {
+        admin: true,
+        params: id,
+        body: t.Object({
+            active: t.Boolean()
+        })
+    })
+
+    .delete("/promocodes/:id", async ({ params, user }) => {
+        await sql.begin(async tx => {
+            await tx`DELETE FROM promo_code_items WHERE code_id = ${params.id}`;
+            await tx`DELETE FROM promo_redemptions WHERE code_id = ${params.id}`;
+            await tx`DELETE FROM promo_codes WHERE id = ${params.id}`;
+        });
+        console.log(`admin: ${user.username} deleted promo code ${params.id}`);
         return {
             ok: true
         };

@@ -30,6 +30,7 @@ import { abuse } from "./api/site/abuse";
 import { sets } from "./api/sets";
 import { comments } from "./api/comments";
 import { ads } from "./api/ads";
+import { promo } from "./api/promo";
 import { firstRun } from "./firstuser";
 const app = new Elysia()
     .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
@@ -97,6 +98,7 @@ const app = new Elysia()
     .use(sets)
     .use(comments)
     .use(ads)
+    .use(promo)
     .use(process.env.PUBLIC_API === "1" ? publicApi : new Elysia())
     .get("/", () => new Response([
         " /\\_/\\",

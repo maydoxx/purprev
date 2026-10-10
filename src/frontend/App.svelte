@@ -71,6 +71,8 @@
     import Redeem from "./pages/Redeem.svelte";
     import Sets from "./pages/Sets.svelte";
     import AdminGameCards from "./pages/admin/GameCards.svelte";
+    import AdminPromoCodes from "./pages/admin/PromoCodes.svelte";
+    import PromoCodes from "./pages/PromoCodes.svelte";
     import AbuseReport from "./pages/AbuseReport.svelte";
     import AdminReports from "./pages/admin/Reports.svelte";
     import GroupsSearch from "./pages/groups/Search.svelte";
@@ -143,6 +145,8 @@
         redeem: Redeem,
         sets: Sets,
         "admin-gamecards": AdminGameCards,
+        "admin-promocodes": AdminPromoCodes,
+        promocodes: PromoCodes,
         abusereport: AbuseReport,
         "admin-reports": AdminReports,
         "groups-search": GroupsSearch,
@@ -194,6 +198,7 @@
         "admin-applications",
         "sets",
         "admin-gamecards",
+        "admin-promocodes",
         "admin-reports",
     ];
 

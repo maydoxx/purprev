@@ -834,6 +834,95 @@
     padding-left: 14px;
 }
 
+.promo-page #Instructions {
+    min-height: 140px;
+    margin-bottom: 18px;
+}
+
+.promo-page .redeem-steps {
+    width: auto;
+    margin: 10px 0 0 12px;
+}
+
+.promo-page .redeem-steps div + div {
+    margin-top: 8px;
+}
+
+.promo-page .redeem-footnote {
+    margin: 16px 0 0 12px;
+}
+
+.promo-page #CodeInput {
+    margin-top: 24px;
+}
+
+.promo-page .redeem-result {
+    position: static;
+    clear: both;
+    width: auto;
+    height: auto;
+    min-height: 59px;
+    margin: 0 12px 12px;
+}
+
+.promo-page .redeem-result span {
+    flex: none;
+    padding: 0;
+    text-align: inherit;
+}
+
+.promo-page .redeem-result-error > span {
+    padding-left: 14px;
+}
+
+.promo-result {
+    flex: 1;
+    padding: 4px 14px;
+}
+
+.promo-result-title {
+    font-size: 16px;
+}
+
+.promo-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 10px 0 4px;
+    padding: 0;
+    list-style: none;
+}
+
+.promo-items li {
+    width: 110px;
+    color: #333;
+    font-weight: normal;
+    text-align: center;
+}
+
+.promo-items img {
+    display: block;
+    width: 110px;
+    height: 110px;
+    margin-bottom: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+}
+
+.bc-body .promo-items a {
+    color: #095fb5;
+}
+
+.promo-owned {
+    display: block;
+    color: #777;
+    font-size: 12px;
+}
+
+.promo-currency {
+    margin-top: 6px;
+}
+
 .bc-body .redeem-login {
     margin: 0 12px 20px;
 }
