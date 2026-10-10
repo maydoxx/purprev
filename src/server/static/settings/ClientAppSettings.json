@@ -62,6 +62,6 @@
     "FFlagUseUserListMenu": "True",
     "FIntStudioInsertDeletionCheckTimeMS": "30000",
     "FLogBrowserActivity": "3",
-    "FStringStudioTutorialsTOCUrl": "http://web.archive.org/web/20190107002714/http://wiki.roblox.com/index.php?title=Studio_Tutorials_Landing&studiomode=true",
-    "FStringStudioTutorialsUrl": "http://web.archive.org/web/20190107002714/http://wiki.roblox.com/index.php?title=Studio_Tutorials_Test&studiomode=true"
+    "FStringStudioTutorialsTOCUrl": "https://wiki.nonerev.de/index.php?title=Studio_Tutorials_Landing&studiomode=true",
+    "FStringStudioTutorialsUrl": "https://wiki.nonerev.de/index.php?title=Studio_Tutorials_Test&studiomode=true"
 }
