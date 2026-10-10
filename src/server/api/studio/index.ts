@@ -3,7 +3,7 @@ import { session, type User } from "../../session";
 import { sql, now } from "../../db";
 import { rcc } from "../../rcc";
 import { SITE_URL } from "../../site";
-import { mediaPut, mediaHas, mediaUrl } from "../../media";
+import { mediaPut, mediaHas, mediaUrl, unsafeXml } from "../../media";
 import { PENDING } from "../../paths";
 import { text, studiosig } from "../engine/sign";
 import { studioSetup, placeR15 } from "../engine/game";
@@ -417,6 +417,9 @@ export const studio = new Elysia()
         if (bytes.byteLength > placeLimit(user)) {
             return status(413, `place files can be up to ${placeLimitLabel(user)}`);
         }
+        if (unsafeXml(bytes)) {
+            return status(400, "that place file has markup that isnt allowed");
+        }
         await rcc.closePlace(placeId);
         await mediaPut("places", placeId, "rbxl", bytes);
         await sql`UPDATE games SET updated_at = ${now()} WHERE id = ${placeId}`;
@@ -449,6 +452,9 @@ export const studio = new Elysia()
         }
         const name = cleanName(query.Name ?? query.name ?? "") || `Untitled ${type}`;
         const extension = extensionFor(type, bytes);
+        if (extension === "rbxmx" && unsafeXml(bytes)) {
+            return status(400, "that model has markup that isnt allowed");
+        }
         const created = await sql`INSERT INTO assets (creator_id, type, name, extension, parent_id, created_at) VALUES (${user.id}, ${type}, ${name}, ${extension}, ${null}, ${now()}) RETURNING id`;
         const id = Number(created[0].id);
         await mediaPut("assets", id, extension, bytes);

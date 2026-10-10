@@ -71,7 +71,7 @@ cp .env.example .env
 | `STORAGE` | `local` keeps uploads and renders in `UPLOADS_DIR`, `cloudflare` puts them in an R2 bucket behind `CDN_URL` |
 | `UPLOADS_DIR` | The local folder, default `uploads/`, RCCManager writes here too when it is local |
 | `R2_*` | Account, bucket, prefix and an API token with object read+write, only for `STORAGE=cloudflare` |
-| `FIRST_USER_NAME`, `FIRST_USER_PASSWORD` | The admin account made on the first start, when there are no users yet. Default `NONEREV` / `meowmeow727`, change the password after logging in |
+| `FIRST_USER_NAME`, `FIRST_USER_PASSWORD` | The admin account made on the first start, when there are no users yet. The name defaults to `NONEREV`; without a password a random one is made and printed once in the API log. Change it after logging in |
 
 > [!WARNING]
 > Do not commit `.env`. and PLEASE use throwaway account for `ROBLOX_COOKIE`.

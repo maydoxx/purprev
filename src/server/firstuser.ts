@@ -8,14 +8,17 @@ const ensureFirstUser = async () => {
         return null;
     }
     const username = process.env.FIRST_USER_NAME || "NONEREV";
-    const hash = await Bun.password.hash(process.env.FIRST_USER_PASSWORD || "meowmeow727", "bcrypt");
+    // random unless .env sets one
+    const given = process.env.FIRST_USER_PASSWORD ?? "";
+    const password = given || Buffer.from(crypto.getRandomValues(new Uint8Array(15))).toString("base64url");
+    const hash = await Bun.password.hash(password, "bcrypt");
     const [row] = await sql`
         INSERT INTO users (username, password, created_at, admin) VALUES (${username}, ${hash}, ${now()}, 1)
         ON CONFLICT DO NOTHING
         RETURNING id
     `;
     if (row) {
-        console.log(`no users yet, created ${username}`);
+        console.log(given ? `no users yet, created ${username}` : `no users yet, created ${username} with password ${password}, it is only shown this once`);
     }
     return row ? Number(row.id) : null;
 };

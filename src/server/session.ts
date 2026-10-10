@@ -20,9 +20,10 @@ export type User = {
     social_discord: string;
     social_twitter: string;
     social_youtube: string;
+    theme: "auto" | "classic" | "dark" | "halloween" | "sakura";
 };
 
-const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.tix, users.ongoing_action_id, users.membership, users.membership_expires, users.social_discord, users.social_twitter, users.social_youtube`;
+const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.tix, users.ongoing_action_id, users.membership, users.membership_expires, users.social_discord, users.social_twitter, users.social_youtube, users.theme`;
 
 export const claimDailyLoginRewards = async (userId: number) => {
     const day = Math.floor(now() / 86400);
@@ -43,6 +44,10 @@ const withMembership = (row: any): User | null => row ? {
     membership: membershipOf(row),
     membership_expires: Number(row.membership_expires)
 } : null;
+
+const READS = ["GET", "HEAD", "OPTIONS"];
+const MODERATED_ALLOWED = ["/api/user/moderation/reactivate", "/api/auth/logout"];
+const PLAYING = /^\/(api\/games\/\d+\/launch|game\/(placelauncher|join|edit)\.ashx)$/i;
 
 export const getUser = async (id: number): Promise<User | null> => {
     const [user] = await sql`SELECT ${USER_COLS} FROM users WHERE id = ${id}`;
@@ -98,6 +103,21 @@ export const session = new Elysia({ name: "session" })
     })
 
 
+
+    // moderated users can only read, reactivate and log out
+    .onBeforeHandle({
+        as: "global"
+    }, ({ user, request, path, status }) => {
+        if (!user?.ongoing_action_id || MODERATED_ALLOWED.includes(path)) {
+            return;
+        }
+        if (READS.includes(request.method) && !PLAYING.test(path)) {
+            return;
+        }
+        return status(403, {
+            error: "Your account is under moderation."
+        });
+    })
 
     .macro({
         auth: {

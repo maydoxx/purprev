@@ -27,6 +27,11 @@ const stylesheetVersions: Plugin = {
     }
 };
 
+const api = {
+    target: process.env.API_URL ?? "http://localhost:3000",
+    xfwd: true
+};
+
 export default defineConfig({
     plugins: [
         stylesheetVersions,
@@ -36,12 +41,12 @@ export default defineConfig({
     server: {
         proxy: {
 
-            "^/+(api|uploads)/": process.env.API_URL ?? "http://localhost:3000",
+            "^/+(api|uploads)/": api,
 
-            "^/+(Game|game|Asset|asset|Setting|Error|error|user|users|userblock|Friend|marketplace|ownership|currency|gametransactions|points|reservedservers|persistence|thumbs|Thumbs|moderation|AbuseReport|adimpression|mobileapi|UserCheck|Login|login|device|notifications|sponsoredpage|client-status|v1\\.0|v1\\.1|my/account|IDE|ide|Data|UI|universes|developerproducts|setup|openapi)/": process.env.API_URL ?? "http://localhost:3000",
-            "^/+(Asset|asset|my/friendsonline|My/Places\\.aspx|my/places\\.aspx|discord|games/start|pe\\.png|openapi)(\\?|$)": process.env.API_URL ?? "http://localhost:3000",
-            "^/+(groups|assets)/[0-9]+(/|\\?|$)": process.env.API_URL ?? "http://localhost:3000",
-            "^/+GetAllowed": process.env.API_URL ?? "http://localhost:3000"
+            "^/+(Game|game|Asset|asset|Setting|Error|error|user|users|userblock|Friend|marketplace|ownership|currency|gametransactions|points|reservedservers|persistence|thumbs|Thumbs|moderation|AbuseReport|adimpression|mobileapi|UserCheck|Login|login|device|notifications|sponsoredpage|client-status|v1\\.0|v1\\.1|my/account|IDE|ide|Data|UI|universes|developerproducts|setup|openapi)/": api,
+            "^/+(Asset|asset|my/friendsonline|My/Places\\.aspx|my/places\\.aspx|discord|games/start|pe\\.png|openapi)(\\?|$)": api,
+            "^/+(groups|assets)/[0-9]+(/|\\?|$)": api,
+            "^/+GetAllowed": api
         }
     }
 });

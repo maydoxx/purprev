@@ -109,7 +109,10 @@ const app = new Elysia()
         }
     }))
     .get("/api", () => "meow :3 nothing to see here, the real stuff is under /api/<thing>")
-    .listen(Number(process.env.API_PORT ?? 3000));
+    .listen({
+        hostname: process.env.API_HOST || "0.0.0.0",
+        port: Number(process.env.API_PORT ?? 3000)
+    });
 
 
 for (const addr of (process.env.ALSO_LISTEN ?? "").split(",").filter(Boolean)) {

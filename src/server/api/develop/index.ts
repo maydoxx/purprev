@@ -5,7 +5,7 @@ import { mkdir, rm } from "fs/promises";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { saveImage, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
-import { mediaPut, mediaEntry, mediaKey, contentType } from "../../media";
+import { mediaPut, mediaEntry, mediaKey, contentType, unsafeXml } from "../../media";
 import { storage } from "../../storage";
 import { imageSize } from "../../image";
 import { rcc } from "../../rcc";
@@ -136,6 +136,9 @@ const keepVersion = async (placeId: number, userId: number) => {
 };
 
 const savePlace = async (placeId: number, userId: number, file: Blob | Uint8Array) => {
+    if (unsafeXml(file instanceof Uint8Array ? file : new Uint8Array(await file.arrayBuffer()))) {
+        throw new DevelopError("That place file has markup that isn't allowed.");
+    }
     await rcc.closePlace(placeId);
     await keepVersion(placeId, userId);
     await mediaPut("places", placeId, "rbxl", file);

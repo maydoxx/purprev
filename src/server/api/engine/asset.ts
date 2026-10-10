@@ -185,8 +185,27 @@ const itemUrls = (item: any) => {
     return item.asset_id ? [assetUrl(Number(item.asset_id))] : [];
 };
 
+// engine only, browsers get a sandboxed download
+const engineOnly = (value: unknown) => {
+    if (!(value instanceof Response)) {
+        return;
+    }
+    const headers = new Headers(value.headers);
+    headers.set("X-Content-Type-Options", "nosniff");
+    headers.set("Content-Security-Policy", "default-src 'none'; sandbox");
+    if (!/^(image|audio|video)\//.test(headers.get("Content-Type") ?? "")) {
+        headers.set("Content-Disposition", "attachment");
+    }
+    return new Response(value.body, {
+        status: value.status,
+        statusText: value.statusText,
+        headers
+    });
+};
+
 const routes = (prefix: string) => new Elysia({ prefix })
     .use(session)
+    .mapResponse(({ responseValue }) => engineOnly(responseValue))
 
     .get("/", async ({ query, status, user, request, server }) => {
         // no asset versions here, the toolbox hands out AssetVersionId = AssetId

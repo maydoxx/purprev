@@ -20,6 +20,13 @@ nonerev.de {
     root * C:\Users\Administrator\Desktop\purprev\dist
     encode gzip
 
+    header {
+        ?X-Content-Type-Options nosniff
+        ?Referrer-Policy strict-origin-when-cross-origin
+        ?X-Frame-Options SAMEORIGIN
+        ?Content-Security-Policy "frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
+    }
+
     @backend path /api/* /uploads/* /Game/* /game/* /Asset /asset /Asset/* /asset/* /Setting/* /Error/* /error/* /user/* /users/* /userblock/* /Friend/* /marketplace/* /ownership/* /currency/* /gametransactions/* /points/* /reservedservers/* /persistence/* /thumbs/* /Thumbs/* /moderation/* /AbuseReport/* /adimpression/* /mobileapi/* /UserCheck/* /Login/* /login/* /device/* /notifications/* /sponsoredpage/* /client-status/* /v1.0/* /v1.1/* /my/account/* /my/friendsonline /My/Places.aspx /IDE/* /ide/* /Data/* /UI/* /universes/* /developerproducts/* /setup/* /discord /games/start /pe.png /GetAllowed* /openapi /openapi/*
     handle @backend {
         reverse_proxy 127.0.0.1:3000

@@ -20,11 +20,15 @@ export const TYPES: Record<string, string> = {
     wav: "audio/wav",
     rbxl: "application/octet-stream",
     rbxm: "application/octet-stream",
-    rbxmx: "application/xml",
+    rbxmx: "application/octet-stream",
     json: "application/json"
 };
 
 export const contentType = (ext: string) => TYPES[ext.toLowerCase()] ?? "application/octet-stream";
+
+// a browser would run these if the file got rendered
+export const unsafeXml = (bytes: Uint8Array) =>
+    /xmlns(:\w+)?\s*=\s*["']https?:\/\/www\.w3\.org\/(1999\/xhtml|2000\/svg)|<!(DOCTYPE|ENTITY)/i.test(new TextDecoder("latin1").decode(bytes));
 
 // headshots and 3d scenes live next to the image they belong to
 const SUFFIX: Record<string, [string, string]> = {
