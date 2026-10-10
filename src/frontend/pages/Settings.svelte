@@ -2,8 +2,12 @@
     import { api } from "../api";
     import { session } from "../session.svelte";
     import { router } from "../router.svelte";
+    import { preferredTheme, setTheme } from "../theme.svelte";
+    import { resolve, type Theme } from "../themes";
+    import themeMeta from "virtual:site-themes";
+    import { customTheme, customThemeLoad, reloadCustomTheme, saveCustomTheme, validateCustomCss, CUSTOM_CSS_LIMIT, CUSTOM_CSS_RECOVERY } from "../custom-theme.svelte";
 
-    type Tab = "account" | "security" | "privacy" | "billing" | "invites";
+    type Tab = "account" | "security" | "privacy" | "billing" | "invites" | "developer";
     type Modal = "username" | "funds" | "password" | "email" | "done";
 
     const tabs: { id: Tab; label: string }[] = [
@@ -26,6 +30,10 @@
         {
             id: "invites",
             label: "Invites"
+        },
+        {
+            id: "developer",
+            label: "Developer"
         }
     ];
 
@@ -37,6 +45,7 @@
     };
 
     let tab = $state<Tab>(pick(router.query.tab));
+    $effect(() => { tab = pick(router.query.tab); });
     let modal = $state<Modal | null>(null);
     let busy = $state(false);
     let error = $state("");
@@ -183,6 +192,97 @@
         }
     };
 
+    const themeNames: [Theme, string][] = [
+        ["auto", "Automatic"],
+        ["classic", "Classic"],
+        ["dark", "Dark"],
+        ["halloween", "Halloween"],
+        ["sakura", "Sakura"]
+    ];
+
+    let theme = $state(preferredTheme());
+    const shownMeta = $derived(themeMeta[resolve(theme, new Date())]);
+    let themeError = $state("");
+    let customCss = $state(customTheme.css);
+    let customUrl = $state(customTheme.url);
+    let customEnabled = $state(customTheme.enabled);
+    let customError = $state("");
+    let customMessage = $state("");
+    let customFileInput = $state<HTMLInputElement>();
+
+    const cssBytes = $derived(new TextEncoder().encode(customCss).length);
+
+    const kb = (bytes: number) => bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+
+    $effect(() => {
+        customCss = customTheme.css;
+        customUrl = customTheme.url;
+        customEnabled = customTheme.enabled;
+    });
+
+    const saveCss = () => {
+        customError = "";
+        customMessage = "";
+        try {
+            saveCustomTheme(customCss, customEnabled, customUrl);
+            reloadCustomTheme();
+            if (router.query.customCss === "off") router.replace("/my/settings?tab=developer");
+            customMessage = customEnabled ? "Custom CSS saved and enabled in this browser." : "Custom CSS saved. It is currently disabled.";
+        } catch (err) {
+            customError = err instanceof Error ? err.message : "Could not save custom CSS.";
+        }
+    };
+
+    const disableCss = () => {
+        customError = "";
+        try {
+            saveCustomTheme(customTheme.css, false, customTheme.url);
+            customMessage = "Custom CSS disabled. Your saved URL and CSS are still available.";
+        } catch (err) {
+            customError = err instanceof Error ? err.message : "Could not disable custom CSS.";
+        }
+    };
+
+    const importCss = async (input: HTMLInputElement) => {
+        const file = input.files?.[0];
+        input.value = "";
+        if (!file) return;
+        customError = "";
+        customMessage = "";
+        try {
+            if (!file.name.toLowerCase().endsWith(".css")) throw new Error("Choose a .css file.");
+            if (file.size > CUSTOM_CSS_LIMIT) throw new Error("Custom CSS must be 256 KB or smaller.");
+            const css = await file.text();
+            validateCustomCss(css);
+            customCss = css;
+            customMessage = "CSS imported into the editor. Save to apply your changes.";
+        } catch (err) {
+            customError = err instanceof Error ? err.message : "Could not read that CSS file.";
+        }
+    };
+
+    const exportCss = () => {
+        const url = URL.createObjectURL(new Blob([customCss], { type: "text/css;charset=utf-8" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "nonerev-custom-theme.css";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+
+    const pickTheme = async (next: Theme) => {
+        theme = next;
+        themeError = "";
+        setTheme(next);
+        try {
+            await api("/user/settings/theme", {
+                theme: next
+            });
+        } catch (err: any) {
+            themeError = err.message;
+        }
+    };
+
     const copy = async () => {
         try {
             await navigator.clipboard.writeText(inviteKey);
@@ -275,7 +375,7 @@
     <ul class="settings-tabs" role="tablist">
         {#each tabs as item}
             <li class="settings-tab" class:active={tab === item.id}>
-                <button type="button" role="tab" aria-selected={tab === item.id} onclick={() => { tab = item.id; notice = null; }}>{item.label}</button>
+                <button type="button" role="tab" aria-selected={tab === item.id} onclick={() => { router.go(`/my/settings?tab=${item.id}`); notice = null; }}>{item.label}</button>
             </li>
         {/each}
     </ul>
@@ -336,6 +436,43 @@
                     <button type="submit" class="settings-btn" disabled={busy}>Save</button>
                 </div>
             </form>
+
+            <h3>Site Theme</h3>
+            <div class="settings-card settings-theme">
+                <label class="settings-field">
+                    <span class="settings-label">Theme:</span>
+                    <select class="settings-input settings-theme-select" value={theme} onchange={e => pickTheme(e.currentTarget.value as Theme)}>
+                        {#each themeNames as [value, label]}
+                            <option {value}>{label}</option>
+                        {/each}
+                    </select>
+                </label>
+                {#if shownMeta}
+                    <div class="settings-theme-meta">
+                        <p><strong>{shownMeta.name}</strong>{#if shownMeta.author}&nbsp;by {shownMeta.author}{/if}{#if theme === "auto"}<span class="settings-hint">&nbsp;(this month's theme)</span>{/if}</p>
+                        {#if shownMeta.description}
+                            <p class="settings-hint">{shownMeta.description}</p>
+                        {/if}
+                        {#if shownMeta.credits.length}
+                            <p class="settings-hint settings-theme-credits-title">Artwork</p>
+                            <ul class="settings-theme-credits">
+                                {#each shownMeta.credits as credit}
+                                    <li>
+                                        {#if credit.url}
+                                            <a class="settings-link" href={credit.url} target="_blank" rel="noopener noreferrer">{credit.text}</a>
+                                        {:else}
+                                            {credit.text}
+                                        {/if}
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
+                {/if}
+                {#if themeError}
+                    <p class="settings-theme-error">{themeError}</p>
+                {/if}
+            </div>
         {:else if tab === "security"}
             <h3>Secure Sign Out</h3>
             <div class="settings-card">
@@ -365,6 +502,61 @@
                     <p class="settings-hint">Builders Club gives you daily Nonebux and the club only items in the catalog. <a class="settings-link" href="/premium/membership">Upgrade now</a>.</p>
                 {/if}
             </div>
+        {:else if tab === "developer"}
+            <form class="settings-developer" onsubmit={e => { e.preventDefault(); saveCss(); }}>
+                <h3>Custom CSS Theme</h3>
+                <div class="settings-card">
+                    <p>Create your own theme with a stylesheet URL, CSS overrides or both! It applies on top of your Site Theme and is saved for your account in this browser!</p>
+                    <p class="settings-dev-links">
+                        <a class="settings-link" href="https://github.com/nonerev/site-themes" target="_blank" rel="noopener noreferrer">Theme source and starter CSS</a>
+                        <a class="settings-link" href="/my/theme-test">Component test page</a>
+                    </p>
+                    <div class="settings-dev-switch">
+                        <label class="settings-custom-toggle">
+                            <input type="checkbox" bind:checked={customEnabled}> Enable custom CSS
+                        </label>
+                        <span class="settings-dev-state" class:on={customTheme.enabled}>{customTheme.enabled ? "On in this browser" : "Off"}</span>
+                    </div>
+                </div>
+
+                <h3>Stylesheet URL</h3>
+                <div class="settings-card">
+                    <label class="settings-label settings-dev-label" for="settings-custom-url">URL (optional)</label>
+                    <input id="settings-custom-url" class="settings-input" type="url" bind:value={customUrl} maxlength="4096" spellcheck="false" autocapitalize="off" autocomplete="off" aria-describedby="settings-url-help" placeholder="https://example.com/theme.css">
+                    <p id="settings-url-help" class="settings-hint settings-dev-hint">Public CSS file served as text/css. It can be raw github link or served via webserver.</p>
+                    {#if customThemeLoad.status !== "idle"}
+                        <div class="settings-url-status">
+                            <p class:settings-theme-error={customThemeLoad.status === "error"} role="status">{customThemeLoad.status === "loading" ? "Loading saved stylesheet…" : customThemeLoad.status === "loaded" ? "Saved stylesheet loaded." : customThemeLoad.error}</p>
+                            <button type="button" class="settings-btn" onclick={reloadCustomTheme}>Reload</button>
+                        </div>
+                    {/if}
+                </div>
+
+                <h3>CSS Overrides</h3>
+                <div class="settings-card">
+                    <textarea id="settings-custom-css" class="settings-input settings-css-editor" bind:value={customCss} spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="CSS overrides" aria-describedby="settings-css-help" placeholder="/* Your theme CSS */"></textarea>
+                    <div class="settings-dev-meta">
+                        <p id="settings-css-help" class="settings-hint settings-dev-hint">Applied after the stylesheet URL. Use full HTTPS URLs or site paths for images and fonts.</p>
+                        <span class="settings-dev-size" class:over={cssBytes > CUSTOM_CSS_LIMIT}>{kb(cssBytes)} / 256 KB</span>
+                    </div>
+                    <input class="settings-hidden" type="file" accept=".css,text/css" aria-label="Import CSS file" bind:this={customFileInput} onchange={e => importCss(e.currentTarget)}>
+                    <div class="settings-css-actions">
+                        <button type="button" class="settings-btn" onclick={() => customFileInput?.click()}>Import</button>
+                        <button type="button" class="settings-btn" disabled={!customCss.trim()} onclick={exportCss}>Export</button>
+                        <span class="settings-css-gap"></span>
+                        <button type="button" class="settings-btn" disabled={!customTheme.enabled} onclick={disableCss}>Disable</button>
+                        <button type="submit" class="settings-btn-primary">Save CSS</button>
+                    </div>
+                    {#if customError || customTheme.error}
+                        <p class="settings-theme-error" role="alert">{customError || customTheme.error}</p>
+                    {/if}
+                    {#if customMessage}
+                        <p class="settings-css-message" role="status">{customMessage}</p>
+                    {/if}
+                </div>
+
+                <p class="settings-hint settings-dev-hint">If a theme hides these controls, open <a class="settings-link" href={CUSTOM_CSS_RECOVERY}>settings with custom CSS turned off</a>. Your URL and CSS are kept.</p>
+            </form>
         {:else}
             <h3>Invites</h3>
             <div class="settings-card">

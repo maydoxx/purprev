@@ -8,6 +8,7 @@ const routes: [string, string][] = [
     ["/home", "home"],
     ["/user", "user"],
     ["/my/settings", "settings"],
+    ["/my/theme-test", "theme-test"],
     ["/my/friends", "friends"],
     ["/my/avatar", "avatar"],
     ["/my/inventory", "inventory"],

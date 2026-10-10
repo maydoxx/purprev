@@ -39,3 +39,12 @@ uploads
 # join script signing key
 keys
 *.pem
+
+# theme repo and what vite copies out of it
+/vendor/site-themes/
+/public/css/themes/
+/public/img/themes/
+
+opsec
+
+.claude/

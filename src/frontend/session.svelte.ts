@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { Theme } from "./themes";
 
 export type Me = {
     id: number;
@@ -14,6 +15,7 @@ export type Me = {
     social_discord: string;
     social_twitter: string;
     social_youtube: string;
+    theme: Theme;
 };
 
 let me = $state<Me | null>(null);

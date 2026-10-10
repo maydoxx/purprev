@@ -417,6 +417,11 @@ a.settings-link {
     margin-top: 40px;
 }
 
+.settings-modal-btns .settings-btn {
+    padding: 9px;
+    font-size: 18px;
+}
+
 .settings-modal-error {
     margin-top: 10px;
     color: #D86868;
@@ -472,6 +477,180 @@ a.settings-btn-primary:hover {
     background-color: #A3E2BD;
     border-color: #A3E2BD;
     cursor: default;
+}
+
+.settings-theme {
+    padding-bottom: 20px;
+}
+
+.settings-theme-select {
+    width: auto;
+    min-width: 300px;
+    max-width: 100%;
+    cursor: pointer;
+}
+
+.settings-theme-meta {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #E3E3E3;
+}
+
+.settings-theme-meta p + p {
+    margin-top: 4px;
+}
+
+.settings-theme-meta .settings-hint {
+    color: #757575;
+}
+
+.settings-theme-credits-title {
+    margin-top: 10px !important;
+    font-weight: 600;
+}
+
+.settings-theme-credits {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.settings-theme-credits .settings-link {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.settings-theme-error {
+    margin-top: 8px;
+    color: #C0392B;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.settings-dev-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    margin-top: 8px;
+}
+
+.settings-dev-links .settings-link {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.settings-dev-switch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #E3E3E3;
+}
+
+.settings-custom-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.settings-dev-state {
+    padding: 2px 10px;
+    border-radius: 10px;
+    color: #757575;
+    background-color: #EBEBEB;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.settings-dev-state.on {
+    color: #fff;
+    background-color: #02b757;
+}
+
+.settings-dev-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.settings-dev-hint {
+    margin-top: 8px;
+    color: #757575;
+}
+
+.settings-page .settings-css-editor {
+    height: 260px;
+    min-height: 160px;
+    padding: 10px 12px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    tab-size: 4;
+    white-space: pre;
+    resize: vertical;
+}
+
+.settings-dev-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.settings-dev-size {
+    flex: 0 0 auto;
+    color: #757575;
+    font-size: 13px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+}
+
+.settings-dev-size.over {
+    color: #D86868;
+}
+
+.settings-css-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #E3E3E3;
+}
+
+.settings-css-gap {
+    flex: 1;
+}
+
+.settings-css-actions .settings-btn,
+.settings-css-actions .settings-btn-primary {
+    min-width: 76px;
+    padding: 7px 14px;
+    font-size: 16px;
+}
+
+.settings-url-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.settings-css-message {
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 400;
 }
 
 @media (min-width: 1688px) {

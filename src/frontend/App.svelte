@@ -16,6 +16,7 @@
     import Home from "./pages/Home.svelte";
     import Profile from "./pages/Profile.svelte";
     import Settings from "./pages/Settings.svelte";
+    import ThemeTest from "./pages/ThemeTest.svelte";
     import Friends from "./pages/Friends.svelte";
     import Avatar from "./pages/Avatar.svelte";
     import Inventory from "./pages/Inventory.svelte";
@@ -91,6 +92,7 @@
         home: Home,
         user: Profile,
         settings: Settings,
+        "theme-test": ThemeTest,
         friends: Friends,
         avatar: Avatar,
         inventory: Inventory,
@@ -166,6 +168,7 @@
         "membership-checkout",
         "home",
         "settings",
+        "theme-test",
         "friends",
         "avatar",
         "inventory",
@@ -201,6 +204,8 @@
         "admin-promocodes",
         "admin-reports",
     ];
+
+    const gamesList = $derived(router.name === "games" || (router.name === "search" && !["user", "users", "library"].includes(router.query.type ?? "")));
 
     const Page = $derived(pages[router.name] ?? NotFound);
 
@@ -262,7 +267,7 @@
             <Footer landing />
         {/if}
     {:else}
-        <div class="site-shell" class:logged-in={!!session.me}>
+        <div class="site-shell" class:logged-in={!!session.me} class:games-list={gamesList}>
             <Header />
             <div class="site-main">
                 <Banners />

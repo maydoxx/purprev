@@ -167,6 +167,10 @@ Same for all three:
 
 Vite does proxy `/api` to the backend, so `http://localhost:5173/api` works too.
 
+## Site themes
+
+Themes live in their own repo, [nonerev/site-themes](https://github.com/nonerev/site-themes). Clone it into `vendor/site-themes`, vite copies it into `public/` when it starts.
+
 ## License
 
 [AGPL-3.0](LICENSE). If you host a modified version, you have to share your changes with the people using it.

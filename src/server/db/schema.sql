@@ -160,6 +160,7 @@ CREATE TABLE IF NOT EXISTS users (
     social_discord varchar(40) NOT NULL DEFAULT '',
     social_twitter varchar(60) NOT NULL DEFAULT '',
     social_youtube varchar(120) NOT NULL DEFAULT '',
+    theme varchar(10) NOT NULL DEFAULT 'auto' CHECK (theme IN ('auto', 'classic', 'dark', 'halloween', 'sakura')),
     PRIMARY KEY (id),
     UNIQUE (username),
     UNIQUE (email)

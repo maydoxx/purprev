@@ -5,6 +5,7 @@ import { changeemail } from "./changeemail";
 import { changepassword } from "./changepassword";
 import { changeusername } from "./changeusername";
 import { socials } from "./socials";
+import { theme } from "./theme";
 
 export const settings = new Elysia({ prefix: "/settings" })
     .use(changebio)
@@ -12,3 +13,4 @@ export const settings = new Elysia({ prefix: "/settings" })
     .use(changepassword)
     .use(changeusername)
     .use(socials)
+    .use(theme)
