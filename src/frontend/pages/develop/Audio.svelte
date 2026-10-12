@@ -141,7 +141,7 @@
                     {#each audio as asset}
                         <div class="develop-item">
                             <div class="develop-thumb">
-                                <button class="develop-audio" class:playing={playing === asset.id} type="button" aria-label={playing === asset.id ? "Stop" : "Play"} onclick={() => play(asset.id)}>
+                                <button class="develop-audio" class:playing={playing === asset.id} type="button" aria-label={playing === asset.id ? "Stop" : "Play"} disabled={asset.content_deleted} onclick={() => play(asset.id)}>
                                     <svg viewBox="0 0 52 52" aria-hidden="true">
                                         <path fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" d="M6 19h8l12-10v34L14 33H6z" />
                                         <path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M33 19c3 4 3 10 0 14M38 14c6 7 6 17 0 24M43 9c9 10 9 24 0 34" />
@@ -150,7 +150,12 @@
                             </div>
                             <div class="develop-name-col">
                                 <span class="develop-name">{asset.name}</span>
-                                <div class="develop-details">Created {day(asset.created_at)}</div>
+                                <div class="develop-details">
+                                    Created {day(asset.created_at)}
+                                    {#if asset.content_deleted}
+                                        <span class="develop-hint develop-warning">Moderated - file removed and can't be replaced</span>
+                                    {/if}
+                                </div>
                             </div>
                             <div class="develop-stats develop-stats-wide">
                                 <div>

@@ -866,6 +866,11 @@ textarea.develop-text {
     font-size: 13px;
 }
 
+.develop-page .develop-hint.develop-warning {
+    color: #a00;
+    font-weight: 600;
+}
+
 .develop-page .develop-check {
     display: flex;
     align-items: center;

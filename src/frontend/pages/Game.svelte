@@ -112,6 +112,9 @@
     const isAndroid = isPhone && /Android/i.test(navigator.userAgent);
 
     const play = async (jobId = "") => {
+        if (game?.content_deleted) {
+            return;
+        }
         try {
             const d = await api(`/games/${id}/launch${jobId ? `?jobId=${encodeURIComponent(jobId)}` : ""}`);
             location.href = d.url;
@@ -416,7 +419,9 @@
                     </div>
 
                     <div class="game-play">
-                        {#if !session.me}
+                        {#if game.content_deleted}
+                            <p class="alert alert-danger game-play-hint" role="alert">This place has been moderated and can't be played.</p>
+                        {:else if !session.me}
                             <a class="game-play-btn" href="/login">Play</a>
                         {:else if isApp}
                             <button id="MobileVisitButton" type="button" class="game-play-btn" onclick={() => location.href = `/games/start?placeid=${id}`}>Play</button>

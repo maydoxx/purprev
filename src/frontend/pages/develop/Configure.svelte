@@ -397,6 +397,9 @@
                     <h2 class="develop-heading">Version History</h2>
                     {@render messages()}
                     <p class="develop-hint">Every upload keeps the file it replaced. Restoring a version makes it the live place file and keeps the current one as a new version.</p>
+                    {#if place.content_deleted}
+                        <p class="develop-hint develop-warning">This place has been moderated. Its file was removed and no version can be restored while it is.</p>
+                    {/if}
                     <table class="develop-versions">
                         <thead>
                             <tr>
@@ -424,7 +427,7 @@
                                     <td>{when(v.uploaded_at)}</td>
                                     <td>{v.uploaded_by_name}</td>
                                     <td>
-                                        <button class="develop-control" type="button" disabled={restoring !== 0} onclick={() => restore(v.version)}>{restoring === v.version ? "Restoring" : "Restore"}</button>
+                                        <button class="develop-control" type="button" disabled={restoring !== 0 || place.content_deleted} onclick={() => restore(v.version)}>{restoring === v.version ? "Restoring" : "Restore"}</button>
                                     </td>
                                 </tr>
                             {/each}
@@ -436,17 +439,23 @@
                         </tbody>
                     </table>
                 {:else if tab === "file"}
-                    <form onsubmit={upload}>
-                        <h2 class="develop-heading">{hasFile ? "Replace Place File" : "Upload Place File"}</h2>
+                    {#if place.content_deleted}
+                        <h2 class="develop-heading">Replace Place File</h2>
                         {@render messages()}
-                        <p class="develop-hint">{hasFile ? "A place file is currently uploaded. Uploading another .rbxl will safely replace it." : "This place does not have an .rbxl file yet."} Files up to {placeLimitLabel()} are uploaded in chunks.</p>
-                        <label class="develop-label" for="place_file">Place File:</label>
-                        <input id="place_file" class="develop-file" name="place_file" type="file" accept=".rbxl" bind:files={placeFiles} required>
-                        <span class="develop-help">.rbxl only, up to {placeLimitLabel()}. Your existing place file is kept if the replacement upload fails.</span>
-                        <div class="develop-buttons">
-                            <button class="develop-btn" type="submit" disabled={!!uploadLabel}>{uploadLabel || (hasFile ? "Replace File" : "Upload File")}</button>
-                        </div>
-                    </form>
+                        <p class="develop-hint">This place has been moderated. Its file was removed and a replacement can't be uploaded.</p>
+                    {:else}
+                        <form onsubmit={upload}>
+                            <h2 class="develop-heading">{hasFile ? "Replace Place File" : "Upload Place File"}</h2>
+                            {@render messages()}
+                            <p class="develop-hint">{hasFile ? "A place file is currently uploaded. Uploading another .rbxl will safely replace it." : "This place does not have an .rbxl file yet."} Files up to {placeLimitLabel()} are uploaded in chunks.</p>
+                            <label class="develop-label" for="place_file">Place File:</label>
+                            <input id="place_file" class="develop-file" name="place_file" type="file" accept=".rbxl" bind:files={placeFiles} required>
+                            <span class="develop-help">.rbxl only, up to {placeLimitLabel()}. Your existing place file is kept if the replacement upload fails.</span>
+                            <div class="develop-buttons">
+                                <button class="develop-btn" type="submit" disabled={!!uploadLabel}>{uploadLabel || (hasFile ? "Replace File" : "Upload File")}</button>
+                            </div>
+                        </form>
+                    {/if}
                 {:else}
                     <h2 class="develop-heading">Delete Place</h2>
                     {@render messages()}
