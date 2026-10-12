@@ -9,6 +9,7 @@ import { SITE_URL, assetUrl } from "../../site";
 import { session, type User } from "../../session";
 import { isInternal } from "./internal";
 import { text } from "./sign";
+import { isFileDeleted } from "../../content";
 
 
 
@@ -212,6 +213,10 @@ const routes = (prefix: string) => new Elysia({ prefix })
         const id = query.id ?? query.ID ?? query.assetversionid;
         if (id === undefined) {
             return status(400, "id missing");
+        }
+        // moderated place and audio files are gone for good
+        if (await isFileDeleted(id)) {
+            return unavailable();
         }
         if (await mediaHas("places", id)) {
             if (!await mayLoadPlace(id, user, request, server)) {

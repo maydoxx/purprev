@@ -144,6 +144,9 @@ const keepVersion = async (placeId: number, userId: number) => {
 };
 
 const savePlace = async (placeId: number, userId: number, file: Blob | Uint8Array) => {
+    if (await isDeleted("place", placeId)) {
+        throw new DevelopError("This place has been moderated and can't be replaced.", 403);
+    }
     if (unsafeXml(file instanceof Uint8Array ? file : new Uint8Array(await file.arrayBuffer()))) {
         throw new DevelopError("That place file has markup that isn't allowed.");
     }

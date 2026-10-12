@@ -11,6 +11,7 @@ import { html, welcomePage, toolboxPage, publishPage, saveModelPage } from "./pa
 import { searchFree, searchOwn, item as toolboxItem, stamp } from "./toolbox";
 import { setsOf, setItems } from "../sets";
 import { placeLimit, placeLimitLabel } from "../../games";
+import { isDeleted } from "../../content";
 
 
 const ASSET_MAX = 20 * 1024 * 1024;
@@ -409,6 +410,9 @@ export const studio = new Elysia()
         const game = placeId ? await ownedPlace(placeId, user) : null;
         if (!game) {
             return status(403, "not your place");
+        }
+        if (await isDeleted("place", placeId)) {
+            return status(403, "this place has been moderated and cannot be replaced");
         }
         const bytes = unpack(new Uint8Array(await request.arrayBuffer()));
         if (bytes.byteLength < 16 || !startsWith(bytes, "<roblox")) {

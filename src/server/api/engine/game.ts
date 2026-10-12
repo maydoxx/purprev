@@ -10,6 +10,7 @@ import { xmlBool, xml } from "./respond";
 import { TIERS, membershipOf } from "../../membership";
 import { report } from "../../counters";
 import { byAccessCode, byKey, canJoin, start } from "../../privateservers";
+import { isDeleted } from "../../content";
 
 // admin scripts look for these, they are not site groups
 const ADMIN_GROUPS = [1, 1200769];
@@ -98,6 +99,9 @@ const routes = (prefix: string) => new Elysia({ prefix })
         }
 
         const placeId = server.placeId;
+        if (await isDeleted("place", Number(placeId))) {
+            return status(410, "this place has been moderated");
+        }
         const appearance = appearanceUrl(who.id);
         const [account] = await sql`SELECT created_at FROM users WHERE id = ${who.id}`;
         await sql`UPDATE games SET visits = visits + 1 WHERE id = ${placeId}`;
@@ -171,6 +175,13 @@ const routes = (prefix: string) => new Elysia({ prefix })
                 jobId: "",
                 status: 5,
                 message: "no such place"
+            };
+        }
+        if (await isDeleted("place", Number(placeId))) {
+            return {
+                jobId: "",
+                status: 5,
+                message: "this place has been moderated"
             };
         }
 

@@ -541,6 +541,11 @@ export const games = new Elysia({ prefix: "/api/games" })
     })
 
     .get("/:id/launch", async ({ params, query, token, user, status }) => {
+        if (await isDeleted("place", params.id)) {
+            return status(403, {
+                error: "This place has been moderated."
+            });
+        }
         let launcher = `${SITE_URL}/Game/PlaceLauncher.ashx?request=RequestGame&placeId=${params.id}${query.jobId ? `&jobId=${encodeURIComponent(query.jobId)}` : ""}`;
         if (query.vipId !== undefined) {
             const ps = await byVipId(query.vipId);
