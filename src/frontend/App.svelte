@@ -66,6 +66,7 @@
     import AdminBanners from "./pages/admin/Banners.svelte";
     import AdminBlog from "./pages/admin/Blog.svelte";
     import AdminGames from "./pages/admin/Games.svelte";
+    import AdminContent from "./pages/admin/Content.svelte";
     import AdminSettings from "./pages/admin/Settings.svelte";
     import AdminApplications from "./pages/admin/Applications.svelte";
     import Privacy from "./pages/Privacy.svelte";
@@ -141,6 +142,7 @@
         "admin-banners": AdminBanners,
         "admin-blog": AdminBlog,
         "admin-games": AdminGames,
+        "admin-content": AdminContent,
         "admin-settings": AdminSettings,
         "admin-applications": AdminApplications,
         privacy: Privacy,
@@ -197,6 +199,7 @@
         "admin-banners",
         "admin-blog",
         "admin-games",
+        "admin-content",
         "admin-settings",
         "admin-applications",
         "sets",

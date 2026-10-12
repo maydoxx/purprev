@@ -16,6 +16,7 @@
         ]],
         ["Content", [
             ["/admi/games", "Games", ["/admi/games"]],
+            ["/admi/content", "Content", ["/admi/content"]],
             ["/admi/catalog", "Catalog", ["/admi/catalog"]],
             ["/admi/blog", "Blog", ["/admi/blog"]],
             ["/admi/banners", "Banners", ["/admi/banners"]],

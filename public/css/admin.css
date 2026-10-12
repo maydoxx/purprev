@@ -596,6 +596,26 @@
     background: #b8b8b8;
 }
 
+.admin-content-text {
+    max-width: 340px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-confirm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+    max-width: 340px;
+}
+
+.admin-confirm .form-control {
+    flex: 1;
+    min-width: 180px;
+}
+
 .admin-list {
     list-style: none;
     margin: 0;

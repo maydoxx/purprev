@@ -59,6 +59,7 @@ const routes: [string, string][] = [
     ["/admi/banners", "admin-banners"],
     ["/admi/blog", "admin-blog"],
     ["/admi/games", "admin-games"],
+    ["/admi/content", "admin-content"],
     ["/admi/settings", "admin-settings"],
     ["/admi/applications", "admin-applications"],
     ["/info/privacy", "privacy"],
