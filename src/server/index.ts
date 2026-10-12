@@ -19,6 +19,7 @@ import { money } from "./api/money";
 import { trade } from "./api/trade";
 import { admin } from "./api/admin";
 import { servers } from "./api/admin/servers";
+import { content } from "./api/admin/content";
 import { engine } from "./api/engine";
 import { uploads } from "./api/uploads";
 import { rcc } from "./api/rcc";
@@ -89,6 +90,7 @@ const app = new Elysia()
     .use(trade)
     .use(admin)
     .use(servers)
+    .use(content)
     .use(engine)
     .use(uploads)
     .use(rcc)
