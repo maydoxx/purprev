@@ -616,6 +616,47 @@
     min-width: 180px;
 }
 
+.admin-content-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-audio {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid #b8b8b8;
+    border-radius: 3px;
+    background: #fff;
+    color: #7b2cbf;
+    cursor: pointer;
+}
+
+.admin-audio:hover:not(:disabled) {
+    border-color: #7b2cbf;
+    background: #f5f8fa;
+}
+
+.admin-audio.playing {
+    border-color: #e04848;
+    color: #e04848;
+}
+
+.admin-audio:disabled {
+    color: #b8b8b8;
+    cursor: not-allowed;
+}
+
+.admin-audio svg {
+    width: 14px;
+    height: 14px;
+}
+
 .admin-list {
     list-style: none;
     margin: 0;

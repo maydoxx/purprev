@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { untrack } from "svelte";
     import { api } from "../../api";
     import { router } from "../../router.svelte";
     import { rows, total, pages, num, adminDate, type Flash } from "./util";
@@ -22,6 +23,8 @@
     let reason = $state<Record<number, string>>({});
     let confirm = $state(0);
     let busy = $state(false);
+    let playing = $state(0);
+    let player = $state<HTMLAudioElement>();
 
     const note = (type: string, message: string) => flash = {
         type,
@@ -39,6 +42,10 @@
         q;
         page;
         confirm = 0;
+        untrack(() => {
+            player?.pause();
+            playing = 0;
+        });
         load();
     });
 
@@ -85,6 +92,19 @@
     };
 
     const url = (p: number) => `/admi/content?kind=${kind}${q ? `&q=${encodeURIComponent(q)}` : ""}&page=${p}`;
+
+    const play = (id: number) => {
+        if (!player) {
+            return;
+        }
+        if (playing === id) {
+            player.pause();
+            playing = 0;
+            return;
+        }
+        player.src = `/asset/?id=${id}`;
+        player.play().then(() => playing = id).catch(() => playing = 0);
+    };
 </script>
 
 <Layout title="Content">
@@ -128,7 +148,30 @@
                         <tr>
                             <td>{item.id}</td>
                             <td>
-                                <div class="admin-content-text" title={item.text}>{item.text || "\u2014"}</div>
+                                <div class="admin-content-cell">
+                                    {#if kind === "audio"}
+                                        <button
+                                            type="button"
+                                            class="admin-audio"
+                                            class:playing={playing === item.id}
+                                            aria-label={playing === item.id ? "Stop preview" : "Preview audio"}
+                                            title={item.deleted ? "File removed, can't be previewed" : "Preview audio"}
+                                            disabled={busy || item.deleted}
+                                            onclick={() => play(item.id)}
+                                        >
+                                            {#if playing === item.id}
+                                                <svg viewBox="0 0 52 52" aria-hidden="true">
+                                                    <rect x="14" y="14" width="24" height="24" fill="currentColor" />
+                                                </svg>
+                                            {:else}
+                                                <svg viewBox="0 0 52 52" aria-hidden="true">
+                                                    <path fill="currentColor" d="M16 10l28 16-28 16z" />
+                                                </svg>
+                                            {/if}
+                                        </button>
+                                    {/if}
+                                    <div class="admin-content-text" title={item.text}>{item.text || "\u2014"}</div>
+                                </div>
                                 {#if confirm === item.id}
                                     <div class="admin-confirm">
                                         <input class="form-control" type="text" placeholder="Reason for deletion" maxlength="500" bind:value={reason[item.id]} disabled={busy}>
@@ -170,4 +213,6 @@
     </div>
 
     <Pagination {page} totalPages={pages(data)} {url} label="Content pages" />
+
+    <audio bind:this={player} onended={() => playing = 0} preload="none"></audio>
 </Layout>
