@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
+import { DELETED_TEXT, deletedIds } from "../../content";
 
 
 export const feed = new Elysia({ prefix: "/feed" })
@@ -12,13 +13,21 @@ export const feed = new Elysia({ prefix: "/feed" })
         `;
         const ids = [user.id, ...friends.map((f: any) => f.id)];
 
-        return await sql`
+        const rows = await sql`
             SELECT status_updates.id, status_updates.user_id, status_updates.body, status_updates.created_at, users.username
             FROM status_updates JOIN users ON users.id = status_updates.user_id
             WHERE status_updates.user_id IN ${sql(ids)}
             ORDER BY status_updates.created_at DESC, status_updates.id DESC
             LIMIT 12
         `;
+        const deleted = await deletedIds("status", rows.map((row: any) => Number(row.id)));
+        return rows.map((row: any) => ({
+            ...row,
+            id: Number(row.id),
+            user_id: Number(row.user_id),
+            created_at: Number(row.created_at),
+            body: deleted.has(Number(row.id)) ? DELETED_TEXT : row.body
+        }));
     }, {
         auth: true
     })

@@ -3,6 +3,7 @@ import { session } from "../../session";
 import { sql } from "../../db";
 import { mediaUrl, withThumbnail } from "../../paths";
 import { isOnline, presenceOf } from "../../friends";
+import { DELETED_TEXT, deletedIds } from "../../content";
 
 const PER_PAGE = 10;
 const GAMES_PER_PAGE = 40;
@@ -15,9 +16,11 @@ const SUGGESTIONS = [
     ["catalog", "Catalog"]
 ];
 
-const withMedia = async (game: any) => ({
+const withMedia = async (game: any, deleted = false) => ({
     ...game,
-    description: game.description ?? "",
+    title: deleted ? DELETED_TEXT : game.title,
+    description: deleted ? DELETED_TEXT : (game.description ?? ""),
+    content_deleted: deleted,
     thumbnail: await mediaUrl("thumbnails", game.id),
     icon: await mediaUrl("icons", game.id),
     playing: 0,
@@ -55,11 +58,12 @@ export const search = new Elysia({ prefix: "/search" })
                 WHERE games.title ILIKE ${like}
                 ORDER BY games.id DESC LIMIT ${GAMES_PER_PAGE} OFFSET ${(page - 1) * GAMES_PER_PAGE}
             `;
+            const deleted = await deletedIds("place", rows.map((g: any) => Number(g.id)));
             return {
                 type,
                 page,
                 totalPages,
-                results: await Promise.all(rows.map(withMedia))
+                results: await Promise.all(rows.map((g: any) => withMedia(g, deleted.has(Number(g.id)))))
             };
         }
 
@@ -123,6 +127,7 @@ export const search = new Elysia({ prefix: "/search" })
             ORDER BY lower(username) = lower(${query.q.trim()}) DESC, id DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}
         `;
         const presence = await presenceOf(rows, user?.id ?? 0);
+        const deleted = await deletedIds("bio", rows.map((u: any) => Number(u.id)));
         return {
             type: "user",
             page,
@@ -131,7 +136,7 @@ export const search = new Elysia({ prefix: "/search" })
                 id: u.id,
                 username: u.username,
                 online: isOnline(u.lastOnlineSite),
-                about: u.about ?? "",
+                about: deleted.has(Number(u.id)) ? DELETED_TEXT : u.about ?? "",
                 last_online: Number(u.lastOnlineSite ?? 0),
                 presence: presence(u)
             }))

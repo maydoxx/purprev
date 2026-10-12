@@ -7,6 +7,7 @@ import { SITE_URL } from "../../site";
 import { GENRES, gameSettings, isGenre } from "../../games";
 import { PurchaseError, buyPass } from "../../purchase";
 import { byVipId, canJoin, jobOf } from "../../privateservers";
+import { DELETED_TEXT, deletedIds, isDeleted } from "../../content";
 
 const PER_PAGE = 20;
 const DAY = 86400;
@@ -148,10 +149,11 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
     `;
     const playing = await rcc.players(rows.map((g: any) => Number(g.id)));
     const ordered = sort.id === "popular" ? byPlaying(rows, playing) : rows;
+    const deleted = await deletedIds("place", ordered.map((g: any) => Number(g.id)));
     return {
         page: current,
         totalPages,
-        games: await Promise.all(ordered.map(({ window_favorites, window_rating, ...g }: any) => withMedia(g, playing[Number(g.id)])))
+        games: await Promise.all(ordered.map(({ window_favorites, window_rating, ...g }: any) => withMedia(g, playing[Number(g.id)], deleted.has(Number(g.id)))))
     };
 };
 
@@ -160,9 +162,12 @@ const timeOf = (time: unknown): Time => TIMES.includes(time as Time) ? time as T
 
 const ratio = (up: number, down: number) => up + down > 0 ? Math.round(up / (up + down) * 100) : 0;
 
-const withMedia = async (game: any, playing = 0) => ({
+const withMedia = async (game: any, playing = 0, deleted = false) => ({
     ...game,
     ...gameSettings(game),
+    title: deleted ? DELETED_TEXT : game.title,
+    description: deleted ? DELETED_TEXT : gameSettings(game).description ?? "",
+    content_deleted: deleted,
     thumbnail: await mediaUrl("thumbnails", game.id),
     icon: await mediaUrl("icons", game.id),
     playing,
@@ -259,7 +264,7 @@ export const games = new Elysia({ prefix: "/api/games" })
         const [mine] = user ? await sql`SELECT 1 FROM game_favorites WHERE game_id = ${params.id} AND user_id = ${user.id}` : [null];
         const [vote] = user ? await sql`SELECT vote FROM game_votes WHERE game_id = ${params.id} AND user_id = ${user.id}` : [null];
         return {
-            ...await withMedia(game, playing[params.id]),
+            ...await withMedia(game, playing[params.id], await isDeleted("place", params.id)),
             favorited: !!mine,
             my_vote: vote ? Number(vote.vote) : 0
         };

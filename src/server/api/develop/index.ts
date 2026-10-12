@@ -11,6 +11,7 @@ import { imageSize } from "../../image";
 import { rcc } from "../../rcc";
 import { assetUrl } from "../../site";
 import { GENRES, GEAR, MAX_PLAYERS, MAX_PLAYERS_BC, ACCESS, gearCsv, gameSettings, placeLimit, placeLimitLabel, isGenre } from "../../games";
+import { DELETED_TEXT, isDeleted, deletedIds } from "../../content";
 import type { User } from "../../session";
 
 const CHUNK_MAX = 768 * 1024;
@@ -99,13 +100,20 @@ const cleanTitle = (title: string) => {
     return title.slice(0, 100);
 };
 
-const withMedia = async (game: any) => ({
-    ...game,
-    ...gameSettings(game),
-    thumbnail: await mediaUrl("thumbnails", game.id),
-    icon: await mediaUrl("icons", game.id),
-    has_file: await mediaHas("places", game.id)
-});
+const withMedia = async (game: any) => {
+    const deleted = await isDeleted("place", Number(game.id));
+    const settings = gameSettings(game);
+    return {
+        ...game,
+        ...settings,
+        title: deleted ? DELETED_TEXT : game.title,
+        description: deleted ? DELETED_TEXT : settings.description ?? "",
+        thumbnail: await mediaUrl("thumbnails", game.id),
+        icon: await mediaUrl("icons", game.id),
+        has_file: await mediaHas("places", game.id),
+        content_deleted: deleted
+    };
+};
 
 const checkPlaceName = (name: string) => {
     if (extname(name).toLowerCase() !== ".rbxl") {
@@ -845,9 +853,12 @@ export const develop = new Elysia({ prefix: "/api/develop" })
 
     .get("/audio", async ({ user }) => {
         const rows = await sql`SELECT * FROM assets WHERE creator_id = ${user.id} AND type = 'Audio' ORDER BY id DESC`;
+        const deleted = await deletedIds("audio", rows.map((asset: any) => Number(asset.id)));
         return rows.map((asset: any) => ({
             ...asset,
-            id: Number(asset.id)
+            id: Number(asset.id),
+            name: deleted.has(Number(asset.id)) ? DELETED_TEXT : asset.name,
+            content_deleted: deleted.has(Number(asset.id))
         }));
     }, {
         auth: true

@@ -7,6 +7,7 @@ import { rcc } from "../../rcc";
 import { membershipOf } from "../../membership";
 import { siteBadges } from "../../badges";
 import { collectionOf } from "./collections";
+import { DELETED_TEXT, isDeleted, deletedIds } from "../../content";
 import type { User } from "../../session";
 
 
@@ -45,13 +46,17 @@ const creationCounts = async (userId: number) => {
     return new Map<string, number>(rows.map((r: any) => [r.type, Number(r.n)]));
 };
 
-const assetCard = async (asset: any) => ({
-    id: Number(asset.id),
-    name: asset.name,
-    type: asset.type,
-    thumbnail: asset.type === "Decal" ? await mediaUrl("assets", Number(asset.id)) : "",
-    created_at: Number(asset.created_at)
-});
+const assetCard = async (asset: any) => {
+    const deleted = asset.type === "Audio" && await isDeleted("audio", Number(asset.id));
+    return {
+        id: Number(asset.id),
+        name: deleted ? DELETED_TEXT : asset.name,
+        type: asset.type,
+        thumbnail: asset.type === "Decal" ? await mediaUrl("assets", Number(asset.id)) : "",
+        created_at: Number(asset.created_at),
+        content_deleted: deleted
+    };
+};
 
 const creations = async (userId: number, [key, title, type]: [string, string, string], total: number, page: number) => {
     const offset = (page - 1) * CREATIONS_PER_PAGE;
@@ -128,9 +133,13 @@ export const profile = new Elysia({ prefix: "/profile" })
                 WHERE gm.user_id = ${row.id}
                 ORDER BY gm.rank DESC, gm.joined_at ASC
             `,
-            sql`SELECT body FROM status_updates WHERE user_id = ${row.id} ORDER BY created_at DESC, id DESC LIMIT 1`,
+            sql`SELECT id, body FROM status_updates WHERE user_id = ${row.id} ORDER BY created_at DESC, id DESC LIMIT 1`,
             presenceOf([row], user?.id ?? 0)
         ]);
+
+        const deletedPlaces = await deletedIds("place", [...games, ...favorites].map((g: any) => Number(g.id)));
+        const deletedAbout = await isDeleted("bio", row.id);
+        const deletedStatus = latest ? await isDeleted("status", Number(latest.id)) : false;
 
         const playing = await rcc.players([...favorites, ...games].map((g: any) => Number(g.id)));
         const [followCounts] = await sql`
@@ -144,14 +153,14 @@ export const profile = new Elysia({ prefix: "/profile" })
             username: row.username,
             favorites: await Promise.all(favorites.map(async (g: any) => ({
                 id: Number(g.id),
-                title: g.title,
+                title: deletedPlaces.has(Number(g.id)) ? DELETED_TEXT : g.title,
                 creator_id: Number(g.creator_id),
                 creator_name: g.creator_name ?? "Unknown",
                 icon: await mediaUrl("icons", Number(g.id)),
                 playing: playing[Number(g.id)] ?? 0
             }))),
             previousUsernames: history.map((h: any) => h.old_username),
-            about: row.about ?? "",
+            about: deletedAbout ? DELETED_TEXT : row.about ?? "",
             socials: {
                 discord: row.social_discord ?? "",
                 twitter: row.social_twitter ?? "",
@@ -162,7 +171,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             joined: row.created_at,
             online: isOnline(row.lastOnlineSite),
             presence: presence(row),
-            status: latest?.body ?? "",
+            status: deletedStatus ? DELETED_TEXT : latest?.body ?? "",
             friendStatus: user ? await friendStatus(user.id, row.id) : "guest",
             friendCount: await friendCount(row.id),
             followerCount: Number(followCounts.followers),
@@ -179,13 +188,18 @@ export const profile = new Elysia({ prefix: "/profile" })
                 role: g.role,
                 memberCount: Number(g.member_count)
             })),
-            games: await Promise.all(games.map(async (g: any) => ({
-                ...g,
-                description: g.description ?? "",
-                icon: await mediaUrl("icons", Number(g.id)),
-                thumbnail: await mediaUrl("thumbnails", Number(g.id)),
-                playing: playing[Number(g.id)] ?? 0
-            }))),
+            games: await Promise.all(games.map(async (g: any) => {
+                const deleted = deletedPlaces.has(Number(g.id));
+                return {
+                    ...g,
+                    title: deleted ? DELETED_TEXT : g.title,
+                    description: deleted ? DELETED_TEXT : g.description ?? "",
+                    content_deleted: deleted,
+                    icon: await mediaUrl("icons", Number(g.id)),
+                    thumbnail: await mediaUrl("thumbnails", Number(g.id)),
+                    playing: playing[Number(g.id)] ?? 0
+                };
+            })),
             badges,
             siteBadges: earned,
             badgeCount: Number(counts[0].badges),
