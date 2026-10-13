@@ -1,11 +1,71 @@
-const PRIVATE = /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.))/;
-
-const LOOPBACK = /^(127\.|::1$|::ffff:127\.)/;
-
 // extra proxies besides local caddy, e.g. TRUSTED_PROXIES=172.18.0.1
 const TRUSTED = (process.env.TRUSTED_PROXIES ?? "").split(",").map(s => s.trim()).filter(Boolean);
 
-const trustedProxy = (peer: string) => LOOPBACK.test(peer) || TRUSTED.includes(peer.replace(/^::ffff:/, ""));
+const strip = (raw: string) => raw.trim().replace(/^\[|\]$/g, "");
+
+const mappedV4 = (ip: string) => {
+    const m = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i.exec(ip);
+    return m ? m[1]! : null;
+};
+
+const privateV4 = (ip: string) => {
+    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
+    if (!m) {
+        return false;
+    }
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (m.slice(1).some(o => Number(o) > 255)) {
+        return false;
+    }
+    if (a === 0 || a === 127 || a === 10) {
+        return true;
+    }
+    if (a === 172 && b >= 16 && b <= 31) {
+        return true;
+    }
+    if (a === 192 && b === 168) {
+        return true;
+    }
+    if (a === 169 && b === 254) {
+        return true;
+    }
+    // carrier grade nat
+    return a === 100 && b >= 64 && b <= 127;
+};
+
+const isPrivate = (raw: string) => {
+    const ip = strip(raw);
+    if (!ip) {
+        return false;
+    }
+    if (ip.includes(":")) {
+        const mapped = mappedV4(ip);
+        if (mapped) {
+            return privateV4(mapped);
+        }
+        const low = ip.toLowerCase();
+        if (low === "::" || low === "::1") {
+            return true;
+        }
+        // unique local addresses fc00::/7
+        return /^f[cd][0-9a-f]{0,2}:/.test(low);
+    }
+    return privateV4(ip);
+};
+
+const isLoopback = (raw: string) => {
+    const ip = strip(raw);
+    const mapped = mappedV4(ip);
+    if (mapped) {
+        return privateV4(mapped) && mapped.startsWith("127.");
+    }
+    if (ip.includes(":")) {
+        return ip.toLowerCase() === "::1";
+    }
+    return ip.startsWith("127.");
+};
+
+const trustedProxy = (peer: string) => isLoopback(peer) || TRUSTED.includes(peer.replace(/^::ffff:/, ""));
 
 // game servers call directly, forwarded means outside unless a trusted proxy says so
 export const isInternal = (request: Request, server: any) => {
@@ -15,7 +75,7 @@ export const isInternal = (request: Request, server: any) => {
     const peer: string = server?.requestIP?.(request)?.address ?? "";
     const forwarded = request.headers.get("x-forwarded-for");
     if (forwarded) {
-        return trustedProxy(peer) && PRIVATE.test(forwarded.split(",").pop()!.trim());
+        return trustedProxy(peer) && isPrivate(forwarded.split(",").pop()!);
     }
-    return PRIVATE.test(peer);
+    return isPrivate(peer);
 };
