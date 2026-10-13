@@ -1196,7 +1196,12 @@ export const admin = new Elysia({ prefix: "/api/admin" })
                 error: "User not found."
             });
         }
-        const adminLevel = Math.max(0, Math.min(255, body.admin_level ?? Number(target.admin)));
+        if (body.admin_level !== undefined && Number(body.admin_level) !== Number(target.admin) && user.admin < 5) {
+            return status(403, {
+                error: "Only administrators can change staff ranks."
+            });
+        }
+        const adminLevel = Math.max(0, Math.min(5, body.admin_level ?? Number(target.admin)));
         const currency = Math.max(0, body.currency ?? Number(target.currency));
         const tix = Math.max(0, Math.min(2000000000, body.tix ?? Number(target.tix)));
         if (params.id === user.id && adminLevel < 1) {
@@ -1224,7 +1229,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         admin: true,
         params: id,
         body: t.Object({
-            admin_level: t.Optional(t.Numeric({ minimum: 0 })),
+            admin_level: t.Optional(t.Integer({ minimum: 0, maximum: 5 })),
             currency: t.Optional(t.Numeric({ minimum: 0 })),
             tix: t.Optional(t.Numeric({ minimum: 0, maximum: 2000000000 })),
             membership: t.Optional(t.String()),

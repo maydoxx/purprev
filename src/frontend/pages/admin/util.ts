@@ -6,6 +6,9 @@ export const pages = (d: any) => Math.max(1, Number(d?.totalPages) || 1);
 
 export const num = (n: any) => Number(n ?? 0).toLocaleString("en-US");
 
+const STAFF_RANKS = ["", "Trial Moderator", "Moderator", "Senior Moderator", "Trial Administrator", "Administrator"];
+export const staffRank = (level: any) => STAFF_RANKS[Math.min(5, Math.max(0, Number(level) || 0))];
+
 export type Flash = {
     type: string;
     message: string;

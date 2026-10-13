@@ -1,6 +1,6 @@
 <script lang="ts">
     import { api } from "../../api";
-    import { rows, num, adminDate } from "./util";
+    import { rows, num, adminDate, staffRank } from "./util";
     import Layout from "./Layout.svelte";
 
     const actionNames: Record<number, string> = {
@@ -156,7 +156,7 @@
                             <img class="admin-avatar" src={pic(u.id)} alt="">
                             <div class="grow">
                                 <a href="/user?id={u.id}">{u.username}</a>
-                                {#if Number(u.admin) > 0}<span class="admin-pill admin">Admin</span>{/if}
+                                {#if Number(u.admin) > 0}<span class="admin-pill admin">{staffRank(u.admin)}</span>{/if}
                                 {#if u.ongoing_action_id != null}<span class="admin-pill danger">Moderated</span>{/if}
                                 {#if club(u)}<span class="admin-pill {club(u).toLowerCase()}">{club(u)}</span>{/if}
                                 <div class="admin-muted">joined {adminDate(u.created_at)}{#if u.invited_by} &middot; invited by {u.invited_by}{/if}</div>

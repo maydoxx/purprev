@@ -2,7 +2,7 @@
     import { api } from "../../api";
     import { router } from "../../router.svelte";
     import { session } from "../../session.svelte";
-    import { rows, total, pages, num, adminDate, type Flash } from "./util";
+    import { rows, total, pages, num, adminDate, staffRank, type Flash } from "./util";
     import Layout from "./Layout.svelte";
     import Pagination from "./Pagination.svelte";
 
@@ -48,7 +48,7 @@
         }
         open = u.id;
         edit = {
-            admin: Number(u.admin),
+            admin: Math.min(5, Number(u.admin)),
             currency: Number(u.currency),
             tix: Number(u.tix),
             membership: u.membership ?? "None",
@@ -166,7 +166,7 @@
                             </td>
                             <td>
                                 {#if u.ongoing_action_id != null}<span class="admin-pill danger">Moderated</span>{/if}
-                                {#if Number(u.admin) > 0}<span class="admin-pill admin">Admin {u.admin}</span>{/if}
+                                {#if Number(u.admin) > 0}<span class="admin-pill admin">{staffRank(u.admin)}</span>{/if}
                                 {#if club(u)}<span class="admin-pill {club(u).toLowerCase()}" title={Number(u.membership_expires) > 0 ? `until ${adminDate(u.membership_expires)}` : "never expires"}>{club(u)}</span>{/if}
                                 {#if u.ongoing_action_id == null && Number(u.admin) === 0 && !club(u)}<span class="admin-muted">—</span>{/if}
                             </td>
@@ -187,8 +187,15 @@
                                 <td colspan="7">
                                     <div class="row g-3 align-items-end mb-3">
                                         <div class="col-sm-3 col-lg-2">
-                                            <label for="admin-{u.id}">Admin level</label>
-                                            <input id="admin-{u.id}" type="number" class="form-control" min="0" max="255" bind:value={edit.admin}>
+                                            <label for="admin-{u.id}">Staff rank</label>
+                                            <select id="admin-{u.id}" class="form-select" bind:value={edit.admin}>
+                                                <option value={0}>No staff rank</option>
+                                                <option value={1}>Trial Moderator</option>
+                                                <option value={2}>Moderator</option>
+                                                <option value={3}>Senior Moderator</option>
+                                                <option value={4}>Trial Administrator</option>
+                                                <option value={5}>Administrator</option>
+                                            </select>
                                         </div>
                                         <div class="col-sm-4 col-lg-2">
                                             <label for="bux-{u.id}">Nonebux</label>
