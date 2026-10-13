@@ -55,7 +55,8 @@ const promoBody = t.Object({
 });
 const list = t.Object({
     q: t.Optional(t.String()),
-    page: t.Optional(t.Numeric())
+    page: t.Optional(t.Numeric()),
+    status: t.Optional(t.String())
 });
 
 const banner = t.Object({
@@ -1126,8 +1127,12 @@ export const admin = new Elysia({ prefix: "/api/admin" })
 
 
     .get("/users", ({ query }) => {
-        const like = `%${(query.q ?? "").trim()}%`;
-        const where = sql`(users.username ILIKE ${like} OR users.email ILIKE ${like})`;
+        const search = (query.q ?? "").trim();
+        const like = `%${search}%`;
+        const userId = /^\d+$/.test(search) ? Number(search) : 0;
+        const status = query.status ?? "all";
+        const currentTime = now();
+        const where = sql`(users.username ILIKE ${like} OR users.email ILIKE ${like} OR users.id = ${userId}) AND (${status} = 'all' OR (${status} = 'admin' AND users.admin > 0) OR (${status} = 'moderated' AND users.ongoing_action_id IS NOT NULL) OR (${status} = 'membership' AND users.membership <> 'None' AND (users.membership_expires = 0 OR users.membership_expires > ${currentTime})))`;
         return paginate(
             sql`SELECT COUNT(*)::int AS n FROM users WHERE ${where}`,
             query.page,

@@ -8,6 +8,7 @@
 
     const q = $derived(router.query.q ?? "");
     const page = $derived(Math.max(1, Number(router.query.page) || 1));
+    const status = $derived(router.query.status ?? "all");
 
     let search = $state("");
     let data = $state<any>(null);
@@ -28,7 +29,7 @@
         search = q;
     });
 
-    const load = () => api(`/admin/users?q=${encodeURIComponent(q)}&page=${page}`).then(d => {
+    const load = () => api(`/admin/users?q=${encodeURIComponent(q)}&page=${page}&status=${encodeURIComponent(status)}`).then(d => {
         data = d;
         users = rows(d);
     }).catch(err => note("danger", err.message));
@@ -36,6 +37,7 @@
     $effect(() => {
         q;
         page;
+        status;
         load();
     });
 
@@ -85,10 +87,26 @@
 
     const submit = (e: Event) => {
         e.preventDefault();
-        router.go("/admi/users" + (search ? "?q=" + encodeURIComponent(search) : ""));
+        const params = new URLSearchParams();
+        if (search) params.set("q", search);
+        if (status !== "all") params.set("status", status);
+        router.go("/admi/users" + (params.size ? "?" + params.toString() : ""));
     };
 
-    const url = (p: number) => `/admi/users?q=${encodeURIComponent(q)}&page=${p}`;
+    const setStatus = (value: string) => {
+        const params = new URLSearchParams();
+        if (q) params.set("q", q);
+        if (value !== "all") params.set("status", value);
+        router.go("/admi/users" + (params.size ? "?" + params.toString() : ""));
+    };
+
+    const url = (p: number) => {
+        const params = new URLSearchParams();
+        if (q) params.set("q", q);
+        if (status !== "all") params.set("status", status);
+        params.set("page", String(p));
+        return `/admi/users?${params.toString()}`;
+    };
     const pic = (id: number) => `/api/user/getProfilePicture?userId=${id}&type=headshot`;
     const club = (u: any) => u.membership && u.membership !== "None" ? u.membership : "";
     const when = (t: any) => adminDate(t);
@@ -106,9 +124,15 @@
 
     <div class="admin-toolbar">
         <form onsubmit={submit}>
-            <input type="search" class="form-control" bind:value={search} placeholder="Username or email">
+            <input type="search" class="form-control" bind:value={search} placeholder="Username, email, or user ID">
             <button class="btn btn-primary" type="submit">Search</button>
             {#if q}<a href="/admi/users" class="btn btn-outline-secondary">Clear</a>{/if}
+            <select class="form-select" aria-label="Filter users by status" value={status} onchange={(event) => setStatus(event.currentTarget.value)}>
+                <option value="all">All accounts</option>
+                <option value="admin">Admins</option>
+                <option value="moderated">Moderated</option>
+                <option value="membership">Membership</option>
+            </select>
         </form>
         <span class="spacer"></span>
         <a href="/admi/moderation" class="btn btn-outline-danger">Moderate someone</a>
