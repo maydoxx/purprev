@@ -65,7 +65,13 @@ const isLoopback = (raw: string) => {
     return ip.startsWith("127.");
 };
 
-const trustedProxy = (peer: string) => isLoopback(peer) || TRUSTED.includes(peer.replace(/^::ffff:/, ""));
+// a proxy we allow to set x-forwarded-for: local caddy (loopback peer) or the
+// docker bridge gateway when the api runs in a container behind that caddy.
+// both are on the private network, which is also what makes a client "internal".
+// this assumes the api is never published to the public internet; if it is, the
+// port mapping would show every caller as the gateway and xff could be spoofed.
+const trustedProxy = (peer: string) =>
+    isLoopback(peer) || isPrivate(peer) || TRUSTED.includes(peer.replace(/^::ffff:/, ""));
 
 // game servers call directly, forwarded means outside unless a trusted proxy says so
 export const isInternal = (request: Request, server: any) => {
