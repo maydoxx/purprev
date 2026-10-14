@@ -18,6 +18,9 @@
     let open = $state(0);
     let edit = $state<any>(null);
     let history = $state<any>(null);
+    let inventory = $state<any[]>([]);
+    let inventoryQuery = $state("");
+    let itemId = $state("");
     let saving = $state(false);
 
     const note = (type: string, message: string) => flash = {
@@ -52,14 +55,68 @@
             currency: Number(u.currency),
             tix: Number(u.tix),
             membership: u.membership ?? "None",
-            membership_days: ""
+            membership_days: "",
+            username: u.username
         };
         history = null;
+        inventory = [];
+        inventoryQuery = "";
+        itemId = "";
         try {
             history = await api(`/admin/users/${u.id}/history`);
+            await loadItems(u.id);
         } catch (err: any) {
             note("danger", err.message);
         }
+    };
+
+    const loadItems = async (userId: number) => {
+        inventory = rows(await api(`/admin/users/${userId}/items?q=${encodeURIComponent(inventoryQuery)}`));
+    };
+
+    const changeUsername = async (u: any) => {
+        saving = true;
+        try {
+            await api(`/admin/users/${u.id}/username`, { username: edit.username }, "POST");
+            note("success", `${u.username} is now ${edit.username}.`);
+            u.username = edit.username;
+            history = await api(`/admin/users/${u.id}/history`);
+            await load();
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+        saving = false;
+    };
+
+    const addItem = async (u: any) => {
+        const id = Number(itemId);
+        if (!Number.isInteger(id) || id < 1) {
+            note("danger", "Enter a valid catalog item ID.");
+            return;
+        }
+        saving = true;
+        try {
+            await api(`/admin/users/${u.id}/items`, { item_id: id }, "POST");
+            note("success", `Added item #${id} to ${u.username}.`);
+            itemId = "";
+            await loadItems(u.id);
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+        saving = false;
+    };
+
+    const removeItem = async (u: any, item: any) => {
+        if (!confirm(`Remove "${item.name}" from ${u.username}?`)) return;
+        saving = true;
+        try {
+            await api(`/admin/users/${u.id}/items/${item.id}`, undefined, "DELETE");
+            note("success", `Removed ${item.name} from ${u.username}.`);
+            await loadItems(u.id);
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+        saving = false;
     };
 
     const save = async (u: any) => {
@@ -221,6 +278,45 @@
                                         <div class="col-auto">
                                             <button type="button" class="btn btn-primary" disabled={saving} onclick={() => save(u)}>Save</button>
                                         </div>
+                                    </div>
+
+                                    <div class="row g-3 align-items-end mb-3">
+                                        <div class="col-sm-5 col-lg-4">
+                                            <label for="username-{u.id}">Username</label>
+                                            <input id="username-{u.id}" class="form-control" maxlength="20" bind:value={edit.username}>
+                                        </div>
+                                        <div class="col-auto">
+                                            <button type="button" class="btn btn-outline-primary" disabled={saving || edit.username === u.username} onclick={() => changeUsername(u)}>Change username</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="admin-history mb-3">
+                                        <strong>Inventory</strong>
+                                        <div class="row g-2 align-items-end mt-1 mb-2">
+                                            <div class="col-sm-5 col-lg-4">
+                                                <label for="item-id-{u.id}">Catalog item ID to add</label>
+                                                <input id="item-id-{u.id}" type="number" min="1" class="form-control" bind:value={itemId}>
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="button" class="btn btn-outline-primary" disabled={saving} onclick={() => addItem(u)}>Add item</button>
+                                            </div>
+                                            <div class="col-sm-5 col-lg-4">
+                                                <label for="inventory-search-{u.id}">Find owned items</label>
+                                                <input id="inventory-search-{u.id}" class="form-control" placeholder="Name or item ID" bind:value={inventoryQuery} onkeydown={(event) => { if (event.key === "Enter") { event.preventDefault(); loadItems(u.id); } }}>
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="button" class="btn btn-outline-secondary" disabled={saving} onclick={() => loadItems(u.id)}>Search</button>
+                                            </div>
+                                        </div>
+                                        {#each inventory as item (item.id)}
+                                            <div class="d-flex align-items-center gap-2 py-1">
+                                                <span>{item.name} <span class="admin-muted">#{item.id} · {item.category}</span></span>
+                                                {#if item.serial_number}<span class="admin-muted">Serial #{item.serial_number}</span>{/if}
+                                                <button type="button" class="btn btn-sm btn-outline-danger ms-auto" disabled={saving} onclick={() => removeItem(u, item)}>Remove</button>
+                                            </div>
+                                        {:else}
+                                            <div class="admin-muted">No matching items found. Showing at most 50 results.</div>
+                                        {/each}
                                     </div>
 
                                     {#if !history}

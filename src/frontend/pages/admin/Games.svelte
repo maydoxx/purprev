@@ -134,6 +134,7 @@
                             <td class="admin-actions">
                                 <button type="button" class="btn btn-sm" class:btn-outline-secondary={!g.featured} class:btn-outline-success={g.featured} disabled={busy[g.id]} onclick={() => feature(g)}>{g.featured ? "Unfeature" : "Feature"}</button>
                                 <button type="button" class="btn btn-sm btn-outline-primary" disabled={!g.published_at || busy[g.id]} onclick={() => render(g)}>Render</button>
+                                <a class="btn btn-sm btn-outline-warning" href={`/admi/content?kind=place&q=${encodeURIComponent(g.title)}`}>Moderate</a>
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick={() => remove(g)}>Delete</button>
                             </td>
                         </tr>

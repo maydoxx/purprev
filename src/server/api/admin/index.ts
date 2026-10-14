@@ -11,6 +11,7 @@ import { isTier } from "../../membership";
 import { ONLINE_WINDOW } from "../../friends";
 import { GENRES, isGenre } from "../../games";
 import { cleanPromo, promoItems, PROMO_CODE } from "../../promo";
+import { clientIp } from "../../invites";
 
 const PER_PAGE = 20;
 const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
@@ -1187,6 +1188,101 @@ export const admin = new Elysia({ prefix: "/api/admin" })
     }, {
         admin: true,
         params: id
+    })
+
+    .get("/users/:id/items", async ({ params, query, status }) => {
+        const [target] = await sql`SELECT id FROM users WHERE id = ${params.id}`;
+        if (!target) {
+            return status(404, { error: "User not found." });
+        }
+        const search = (query.q ?? "").trim();
+        const like = `%${search}%`;
+        const itemId = /^\d+$/.test(search) ? Number(search) : 0;
+        return sql`
+            SELECT catalog_items.id, catalog_items.name, catalog_items.category, user_items.purchased_at, user_items.serial_number
+            FROM user_items JOIN catalog_items ON catalog_items.id = user_items.item_id
+            WHERE user_items.user_id = ${params.id}
+                AND (${search} = '' OR catalog_items.name ILIKE ${like} OR catalog_items.id = ${itemId})
+            ORDER BY user_items.purchased_at DESC, catalog_items.id DESC
+            LIMIT 50
+        `;
+    }, {
+        admin: true,
+        params: id,
+        query: t.Object({ q: t.Optional(t.String()) })
+    })
+
+    .post("/users/:id/items", async ({ params, body, status }) => {
+        const [target] = await sql`SELECT id FROM users WHERE id = ${params.id}`;
+        if (!target) {
+            return status(404, { error: "User not found." });
+        }
+        const result = await sql.begin(async tx => {
+            const [item] = await tx`SELECT id, is_limited_unique, limited_sold FROM catalog_items WHERE id = ${body.item_id} FOR UPDATE`;
+            if (!item) {
+                return { missing: true };
+            }
+            const [owned] = await tx`SELECT 1 FROM user_items WHERE user_id = ${params.id} AND item_id = ${body.item_id}`;
+            if (owned) {
+                return { owned: true };
+            }
+            const serial = item.is_limited_unique ? Number(item.limited_sold) + 1 : null;
+            if (serial !== null) {
+                await tx`UPDATE catalog_items SET limited_sold = limited_sold + 1 WHERE id = ${body.item_id}`;
+            }
+            await tx`INSERT INTO user_items (user_id, item_id, wearing, purchased_at, serial_number) VALUES (${params.id}, ${body.item_id}, 0, ${now()}, ${serial})`;
+            return { added: true };
+        });
+        if ("missing" in result) {
+            return status(404, { error: "Catalog item not found." });
+        }
+        if ("owned" in result) {
+            return status(409, { error: "That user already owns this item." });
+        }
+        return { ok: true };
+    }, {
+        admin: true,
+        params: id,
+        body: t.Object({ item_id: t.Integer({ minimum: 1 }) })
+    })
+
+    .delete("/users/:id/items/:itemId", async ({ params, status }) => {
+        const result = await sql`DELETE FROM user_items WHERE user_id = ${params.id} AND item_id = ${params.itemId}`;
+        if (!result.count) {
+            return status(404, { error: "That user does not own this item." });
+        }
+        return { ok: true };
+    }, {
+        admin: true,
+        params: t.Object({ id: t.Numeric(), itemId: t.Numeric() })
+    })
+
+    .post("/users/:id/username", async ({ params, body, request, server, status }) => {
+        const username = body.username.trim();
+        if (!/^[a-zA-Z0-9]{3,20}$/.test(username)) {
+            return status(400, { error: "Username can only have 3 to 20 letters and numbers." });
+        }
+        const [target] = await sql`SELECT username FROM users WHERE id = ${params.id}`;
+        if (!target) {
+            return status(404, { error: "User not found." });
+        }
+        if (username.toLowerCase() === String(target.username).toLowerCase()) {
+            return status(400, { error: "That is already the username." });
+        }
+        const [taken] = await sql`SELECT id FROM users WHERE username = ${username}`;
+        const [used] = await sql`SELECT id FROM username_history WHERE old_username = ${username} AND user_id != ${params.id}`;
+        if (taken || used) {
+            return status(409, { error: "Username is already taken." });
+        }
+        await sql.begin(async tx => {
+            await tx`UPDATE users SET username = ${username} WHERE id = ${params.id}`;
+            await tx`INSERT INTO username_history (user_id, old_username, new_username, changed_at, ip) VALUES (${params.id}, ${target.username}, ${username}, ${now()}, ${clientIp(request, server)})`;
+        });
+        return { ok: true };
+    }, {
+        admin: true,
+        params: id,
+        body: t.Object({ username: t.String({ maxLength: 20 }) })
     })
 
     .patch("/users/:id", async ({ params, body, user, status }) => {
