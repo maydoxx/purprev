@@ -130,6 +130,18 @@
     flex-basis: 110px;
 }
 
+.user-ad-item {
+    height: auto;
+    min-height: 69px;
+    align-items: flex-start;
+}
+
+.user-ad-item + .user-ad-item {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #efefef;
+}
+
 .user-ad-item .develop-thumb a,
 .user-ad-item .develop-thumb span {
     width: 100px;
