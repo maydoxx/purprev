@@ -8,6 +8,7 @@
     const themes: [Theme, string][] = [
         ["classic", "Classic"],
         ["dark", "Dark"],
+        ["oled", "OLED / High Contrast"],
         ["sakura", "Sakura"],
         ["halloween", "Halloween"],
         ["auto", "Automatic"]

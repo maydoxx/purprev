@@ -9,6 +9,7 @@ export const themePreview = $state({ name: null as Theme | null });
 // literal paths so the build can hash them
 const themeStylesheets = {
     dark: "/css/themes/dark.css",
+    oled: "/css/themes/oled.css",
     halloween: "/css/themes/halloween.css",
     sakura: "/css/themes/sakura.css"
 };
@@ -32,6 +33,7 @@ const themeColors: Record<Theme, string> = {
     auto: "#7B2CBF",
     classic: "#7B2CBF",
     dark: "#17171c",
+    oled: "#000000",
     halloween: "#1f1611",
     sakura: "#5b2a42"
 };
@@ -54,7 +56,7 @@ export const preferredTheme = (): Theme => {
 export const applyTheme = (theme: Theme) => {
     const name = resolve(theme, new Date());
     document.documentElement.dataset.siteTheme = name;
-    document.documentElement.dataset.bsTheme = name === "dark" ? "dark" : "light";
+    document.documentElement.dataset.bsTheme = name === "dark" || name === "oled" ? "dark" : "light";
 
     const meta = document.querySelector('meta[name="theme-color"]');
     meta?.setAttribute("content", themeColors[name]);

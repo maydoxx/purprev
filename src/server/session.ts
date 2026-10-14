@@ -20,7 +20,7 @@ export type User = {
     social_discord: string;
     social_twitter: string;
     social_youtube: string;
-    theme: "auto" | "classic" | "dark" | "halloween" | "sakura";
+    theme: "auto" | "classic" | "dark" | "oled" | "halloween" | "sakura";
 };
 
 const USER_COLS = sql`users.id, users.username, users.email, users.about, users.admin, users.currency, users.tix, users.ongoing_action_id, users.membership, users.membership_expires, users.social_discord, users.social_twitter, users.social_youtube, users.theme`;

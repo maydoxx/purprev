@@ -3,7 +3,9 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const themeSource = fileURLToPath(new URL("../vendor/site-themes/", import.meta.url));
+const vendoredThemeSource = fileURLToPath(new URL("../vendor/site-themes/", import.meta.url));
+const siblingThemeSource = fileURLToPath(new URL("../../site-themes/", import.meta.url));
+export const themeSource = existsSync(resolve(vendoredThemeSource, "css/dark.css")) ? vendoredThemeSource : siblingThemeSource;
 const publicRoot = fileURLToPath(new URL("../public/", import.meta.url));
 
 const writeChanged = (path: string, contents: string | Buffer) => {
@@ -11,7 +13,7 @@ const writeChanged = (path: string, contents: string | Buffer) => {
     if (!existsSync(path) || !readFileSync(path).equals(data)) writeFileSync(path, data);
 };
 
-const themeNames = ["dark", "halloween", "sakura"];
+const themeNames = ["dark", "oled", "halloween", "sakura"];
 
 export type ThemeCredit = {
     text: string;
@@ -82,7 +84,7 @@ export const syncSiteThemes = () => {
                 return `url("${url}")`;
             }
         );
-        writeChanged(resolve(cssTarget, `${name}.css`), `/* generated from vendor/site-themes, edit it there */\n${css}`);
+        writeChanged(resolve(cssTarget, `${name}.css`), `/* generated from site-themes, edit the source there */\n${css}`);
     }
 };
 

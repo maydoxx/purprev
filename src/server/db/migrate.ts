@@ -52,7 +52,7 @@ const columns: [string, string, string][] = [
     ["vip_servers", "allow_friends", "smallint NOT NULL DEFAULT 0"],
     ["users", "last_studio", "integer NOT NULL DEFAULT 0"],
     ["users", "studio_place_id", "integer NOT NULL DEFAULT 0"],
-    ["users", "theme", "varchar(10) NOT NULL DEFAULT 'auto' CHECK (theme IN ('auto', 'classic', 'dark', 'halloween', 'sakura'))"]
+    ["users", "theme", "varchar(10) NOT NULL DEFAULT 'auto' CHECK (theme IN ('auto', 'classic', 'dark', 'oled', 'halloween', 'sakura'))"]
 ];
 for (const [table, column, definition] of columns) {
     const [row] = await sql`SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ${table} AND column_name = ${column}`;
@@ -86,7 +86,7 @@ for (const { conname } of themeChecks) {
     const safeName = String(conname).replace(/"/g, '""');
     await sql.unsafe(`ALTER TABLE users DROP CONSTRAINT "${safeName}"`);
 }
-await sql`ALTER TABLE users ADD CONSTRAINT users_theme_check CHECK (theme IN ('auto', 'classic', 'dark', 'halloween', 'sakura'))`;
+await sql`ALTER TABLE users ADD CONSTRAINT users_theme_check CHECK (theme IN ('auto', 'classic', 'dark', 'oled', 'halloween', 'sakura'))`;
 
 // the column may only exist after the loop above
 await sql`CREATE UNIQUE INDEX IF NOT EXISTS vip_servers_access_code ON vip_servers (access_code)`;

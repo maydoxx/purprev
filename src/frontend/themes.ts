@@ -1,4 +1,4 @@
-export const themes = ["auto", "classic", "dark", "halloween", "sakura"] as const;
+export const themes = ["auto", "classic", "dark", "oled", "halloween", "sakura"] as const;
 
 export type Theme = typeof themes[number];
 

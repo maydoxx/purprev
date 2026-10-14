@@ -16,6 +16,7 @@ export const theme = new Elysia()
                 t.Literal("auto"),
                 t.Literal("classic"),
                 t.Literal("dark"),
+                t.Literal("oled"),
                 t.Literal("halloween"),
                 t.Literal("sakura")
             ])

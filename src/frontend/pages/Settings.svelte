@@ -196,6 +196,7 @@
         ["auto", "Automatic"],
         ["classic", "Classic"],
         ["dark", "Dark"],
+        ["oled", "OLED / High Contrast"],
         ["halloween", "Halloween"],
         ["sakura", "Sakura"]
     ];
