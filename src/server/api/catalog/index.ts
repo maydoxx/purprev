@@ -15,9 +15,14 @@ const LANDING_COLLECTIBLES = 12;
 
 const CATEGORIES: Record<string, string[]> = {
     clothing: ["Hat", "Shirt", "T-Shirt", "Pants", "Package"],
-    bodyparts: ["Face", "Package"],
+    bodyparts: ["Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg", "Face", "Package"],
     hats: ["Hat"],
-    heads: [],
+    heads: ["Head"],
+    torsos: ["Torso"],
+    "left-arms": ["LeftArm"],
+    "right-arms": ["RightArm"],
+    "left-legs": ["LeftLeg"],
+    "right-legs": ["RightLeg"],
     faces: ["Face"],
     "t-shirts": ["T-Shirt"],
     shirts: ["Shirt"],

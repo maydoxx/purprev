@@ -62,6 +62,19 @@ for (const [table, column, definition] of columns) {
     }
 }
 
+const catalogCategoryChecks = await sql`
+    SELECT conname
+    FROM pg_constraint
+    WHERE conrelid = 'catalog_items'::regclass
+      AND contype = 'c'
+      AND pg_get_constraintdef(oid) ILIKE '%category%'
+`;
+for (const { conname } of catalogCategoryChecks) {
+    const safeName = String(conname).replace(/"/g, '""');
+    await sql.unsafe(`ALTER TABLE catalog_items DROP CONSTRAINT "${safeName}"`);
+}
+await sql`ALTER TABLE catalog_items ADD CONSTRAINT catalog_items_category_check CHECK (category IN ('Hat', 'Face', 'T-Shirt', 'Shirt', 'Pants', 'Gear', 'Package', 'Head', 'Torso', 'LeftArm', 'RightArm', 'LeftLeg', 'RightLeg'))`;
+
 const themeChecks = await sql`
     SELECT conname
     FROM pg_constraint

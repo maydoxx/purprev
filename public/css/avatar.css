@@ -360,7 +360,8 @@ body:has(.avatar-page) {
 }
 
 .wardrobe-categories {
-    height: 84px;
+    min-height: 84px;
+    height: auto;
     text-align: center;
     cursor: default;
 }

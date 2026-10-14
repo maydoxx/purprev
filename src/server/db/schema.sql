@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS catalog_items (
     name varchar(80) NOT NULL,
     description text NOT NULL,
     creator_id integer NOT NULL,
-    category varchar(8) NOT NULL CHECK (category IN ('Hat', 'Face', 'T-Shirt', 'Shirt', 'Pants', 'Gear', 'Package')),
+    category varchar(8) NOT NULL CHECK (category IN ('Hat', 'Face', 'T-Shirt', 'Shirt', 'Pants', 'Gear', 'Package', 'Head', 'Torso', 'LeftArm', 'RightArm', 'LeftLeg', 'RightLeg')),
     asset_id bigint DEFAULT NULL,
     price integer DEFAULT NULL,
     tix_price integer DEFAULT NULL,

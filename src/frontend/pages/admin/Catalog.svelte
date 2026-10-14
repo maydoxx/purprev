@@ -6,7 +6,7 @@
     import Layout from "./Layout.svelte";
     import Pagination from "./Pagination.svelte";
 
-    const categories = ["Hat", "Face", "T-Shirt", "Shirt", "Pants", "Gear", "Package"];
+    const categories = ["Hat", "Face", "T-Shirt", "Shirt", "Pants", "Gear", "Package", "Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg"];
 
     const q = $derived(router.query.q ?? "");
     const page = $derived(Math.max(1, Number(router.query.page) || 1));

@@ -22,8 +22,16 @@ const WEAR_LIMITS: Record<string, number> = {
     Shirt: 1,
     Pants: 1,
     "T-Shirt": 1,
-    Package: 1
+    Package: 1,
+    Head: 1,
+    Torso: 1,
+    LeftArm: 1,
+    RightArm: 1,
+    LeftLeg: 1,
+    RightLeg: 1
 };
+
+const BODY_PARTS = ["Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg"];
 
 const bodyColors = async (userId: number) => {
     const [row] = await sql`SELECT * FROM user_avatar WHERE user_id = ${userId}`;
@@ -155,7 +163,12 @@ export const avatar = new Elysia({ prefix: "/avatar" })
                 SELECT user_items.item_id FROM user_items
                 JOIN catalog_items ON catalog_items.id = user_items.item_id
                 WHERE user_items.user_id = ${user.id} AND user_items.wearing = 1
-                AND catalog_items.category = ${item.category} AND user_items.item_id != ${body.itemId}
+                AND (
+                    catalog_items.category = ${item.category}
+                    OR (${item.category} = 'Package' AND catalog_items.category IN ${sql(BODY_PARTS)})
+                    OR (${item.category} IN ${sql(BODY_PARTS)} AND catalog_items.category = 'Package')
+                )
+                AND user_items.item_id != ${body.itemId}
                 ORDER BY user_items.purchased_at ASC
             `;
             for (const drop of same.slice(0, Math.max(0, same.length - limit + 1))) {

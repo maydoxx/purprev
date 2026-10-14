@@ -23,6 +23,11 @@
         packages: "Packages",
         bodyparts: "Body Parts",
         heads: "Heads",
+        torsos: "Torsos",
+        "left-arms": "Left Arms",
+        "right-arms": "Right Arms",
+        "left-legs": "Left Legs",
+        "right-legs": "Right Legs",
         faces: "Faces",
         gear: "Gear"
     };
@@ -33,6 +38,11 @@
         pants: "clothing",
         packages: "clothing",
         heads: "bodyparts",
+        torsos: "bodyparts",
+        "left-arms": "bodyparts",
+        "right-arms": "bodyparts",
+        "left-legs": "bodyparts",
+        "right-legs": "bodyparts",
         faces: "bodyparts"
     };
     const sorts: [string, string][] = [
@@ -350,6 +360,11 @@
                 <li class="slideHeader"><span>Body Part Types</span></li>
                 <li><a href={url({ category: "bodyparts" }, false)} class="assetTypeFilter">All Body Parts</a></li>
                 <li><a href={url({ category: "heads" }, false)} class="assetTypeFilter">Heads</a></li>
+                <li><a href={url({ category: "torsos" }, false)} class="assetTypeFilter">Torsos</a></li>
+                <li><a href={url({ category: "left-arms" }, false)} class="assetTypeFilter">Left Arms</a></li>
+                <li><a href={url({ category: "right-arms" }, false)} class="assetTypeFilter">Right Arms</a></li>
+                <li><a href={url({ category: "left-legs" }, false)} class="assetTypeFilter">Left Legs</a></li>
+                <li><a href={url({ category: "right-legs" }, false)} class="assetTypeFilter">Right Legs</a></li>
                 <li><a href={url({ category: "faces" }, false)} class="assetTypeFilter">Faces</a></li>
                 <li><a href={url({ category: "packages" }, false)} class="assetTypeFilter">Packages</a></li>
             </ul>

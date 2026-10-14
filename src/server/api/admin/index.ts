@@ -17,7 +17,7 @@ const PER_PAGE = 20;
 const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
 const BLOG_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const BANNER_STYLES = ["info", "warning", "success"];
-const ITEM_CATEGORIES = ["Hat", "Face", "T-Shirt", "Shirt", "Pants", "Gear", "Package"];
+const ITEM_CATEGORIES = ["Hat", "Face", "T-Shirt", "Shirt", "Pants", "Gear", "Package", "Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg"];
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const GAME_CARD_CODE = () => {

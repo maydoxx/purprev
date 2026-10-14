@@ -16,8 +16,14 @@ const ASSET_TYPES: Record<string, number> = {
     Hat: 8,
     Shirt: 11,
     Pants: 12,
+    Head: 17,
     Face: 18,
     Gear: 19,
+    Torso: 27,
+    RightArm: 28,
+    LeftArm: 29,
+    LeftLeg: 30,
+    RightLeg: 31,
     Package: 32
 };
 

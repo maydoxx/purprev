@@ -25,6 +25,14 @@
             ["Gear", "Gear"]
         ],
         [
+            ["Head", "Heads"],
+            ["Torso", "Torsos"],
+            ["LeftArm", "Left Arms"],
+            ["RightArm", "Right Arms"],
+            ["LeftLeg", "Left Legs"],
+            ["RightLeg", "Right Legs"]
+        ],
+        [
             ["Package", "Packages"]
         ]
     ];
@@ -52,7 +60,13 @@
         update: ["Update Outfit", "This outfit will be updated to your avatar's current appearance.", "Update"]
     };
 
-    const wearable = ["Hat", "Face", "Shirt", "Pants", "T-Shirt", "Package"];
+    const wearable = ["Hat", "Face", "Shirt", "Pants", "T-Shirt", "Package", "Head", "Torso", "LeftArm", "RightArm", "LeftLeg", "RightLeg"];
+    const itemCategoryName: Record<string, string> = {
+        LeftArm: "Left Arm",
+        RightArm: "Right Arm",
+        LeftLeg: "Left Leg",
+        RightLeg: "Right Leg"
+    };
     const PER_PAGE = 8;
 
     let data = $state<any>(null);
@@ -347,7 +361,7 @@
         <div class="asset-details">
             <div class="asset-name"><a href="/catalog/item?id={item.id}">{item.name}</a></div>
             {#if mode === "wearing"}
-                <div class="asset-type"><span class="asset-type-label">Type:</span> <span>{item.category}</span></div>
+                <div class="asset-type"><span class="asset-type-label">Type:</span> <span>{itemCategoryName[item.category] ?? item.category}</span></div>
             {:else if !canWear(item)}
                 <div class="asset-type"><span class="asset-type-label">Not wearable</span></div>
             {/if}
