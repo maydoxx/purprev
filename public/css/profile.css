@@ -121,9 +121,9 @@
     width: 90px;
     margin: 6px 0 0;
     padding: 4px;
-    border: 1px solid #7b2cbf;
+    border: 1px solid var(--profile-accent, #7b2cbf);
     border-radius: 3px;
-    background-color: #7b2cbf;
+    background-color: var(--profile-accent, #7b2cbf);
     color: #fff;
     font-size: 14px;
     font-weight: 400;
@@ -360,7 +360,7 @@
 }
 
 .profile-status-input:focus {
-    border-color: #7b2cbf;
+    border-color: var(--profile-accent, #7b2cbf);
     outline: 0;
 }
 
@@ -388,13 +388,13 @@
 .profile-count:link,
 .profile-count:visited {
     display: block;
-    color: #7b2cbf;
+    color: var(--profile-accent, #7b2cbf);
     font-weight: 400;
 }
 
 .profile-count:hover,
 .profile-count:focus {
-    color: #7b2cbf;
+    color: var(--profile-accent, #7b2cbf);
     text-decoration: underline;
 }
 
@@ -510,7 +510,7 @@
 
 .profile-menu li:hover {
     background-color: #f2f2f2;
-    box-shadow: 4px 0 0 0 #7b2cbf inset;
+    box-shadow: 4px 0 0 0 var(--profile-accent, #7b2cbf) inset;
 }
 
 .profile-menu a,
@@ -558,7 +558,7 @@
 .profile-tab:hover .profile-tab-heading,
 .profile-tab.active .profile-tab-heading,
 .profile-tab-heading:focus-visible {
-    box-shadow: 0 -4px 0 0 #7b2cbf inset;
+    box-shadow: 0 -4px 0 0 var(--profile-accent, #7b2cbf) inset;
 }
 
 .profile-tab.active .profile-tab-heading {
@@ -574,6 +574,76 @@
 
 .profile-pane {
     margin: 6px 0;
+}
+
+.profile-pane.customizable {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-pane.customizable[hidden] {
+    display: none;
+}
+
+.profile-customize-action {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 8px;
+}
+
+.profile-customize-action .profile-btn-more {
+    float: none;
+    width: 90px;
+    margin: 6px 0 0;
+    padding: 4px;
+}
+
+.profile-customize-modal {
+    max-width: 560px;
+}
+
+.profile-customize-colors {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0 20px;
+}
+
+.profile-color-swatch {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--swatch-color);
+    box-shadow: 0 0 0 1px #aaa;
+}
+
+.profile-color-swatch.selected {
+    box-shadow: 0 0 0 3px var(--profile-accent, #7b2cbf);
+}
+
+.profile-customize-sections {
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.profile-customize-sections li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #e3e3e3;
+}
+
+.profile-customize-sections li div {
+    display: flex;
+    gap: 5px;
+}
+
+.profile-customize-sections .profile-modal-button {
+    min-width: 36px;
+    padding: 5px 8px;
 }
 
 .profile-socials {
@@ -641,7 +711,7 @@
     padding: 0;
     border: 0;
     background: none;
-    color: #7b2cbf;
+    color: var(--profile-accent, #7b2cbf);
 }
 
 .profile-about-toggle:hover {
@@ -748,7 +818,7 @@
     float: left;
     width: 50%;
     height: 300px;
-    background-color: #7b2cbf;
+    background-color: var(--profile-accent, #7b2cbf);
 }
 
 .profile-items-mask {
@@ -870,7 +940,7 @@
 }
 
 .profile-friend-link:hover .profile-friend-name {
-    color: #7b2cbf;
+    color: var(--profile-accent, #7b2cbf);
 }
 
 .profile-asset-list {
@@ -920,7 +990,7 @@
 }
 
 .profile-asset a[href]:hover .profile-asset-name {
-    color: #7b2cbf;
+    color: var(--profile-accent, #7b2cbf);
 }
 
 .profile-badge-icon {
@@ -1009,8 +1079,8 @@
 }
 
 .profile-view-button.selected {
-    border-color: #7b2cbf;
-    background-color: #7b2cbf;
+    border-color: var(--profile-accent, #7b2cbf);
+    background-color: var(--profile-accent, #7b2cbf);
     color: #fff;
 }
 
@@ -1026,7 +1096,7 @@
 }
 
 .profile-switcher-groups {
-    background-color: #7b2cbf;
+    background-color: var(--profile-accent, #7b2cbf);
 }
 
 .profile-switcher-games {
@@ -1418,7 +1488,7 @@
     width: calc(100% - 18px);
     margin-left: 3px;
     overflow: hidden;
-    color: #7b2cbf;
+    color: var(--profile-accent, #7b2cbf);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -1543,8 +1613,8 @@
 }
 
 .profile-picker-item.picked img {
-    border-color: #7b2cbf;
-    box-shadow: 0 0 0 2px #7b2cbf;
+    border-color: var(--profile-accent, #7b2cbf);
+    box-shadow: 0 0 0 2px var(--profile-accent, #7b2cbf);
 }
 
 .profile-item-name {

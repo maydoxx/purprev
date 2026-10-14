@@ -4,12 +4,14 @@ import { session, getUser, claimDailyLoginRewards } from "../../session";
 import { login } from "./login";
 import { logout } from "./logout";
 import { register } from "./register";
+import { passwordReset } from "./passwordreset";
 
 export const auth = new Elysia({ prefix: "/api/auth" })
     .use(session)
     .use(login)
     .use(logout)
     .use(register)
+    .use(passwordReset)
 
 
     .get("/me", async ({ user }) => {

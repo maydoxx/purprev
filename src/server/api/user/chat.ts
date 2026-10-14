@@ -3,6 +3,7 @@ import { session } from "../../session";
 import { sql, now } from "../../db";
 import { friendStatus, friendsOf } from "../../friends";
 import { white } from "../engine/chatfilter";
+import { privacyAllows } from "../../privacy";
 
 const PAGE = 50;
 const BODY_MAX = 500;
@@ -108,6 +109,10 @@ export const chat = new Elysia({ prefix: "/chat" })
             return status(403, {
                 error: "You can only chat with friends"
             });
+        }
+        const [recipient] = await sql`SELECT message_privacy FROM users WHERE id = ${params.id}`;
+        if (!recipient || !await privacyAllows(Number(params.id), user.id, recipient.message_privacy)) {
+            return status(403, { error: "This user does not allow messages from you." });
         }
         const filtered = white(text);
         const created = await sql`

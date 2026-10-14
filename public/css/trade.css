@@ -171,6 +171,20 @@
     margin-left: 9px;
 }
 
+.trade-history-exchange {
+    min-width: 220px;
+    max-width: 300px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.trade-history-exchange span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .trade-request-head,
 .trade-offer-head {
     display: flex;

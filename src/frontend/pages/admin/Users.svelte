@@ -22,6 +22,10 @@
     let inventoryQuery = $state("");
     let itemId = $state("");
     let saving = $state(false);
+    let resetLink = $state("");
+    let selectedUserIds = $state<number[]>([]);
+    let bulkAction = $state("warning");
+    let bulkReason = $state("");
 
     const note = (type: string, message: string) => flash = {
         type,
@@ -35,6 +39,7 @@
     const load = () => api(`/admin/users?q=${encodeURIComponent(q)}&page=${page}&status=${encodeURIComponent(status)}`).then(d => {
         data = d;
         users = rows(d);
+        selectedUserIds = [];
     }).catch(err => note("danger", err.message));
 
     $effect(() => {
@@ -47,9 +52,11 @@
     const toggle = async (u: any) => {
         if (open === u.id) {
             open = 0;
+            resetLink = "";
             return;
         }
         open = u.id;
+        resetLink = "";
         edit = {
             admin: Math.min(5, Number(u.admin)),
             currency: Number(u.currency),
@@ -88,6 +95,23 @@
         saving = false;
     };
 
+    const createPasswordResetLink = async (u: any) => {
+        saving = true;
+        try {
+            const result = await api(`/admin/users/${u.id}/password-reset`, {}, "POST");
+            resetLink = result.url;
+            note("success", `Password reset link created for ${u.username}. It expires in 1 hour and can only be used once.`);
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+        saving = false;
+    };
+
+    const copyResetLink = async () => {
+        await navigator.clipboard.writeText(resetLink);
+        note("success", "Password reset link copied.");
+    };
+
     const addItem = async (u: any) => {
         const id = Number(itemId);
         if (!Number.isInteger(id) || id < 1) {
@@ -124,6 +148,16 @@
             note("danger", "You cannot remove your own admin access here.");
             return;
         }
+        const changes: string[] = [];
+        if (Number(edit.admin) !== Number(u.admin)) {
+            changes.push(`Staff rank: ${staffRank(u.admin)} → ${staffRank(edit.admin)}`);
+            if (Number(u.admin) > 0 && Number(edit.admin) === 0) changes.push("WARNING: this removes the user's staff access.");
+        }
+        if (Number(edit.currency) !== Number(u.currency)) changes.push(`Nonebux: ${num(u.currency)} → ${num(edit.currency)}`);
+        if (Number(edit.tix) !== Number(u.tix)) changes.push(`Tix: ${num(u.tix)} → ${num(edit.tix)}`);
+        if (edit.membership !== (u.membership ?? "None")) changes.push(`Builders Club: ${u.membership ?? "None"} → ${edit.membership}`);
+        if (edit.membership_days !== "") changes.push(`Club duration: ${edit.membership_days} days`);
+        if (changes.length && !confirm(`Review changes for ${u.username}:\n\n${changes.join("\n")}\n\nApply these changes?`)) return;
         saving = true;
         try {
             await api(`/admin/users/${u.id}`, {
@@ -164,6 +198,47 @@
         params.set("page", String(p));
         return `/admi/users?${params.toString()}`;
     };
+    const toggleUserSelection = (id: number) => {
+        selectedUserIds = selectedUserIds.includes(id)
+            ? selectedUserIds.filter(selectedId => selectedId !== id)
+            : [...selectedUserIds, id];
+    };
+    const togglePageSelection = () => {
+        const pageIds = users.filter(u => Number(u.id) !== Number(session.me?.id)).map(u => Number(u.id));
+        const allSelected = pageIds.length > 0 && pageIds.every(id => selectedUserIds.includes(id));
+        selectedUserIds = allSelected ? [] : pageIds;
+    };
+    const applyBulkModeration = async () => {
+        const selected = users.filter(u => selectedUserIds.includes(Number(u.id)));
+        if (!selected.length || !bulkReason.trim()) {
+            note("danger", "Select at least one account and enter a moderation reason.");
+            return;
+        }
+        const actionLabel = ({
+            warning: "warning",
+            ban1d: "1 day ban",
+            ban3d: "3 day ban",
+            ban7d: "7 day ban",
+            ban14d: "14 day ban"
+        }[bulkAction] ?? "moderation action");
+        const targets = selected.map(u => `${u.username} (#${u.id})`).join(", ");
+        if (!confirm(`Review bulk moderation\n\nAction: ${actionLabel}\nReason: ${bulkReason.trim()}\nAccounts (${selected.length}): ${targets}\n\nApply this action to every listed account?`)) return;
+        saving = true;
+        try {
+            await api("/admin/moderation/bulk", {
+                user_ids: selected.map(u => Number(u.id)),
+                type: bulkAction,
+                reason: bulkReason.trim()
+            }, "POST");
+            note("success", `Applied ${actionLabel} to ${selected.length} account${selected.length === 1 ? "" : "s"}.`);
+            selectedUserIds = [];
+            bulkReason = "";
+            await load();
+        } catch (err: any) {
+            note("danger", err.message);
+        }
+        saving = false;
+    };
     const pic = (id: number) => `/api/user/getProfilePicture?userId=${id}&type=headshot`;
     const club = (u: any) => u.membership && u.membership !== "None" ? u.membership : "";
     const when = (t: any) => adminDate(t);
@@ -186,7 +261,9 @@
             {#if q}<a href="/admi/users" class="btn btn-outline-secondary">Clear</a>{/if}
             <select class="form-select" aria-label="Filter users by status" value={status} onchange={(event) => setStatus(event.currentTarget.value)}>
                 <option value="all">All accounts</option>
-                <option value="admin">Admins</option>
+                <option value="admin">Staff</option>
+                <option value="banned">Banned users</option>
+                <option value="recent">Recent signups (7 days)</option>
                 <option value="moderated">Moderated</option>
                 <option value="membership">Membership</option>
             </select>
@@ -195,11 +272,33 @@
         <a href="/admi/moderation" class="btn btn-outline-danger">Moderate someone</a>
     </div>
 
+    <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap gap-2 align-items-end">
+            <div>
+                <label for="bulk-action">Bulk action</label>
+                <select id="bulk-action" class="form-select" bind:value={bulkAction}>
+                    <option value="warning">Warning</option>
+                    <option value="ban1d">1 day ban</option>
+                    <option value="ban3d">3 day ban</option>
+                    <option value="ban7d">7 day ban</option>
+                    <option value="ban14d">14 day ban</option>
+                </select>
+            </div>
+            <div class="flex-grow-1">
+                <label for="bulk-reason">Reason</label>
+                <input id="bulk-reason" class="form-control" maxlength="1000" bind:value={bulkReason} placeholder="Reason for this action">
+            </div>
+            <button type="button" class="btn btn-danger" disabled={saving || selectedUserIds.length === 0} onclick={applyBulkModeration}>Review and moderate ({selectedUserIds.length})</button>
+            <span class="admin-muted">Selections apply to this page only.</span>
+        </div>
+    </div>
+
     <div class="card">
         <div class="table-responsive">
             <table class="table table-hover admin-table align-middle">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" aria-label="Select all eligible accounts on this page" checked={users.some(u => Number(u.id) !== Number(session.me?.id)) && users.filter(u => Number(u.id) !== Number(session.me?.id)).every(u => selectedUserIds.includes(Number(u.id)))} onchange={togglePageSelection}></th>
                         <th>User</th>
                         <th>Status</th>
                         <th>Nonebux</th>
@@ -212,6 +311,7 @@
                 <tbody>
                     {#each users as u (u.id)}
                         <tr class:table-active={open === u.id}>
+                            <td><input type="checkbox" aria-label="Select {u.username}" disabled={Number(u.id) === Number(session.me?.id)} checked={selectedUserIds.includes(Number(u.id))} onchange={() => toggleUserSelection(Number(u.id))}></td>
                             <td>
                                 <div class="admin-user">
                                     <img class="admin-avatar" src={pic(u.id)} alt="">
@@ -241,7 +341,7 @@
                         </tr>
                         {#if open === u.id && edit}
                             <tr class="admin-editor">
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="row g-3 align-items-end mb-3">
                                         <div class="col-sm-3 col-lg-2">
                                             <label for="admin-{u.id}">Staff rank</label>
@@ -288,6 +388,22 @@
                                         <div class="col-auto">
                                             <button type="button" class="btn btn-outline-primary" disabled={saving || edit.username === u.username} onclick={() => changeUsername(u)}>Change username</button>
                                         </div>
+                                    </div>
+
+                                    <div class="row g-3 align-items-end mb-3">
+                                        <div class="col-auto">
+                                            <button type="button" class="btn btn-outline-danger" disabled={saving} onclick={() => createPasswordResetLink(u)}>Generate password reset link</button>
+                                        </div>
+                                        {#if resetLink}
+                                            <div class="col-12">
+                                                <label for="reset-link-{u.id}">Share this one-time link with the user</label>
+                                                <div class="input-group">
+                                                    <input id="reset-link-{u.id}" class="form-control" readonly value={resetLink} onfocus={(event) => event.currentTarget.select()}>
+                                                    <button type="button" class="btn btn-outline-secondary" onclick={copyResetLink}>Copy link</button>
+                                                </div>
+                                            </div>
+                                        {/if}
+                                        <div class="col-12 admin-muted">The link expires after 1 hour. Creating another link invalidates the previous one.</div>
                                     </div>
 
                                     <div class="admin-history mb-3">
@@ -355,7 +471,7 @@
                             </tr>
                         {/if}
                     {:else}
-                        <tr><td colspan="7" class="admin-empty">No users found.</td></tr>
+                        <tr><td colspan="8" class="admin-empty">No users found.</td></tr>
                     {/each}
                 </tbody>
             </table>

@@ -9,6 +9,7 @@ import { siteBadges } from "../../badges";
 import { collectionOf } from "./collections";
 import { DELETED_TEXT, isDeleted, deletedIds } from "../../content";
 import type { User } from "../../session";
+import { privacyAllows } from "../../privacy";
 
 
 const TERMINATED = 6;
@@ -85,7 +86,7 @@ export const profile = new Elysia({ prefix: "/profile" })
     .use(session)
     .get("/:id", async ({ params, user, status }) => {
         const [row] = await sql`
-            SELECT id, username, about, admin, created_at, "lastOnlineSite", ongoing_action_id, membership, membership_expires, social_discord, social_twitter, social_youtube
+            SELECT id, username, about, admin, created_at, "lastOnlineSite", ongoing_action_id, membership, membership_expires, social_discord, social_twitter, social_youtube, profile_accent, profile_sections, message_privacy, follow_privacy, friend_request_privacy
             FROM users WHERE id = ${params.id}
         `;
 
@@ -147,10 +148,16 @@ export const profile = new Elysia({ prefix: "/profile" })
                 (SELECT COUNT(*)::int FROM user_follows WHERE follower_id = ${row.id}) AS following
         `;
         const [followed] = user ? await sql`SELECT 1 FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${row.id}` : [null];
+        const currentFriendStatus = user ? await friendStatus(user.id, row.id) : "guest";
 
         return {
             id: row.id,
             username: row.username,
+            accent: row.profile_accent || "#7b2cbf",
+            sectionOrder: String(row.profile_sections || "about,wearing,friends,collections,groups,favorites,siteBadges,playerBadges,statistics").split(","),
+            canMessage: !!user && await privacyAllows(row.id, user.id, row.message_privacy),
+            canFollow: !!user && (!!followed || await privacyAllows(row.id, user.id, row.follow_privacy)),
+            canFriendRequest: !!user && (currentFriendStatus === "pending_in" || await privacyAllows(row.id, user.id, row.friend_request_privacy)),
             favorites: await Promise.all(favorites.map(async (g: any) => ({
                 id: Number(g.id),
                 title: deletedPlaces.has(Number(g.id)) ? DELETED_TEXT : g.title,
@@ -172,7 +179,7 @@ export const profile = new Elysia({ prefix: "/profile" })
             online: isOnline(row.lastOnlineSite),
             presence: presence(row),
             status: deletedStatus ? DELETED_TEXT : latest?.body ?? "",
-            friendStatus: user ? await friendStatus(user.id, row.id) : "guest",
+            friendStatus: currentFriendStatus,
             friendCount: await friendCount(row.id),
             followerCount: Number(followCounts.followers),
             followingCount: Number(followCounts.following),

@@ -11,6 +11,7 @@
     import Warning, { warning } from "./Warning.svelte";
     import Landing from "./pages/Landing.svelte";
     import Login from "./pages/Login.svelte";
+    import ResetPassword from "./pages/ResetPassword.svelte";
     import Signup from "./pages/Signup.svelte";
     import Apply from "./pages/Apply.svelte";
     import Home from "./pages/Home.svelte";
@@ -87,6 +88,7 @@
     const pages: Record<string, Component<any>> = {
         landing: Landing,
         login: Login,
+        "reset-password": ResetPassword,
         signup: Signup,
         apply: Apply,
         about: Warning,
@@ -161,7 +163,7 @@
 
     const landing = ["landing", "login", "signup", "apply"];
     const bare = ["blog", "download"];
-    const free = ["tos", "privacy"];
+    const free = ["tos", "privacy", "reset-password"];
 
     const needsLogin = [
         "create-user-ad",

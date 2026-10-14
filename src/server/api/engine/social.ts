@@ -6,6 +6,7 @@ import { isInternal } from "./internal";
 import { white, black } from "./chatfilter";
 import { text } from "./sign";
 import { notify } from "../../notifications";
+import { privacyAllows } from "../../privacy";
 
 const pair = t.Object({
     firstUserId: t.Numeric(),
@@ -53,7 +54,10 @@ const friend = new Elysia({ prefix: "/Friend" })
     }, app => app
         .post("/CreateFriendRequest", async ({ query }) => {
             if (await friendStatus(query.firstUserId, query.secondUserId) === "none") {
-                await request(query.firstUserId, query.secondUserId);
+                const [target] = await sql`SELECT friend_request_privacy FROM users WHERE id = ${query.secondUserId}`;
+                if (target && await privacyAllows(query.secondUserId, query.firstUserId, target.friend_request_privacy)) {
+                    await request(query.firstUserId, query.secondUserId);
+                }
             }
             return text("ok");
         })
@@ -69,6 +73,8 @@ const friend = new Elysia({ prefix: "/Friend" })
             const b = query.secondUserId;
             let state = await friendStatus(a, b);
             if (state === "none") {
+                const [target] = await sql`SELECT friend_request_privacy FROM users WHERE id = ${a}`;
+                if (!target || !await privacyAllows(a, b, target.friend_request_privacy)) return text("ok");
                 await request(b, a);
                 state = "pending_in";
             }
@@ -109,12 +115,15 @@ const user = new Elysia({ prefix: "/user" })
     })
 
     .post("/follow", async ({ body, user }) => {
-        const [target] = await sql`SELECT id FROM users WHERE id = ${body.followedUserId}`;
+        const [target] = await sql`SELECT id, follow_privacy FROM users WHERE id = ${body.followedUserId}`;
         if (!target || body.followedUserId === user.id) {
             return {
                 success: false,
                 message: "cannot follow that user"
             };
+        }
+        if (!await privacyAllows(target.id, user.id, target.follow_privacy)) {
+            return { success: false, message: "This user does not allow you to follow them" };
         }
         const inserted = await sql`INSERT INTO user_follows (follower_id, followed_id, created_at) VALUES (${user.id}, ${body.followedUserId}, ${now()}) ON CONFLICT DO NOTHING`;
         if (inserted.count) {

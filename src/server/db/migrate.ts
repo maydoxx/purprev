@@ -52,7 +52,13 @@ const columns: [string, string, string][] = [
     ["vip_servers", "allow_friends", "smallint NOT NULL DEFAULT 0"],
     ["users", "last_studio", "integer NOT NULL DEFAULT 0"],
     ["users", "studio_place_id", "integer NOT NULL DEFAULT 0"],
-    ["users", "theme", "varchar(10) NOT NULL DEFAULT 'auto' CHECK (theme IN ('auto', 'classic', 'dark', 'oled', 'halloween', 'sakura'))"]
+    ["users", "theme", "varchar(10) NOT NULL DEFAULT 'auto' CHECK (theme IN ('auto', 'classic', 'dark', 'oled', 'halloween', 'sakura'))"],
+    ["users", "profile_accent", "varchar(7) NOT NULL DEFAULT '#7b2cbf'"],
+    ["users", "profile_sections", "varchar(120) NOT NULL DEFAULT 'about,wearing,friends,collections,groups,favorites,siteBadges,playerBadges,statistics'"],
+    ["users", "message_privacy", "varchar(10) NOT NULL DEFAULT 'everyone'"],
+    ["users", "follow_privacy", "varchar(10) NOT NULL DEFAULT 'everyone'"],
+    ["users", "friend_request_privacy", "varchar(10) NOT NULL DEFAULT 'everyone'"],
+    ["tokens", "platform", "varchar(20) NOT NULL DEFAULT 'Unknown'"]
 ];
 for (const [table, column, definition] of columns) {
     const [row] = await sql`SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ${table} AND column_name = ${column}`;

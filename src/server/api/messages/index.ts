@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { notify } from "../../notifications";
+import { privacyAllows } from "../../privacy";
 
 const PER_PAGE = 20;
 
@@ -119,7 +120,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
         const subject = body.subject.trim();
         const text = body.body.trim();
 
-        const [recipient] = await sql`SELECT id FROM users WHERE username = ${body.to.trim()}`;
+        const [recipient] = await sql`SELECT id, message_privacy FROM users WHERE username = ${body.to.trim()}`;
         if (!recipient) {
             return status(400, {
                 error: "That user does not exist"
@@ -129,6 +130,9 @@ export const messages = new Elysia({ prefix: "/api/messages" })
             return status(400, {
                 error: "You cannot message yourself"
             });
+        }
+        if (!await privacyAllows(recipient.id, user.id, recipient.message_privacy)) {
+            return status(403, { error: "This user does not allow messages from you." });
         }
         if (subject === "") {
             return status(400, {

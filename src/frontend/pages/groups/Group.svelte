@@ -106,6 +106,7 @@
         bc_only: false
     });
     let iconFile = $state<FileList | null>(null);
+    let bannerFile = $state<FileList | null>(null);
     let newRole = $state({
         role_name: "",
         rank: 2,
@@ -392,15 +393,17 @@
     const saveSettings = (e: Event) => {
         e.preventDefault();
         act(async () => {
-            if (iconFile?.[0]) {
+            if (iconFile?.[0] || bannerFile?.[0]) {
                 const fd = new FormData();
                 fd.append("description", settingsForm.description);
                 fd.append("approval_required", String(settingsForm.approval_required));
                 fd.append("wall_enabled", String(settingsForm.wall_enabled));
                 fd.append("bc_only", String(settingsForm.bc_only));
-                fd.append("icon", iconFile[0]);
+                if (iconFile?.[0]) fd.append("icon", iconFile[0]);
+                if (bannerFile?.[0]) fd.append("banner", bannerFile[0]);
                 await apiForm(`/groups/${id}/settings`, fd, "PATCH");
                 iconFile = null;
+                bannerFile = null;
             } else {
                 await api(`/groups/${id}/settings`, settingsForm, "PATCH");
             }
@@ -567,6 +570,12 @@
                     <div class="group-alert success">{success}</div>
                 {/if}
 
+                {#if group.banner}
+                    <div class="group-banner">
+                        <img src={group.banner} alt="{group.name} banner">
+                    </div>
+                {/if}
+
                 <div class="group-panel">
                     <div class="group-left">
                         <div class="group-thumb">
@@ -656,6 +665,10 @@
                                         <img src={group.icon || "/img/pending.png"} alt="">
                                         <input id="group-icon" type="file" bind:files={iconFile} accept="image/png,image/jpeg,image/webp">
                                     </div>
+                                    <label for="group-banner">Group Banner</label>
+                                    {#if group.banner}<img class="group-banner-preview" src={group.banner} alt="Current group banner">{/if}
+                                    <input id="group-banner" type="file" bind:files={bannerFile} accept="image/png,image/jpeg,image/webp">
+                                    <p class="group-banner-help">Wide images work best. PNG, JPG or WEBP, up to 4 MB.</p>
                                     <label class="group-check">
                                         <input type="checkbox" bind:checked={settingsForm.approval_required}>
                                         Manual approval required to join

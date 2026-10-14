@@ -64,8 +64,54 @@
     let usernamePassword = $state("");
     let invitesOn = $state(true);
     let pastNames = $state<string[]>([]);
+    let messagePrivacy = $state("everyone");
+    let followPrivacy = $state("everyone");
+    let friendRequestPrivacy = $state("everyone");
+    let activeSessions = $state<{ id: number; expires: number; platform: string; current: boolean }[]>([]);
+    let sessionsLoading = $state(false);
+    let sessionsError = $state("");
 
     api("/site/settings").then(d => invitesOn = !!d.invites_enabled).catch(() => {});
+    api("/user/settings/privacy").then(d => {
+        messagePrivacy = d.messages;
+        followPrivacy = d.follows;
+        friendRequestPrivacy = d.friendRequests;
+    }).catch(() => {});
+
+    const loadSessions = async () => {
+        sessionsLoading = true;
+        sessionsError = "";
+        try {
+            activeSessions = (await api<{ sessions: typeof activeSessions }>("/user/settings/sessions")).sessions;
+        } catch (err: any) {
+            sessionsError = err.message;
+        } finally {
+            sessionsLoading = false;
+        }
+    };
+
+    const revokeSession = async (id: number) => {
+        if (!confirm("Sign out this session?")) return;
+        busy = true;
+        try {
+            await api(`/user/settings/sessions/${id}`, undefined, "DELETE");
+            notice = { text: "Session signed out.", ok: true };
+            await loadSessions();
+        } catch (err: any) {
+            notice = { text: err.message, ok: false };
+        } finally {
+            busy = false;
+        }
+    };
+
+    const signOutOtherSessions = async () => {
+        await save("/user/settings/signout", {}, "Signed out of all other sessions.");
+        await loadSessions();
+    };
+
+    $effect(() => {
+        if (tab === "security") void loadSessions();
+    });
 
     const loadPastNames = () => {
         if (!session.me) return;
@@ -475,17 +521,68 @@
                 {/if}
             </div>
         {:else if tab === "security"}
-            <h3>Secure Sign Out</h3>
+            <h3>Active Sessions</h3>
             <div class="settings-card">
                 <div class="settings-split">
-                    <p>Sign out of all other sessions</p>
-                    <button type="button" class="settings-btn" disabled={busy} onclick={() => save("/user/settings/signout", {}, "Signed out of all other sessions.")}>Sign out</button>
+                    <p>Review where your account is signed in. Signing out a session requires that device to sign in again.</p>
+                    <button type="button" class="settings-btn" disabled={busy} onclick={signOutOtherSessions}>Sign out other sessions</button>
                 </div>
+                {#if sessionsLoading}
+                    <p class="settings-hint">Loading sessions…</p>
+                {:else if sessionsError}
+                    <p class="settings-theme-error" role="alert">{sessionsError}</p>
+                {:else if activeSessions.length === 0}
+                    <p class="settings-hint">No active sessions were found.</p>
+                {:else}
+                    <ul class="settings-session-list">
+                        {#each activeSessions as activeSession (activeSession.id)}
+                            <li class="settings-session-row">
+                                <div>
+                                    <strong>{activeSession.platform} {activeSession.current ? "· This device" : "· Other session"}</strong>
+                                    <p class="settings-hint">Expires {new Date(activeSession.expires * 1000).toLocaleString()}</p>
+                                </div>
+                                {#if !activeSession.current}
+                                    <button type="button" class="settings-btn" disabled={busy} onclick={() => revokeSession(activeSession.id)}>Sign out</button>
+                                {:else}
+                                    <span class="settings-session-current">Current</span>
+                                {/if}
+                            </li>
+                        {/each}
+                    </ul>
+                {/if}
             </div>
         {:else if tab === "privacy"}
-            <h3>Privacy Setting</h3>
+            <h3>Profile Privacy</h3>
             <div class="settings-card">
-                <p>There are no privacy options for this account yet.</p>
+                <label class="settings-field">
+                    <span class="settings-label">Who can message you?</span>
+                    <select class="settings-input" bind:value={messagePrivacy}>
+                        <option value="everyone">Everyone</option>
+                        <option value="friends">Friends</option>
+                        <option value="followers">Followers</option>
+                        <option value="nobody">Nobody</option>
+                    </select>
+                </label>
+                <label class="settings-field">
+                    <span class="settings-label">Who can follow you?</span>
+                    <select class="settings-input" bind:value={followPrivacy}>
+                        <option value="everyone">Everyone</option>
+                        <option value="friends">Friends</option>
+                        <option value="nobody">Nobody</option>
+                    </select>
+                </label>
+                <label class="settings-field">
+                    <span class="settings-label">Who can send you friend requests?</span>
+                    <select class="settings-input" bind:value={friendRequestPrivacy}>
+                        <option value="everyone">Everyone</option>
+                        <option value="followers">Followers</option>
+                        <option value="nobody">Nobody</option>
+                    </select>
+                </label>
+                <p class="settings-hint">Existing friends and followers stay connected. These settings control new messages, follows, and friend requests.</p>
+                <div class="settings-actions">
+                    <button type="button" class="settings-btn" disabled={busy} onclick={() => save("/user/settings/privacy", { messages: messagePrivacy, follows: followPrivacy, friendRequests: friendRequestPrivacy }, "Privacy settings saved.")}>Save</button>
+                </div>
             </div>
 
             <h3>Notifications</h3>
@@ -579,3 +676,28 @@
         {/if}
     </div>
 </main>
+
+<style>
+    .settings-session-list {
+        list-style: none;
+        margin: 18px 0 0;
+        padding: 0;
+    }
+
+    .settings-session-row {
+        align-items: center;
+        border-top: 1px solid var(--border-color, #444);
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        padding: 14px 0;
+    }
+
+    .settings-session-row p {
+        margin: 4px 0 0;
+    }
+
+    .settings-session-current {
+        opacity: 0.75;
+    }
+</style>

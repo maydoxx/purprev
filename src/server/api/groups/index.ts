@@ -192,6 +192,9 @@ export const groups = new Elysia({ prefix: "/api/groups" })
                 const icon = await saveImage("groups", groupId, body.icon);
                 await sql`UPDATE site_groups SET icon = ${icon} WHERE id = ${groupId}`;
             }
+            if (body.banner && body.banner.size > 0) {
+                await saveImage("groupbanners", groupId, body.banner);
+            }
 
             return {
                 ok: true,
@@ -205,7 +208,8 @@ export const groups = new Elysia({ prefix: "/api/groups" })
         body: t.Object({
             name: t.String(),
             description: t.Optional(t.String()),
-            icon: t.Optional(t.File({ type: "image" }))
+            icon: t.Optional(t.File({ type: "image" })),
+            banner: t.Optional(t.File({ type: "image" }))
         })
     })
 
@@ -218,6 +222,7 @@ export const groups = new Elysia({ prefix: "/api/groups" })
 
             return {
                 ...group,
+                banner: await mediaUrl("groupbanners", params.id),
                 is_member: rank > 0,
                 join_pending: !!pending,
                 viewer_role: membership?.role ?? "Guest",
@@ -281,6 +286,9 @@ export const groups = new Elysia({ prefix: "/api/groups" })
                 const icon = await saveImage("groups", params.id, body.icon);
                 await sql`UPDATE site_groups SET icon = ${icon} WHERE id = ${params.id}`;
             }
+            if (body.banner && body.banner.size > 0) {
+                await saveImage("groupbanners", params.id, body.banner);
+            }
             return {
                 ok: true
             };
@@ -295,7 +303,8 @@ export const groups = new Elysia({ prefix: "/api/groups" })
             approval_required: t.Optional(t.BooleanString()),
             wall_enabled: t.Optional(t.BooleanString()),
             bc_only: t.Optional(t.BooleanString()),
-            icon: t.Optional(t.File({ type: "image" }))
+            icon: t.Optional(t.File({ type: "image" })),
+            banner: t.Optional(t.File({ type: "image" }))
         })
     })
 

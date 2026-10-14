@@ -5,6 +5,14 @@ import { membershipOf, type Tier } from "./membership";
 
 const TOKEN_LIFE = 60 * 60 * 24 * 7;
 
+export const platformOf = (userAgent: string) => /android/i.test(userAgent) ? "Android"
+    : /iphone|ipad|ipod/i.test(userAgent) ? "iOS"
+    : /windows/i.test(userAgent) ? "Windows"
+    : /cros/i.test(userAgent) ? "ChromeOS"
+    : /macintosh|mac os/i.test(userAgent) ? "macOS"
+    : /linux/i.test(userAgent) ? "Linux"
+    : "Unknown";
+
 export type User = {
     id: number;
     username: string;
@@ -57,7 +65,7 @@ export const getUser = async (id: number): Promise<User | null> => {
 export const session = new Elysia({ name: "session" })
     .resolve({
         as: "global"
-    }, async ({ cookie }) => {
+    }, async ({ cookie, request }) => {
 
         const token = cookie.token?.value ?? cookie[".ROBLOSECURITY"]?.value;
         let user: User | null = null;
@@ -78,7 +86,9 @@ export const session = new Elysia({ name: "session" })
             login: async (userId: number) => {
                 const token = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("hex");
                 const expires = now() + TOKEN_LIFE;
-                await sql`INSERT INTO tokens (user_id, token, expires) VALUES (${userId}, ${token}, ${expires})`;
+                const userAgent = request.headers.get("user-agent") ?? "";
+                const platform = platformOf(userAgent);
+                await sql`INSERT INTO tokens (user_id, token, expires, platform) VALUES (${userId}, ${token}, ${expires}, ${platform})`;
 
                 for (const name of ["token", ".ROBLOSECURITY"]) {
                     cookie[name]!.set({

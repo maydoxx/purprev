@@ -69,6 +69,25 @@ const tradeItems = async (tradeId: number) => {
     };
 };
 
+const tradeListRows = async (where: any) => {
+    const trades = await tradeRows(where);
+    if (trades.length === 0) return trades;
+    const ids = trades.map((row: any) => Number(row.id));
+    const items = await sql`
+        SELECT trade_items.trade_id, trade_items.side, catalog_items.id, catalog_items.name
+        FROM trade_items JOIN catalog_items ON catalog_items.id = trade_items.item_id
+        WHERE trade_items.trade_id IN ${sql(ids)}
+        ORDER BY trade_items.trade_id, trade_items.side, catalog_items.id
+    `;
+    return trades.map((row: any) => ({
+        ...row,
+        items: {
+            offer: items.filter((item: any) => Number(item.trade_id) === Number(row.id) && item.side === "offer"),
+            request: items.filter((item: any) => Number(item.trade_id) === Number(row.id) && item.side === "request")
+        }
+    }));
+};
+
 const limitedsOf = (userId: number) => sql`
     SELECT catalog_items.*, user_items.serial_number FROM user_items
     JOIN catalog_items ON catalog_items.id = user_items.item_id
@@ -114,7 +133,7 @@ export const trade = new Elysia({ prefix: "/api/trade" })
             page,
             totalPages,
             inboundCount: Number(inbound.n),
-            trades: await tradeRows(sql`WHERE ${where} ORDER BY trades.created_at DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}`)
+            trades: await tradeListRows(sql`WHERE ${where} ORDER BY trades.created_at DESC LIMIT ${PER_PAGE} OFFSET ${(page - 1) * PER_PAGE}`)
         };
     }, {
         auth: true,

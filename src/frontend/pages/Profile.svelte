@@ -31,6 +31,12 @@
     const MAX_COLLECTION = 6;
     const ITEMS_PER_PAGE = 8;
     const CARDS_PER_ROW = 6;
+    const PROFILE_SECTIONS = [
+        ["about", "About"], ["wearing", "Currently Wearing"], ["friends", "Friends"],
+        ["collections", "Collections"], ["groups", "Groups"], ["favorites", "Favorite Games"],
+        ["siteBadges", "NoneRev Badges"], ["playerBadges", "Player Badges"], ["statistics", "Statistics"]
+    ];
+    const PROFILE_COLORS = ["#7b2cbf", "#1677d2", "#008f72", "#d24b32", "#c23d83", "#b07800", "#34495e", "#202020"];
 
     const id = $derived(Number(router.query.id) || 0);
     const isMe = $derived(session.me?.id === id);
@@ -64,6 +70,10 @@
     let picked = $state<number[]>([]);
     let saving = $state(false);
     let pickError = $state("");
+    let customizeOpen = $state(false);
+    let customAccent = $state("#7b2cbf");
+    let customSections = $state<string[]>([]);
+    let customizeBusy = $state(false);
 
     const itemPages = $derived(profile ? Math.ceil(profile.wearing.length / ITEMS_PER_PAGE) : 0);
     const worn = $derived(profile ? profile.wearing.slice(itemPage * ITEMS_PER_PAGE, (itemPage + 1) * ITEMS_PER_PAGE) : []);
@@ -79,6 +89,7 @@
     })) : []);
     const hasSocials = $derived(!!(profile?.socials?.discord || profile?.socials?.twitter || profile?.socials?.youtube));
     const inGame = $derived(profile?.presence?.type === "game" ? profile.presence : null);
+    const sectionOrder = (key: string) => Math.max(1, (profile?.sectionOrder ?? PROFILE_SECTIONS.map(([id]) => id)).indexOf(key) + 1);
 
     $effect(() => {
         profile;
@@ -302,6 +313,30 @@
     const quoted = (text: string) => text ? `"${text}"` : "";
     const date = (t: number) => t ? new Date(t * 1000).toLocaleDateString("en-US") : "Unknown";
     const pic = (userId: number, type: string) => `/api/user/getProfilePicture?userId=${userId}&type=${type}`;
+    const openCustomizer = () => {
+        customAccent = profile.accent || "#7b2cbf";
+        customSections = [...(profile.sectionOrder ?? PROFILE_SECTIONS.map(([key]) => key))];
+        customizeOpen = true;
+    };
+    const moveSection = (index: number, offset: number) => {
+        const target = index + offset;
+        if (target < 0 || target >= customSections.length) return;
+        const next = [...customSections];
+        [next[index], next[target]] = [next[target], next[index]];
+        customSections = next;
+    };
+    const saveCustomization = async () => {
+        customizeBusy = true;
+        try {
+            const result = await api("/user/settings/profile-customization", { accent: customAccent, sections: customSections }, "POST");
+            profile.accent = result.accent;
+            profile.sectionOrder = result.sections;
+            customizeOpen = false;
+        } catch (err: any) {
+            alert(err.message);
+        }
+        customizeBusy = false;
+    };
 </script>
 
 <svelte:window onclick={clickAway} />
@@ -396,7 +431,7 @@
     </div>
 {/snippet}
 
-<main class="profile-page">
+<main class="profile-page" style={profile ? `--profile-accent: ${profile.accent || "#7b2cbf"}` : undefined}>
     <UserAd size="banner" class="user-ad-top" />
     <div class="profile-container">
         {#if profile}
@@ -462,11 +497,19 @@
                                             {:else if profile.friendStatus === "pending_in"}
                                                 <button type="button" class="profile-action profile-action-add" disabled={busy} onclick={() => friend("accept")}><span>Accept</span></button>
                                             {:else}
-                                                <button type="button" class="profile-action profile-action-add" disabled={busy} onclick={() => friend("request")}><span>Add Friend</span></button>
+                                                {#if profile.canFriendRequest}
+                                                    <button type="button" class="profile-action profile-action-add" disabled={busy} onclick={() => friend("request")}><span>Add Friend</span></button>
+                                                {:else}
+                                                    <button type="button" class="profile-action profile-action-pending" disabled><span>Requests off</span></button>
+                                                {/if}
                                             {/if}
                                         </li>
                                         <li>
-                                            <a class="profile-action profile-action-message" href={session.me ? `/my/messages?compose=1&to=${id}` : "/login"}><span>Message</span></a>
+                                            {#if !session.me || profile.canMessage}
+                                                <a class="profile-action profile-action-message" href={session.me ? `/my/messages?compose=1&to=${id}` : "/login"}><span>Message</span></a>
+                                            {:else}
+                                                <button type="button" class="profile-action profile-action-message" disabled><span>Messages off</span></button>
+                                            {/if}
                                         </li>
                                         {#if inGame}
                                             <li>
@@ -488,7 +531,7 @@
                                     <div class="profile-popover-arrow"></div>
                                     <ul class="profile-menu" role="menu">
                                         <li>
-                                            <button type="button" disabled={busy} onclick={follow}>{profile.isFollowing ? "Unfollow" : "Follow"}</button>
+                                            <button type="button" disabled={busy || (!profile.isFollowing && !profile.canFollow)} onclick={follow}>{profile.isFollowing ? "Unfollow" : profile.canFollow ? "Follow" : "Following is restricted"}</button>
                                         </li>
                                         <li>
                                             <a href="/trade?with={id}">Trade Items</a>
@@ -503,6 +546,12 @@
                     {/if}
                 </div>
             </div>
+
+            {#if isMe}
+                <div class="profile-customize-action">
+                    <button type="button" class="profile-btn-more" onclick={openCustomizer}>Customize</button>
+                </div>
+            {/if}
 
             <div class="profile-tabs">
                 <ul class="profile-tab-list" role="tablist">
@@ -519,8 +568,8 @@
                 </ul>
             </div>
 
-            <div class="profile-pane" role="tabpanel" hidden={tab !== "about"}>
-                <div class="profile-section profile-about">
+            <div class="profile-pane customizable" role="tabpanel" hidden={tab !== "about"}>
+                <div class="profile-section profile-about" style:order={sectionOrder("about")}>
                     <div class="profile-heading">
                         <h3>About</h3>
                         {#if hasSocials}
@@ -568,7 +617,7 @@
                     </div>
                 </div>
 
-                <div class="profile-list profile-wearing">
+                <div class="profile-list profile-wearing" style:order={sectionOrder("wearing")}>
                     <h3>Currently Wearing</h3>
                     <div class="profile-avatar-panel">
                         <div class="profile-avatar-holder">
@@ -611,7 +660,7 @@
                 </div>
 
                 {#if profile.friends.length > 0}
-                    <div class="profile-section profile-friends">
+                    <div class="profile-section profile-friends" style:order={sectionOrder("friends")}>
                         <div class="profile-heading">
                             <h3>Friends ({profile.friendCount.toLocaleString()})</h3>
                             <a class="profile-btn-more" href={isMe ? "/my/friends" : `/my/friends?user=${id}`}>See All</a>
@@ -641,7 +690,7 @@
                 {/if}
 
                 {#if isMe || profile.collection.length > 0}
-                    <div class="profile-section profile-collections">
+                    <div class="profile-section profile-collections" style:order={sectionOrder("collections")}>
                         <div class="profile-heading">
                             <h3>Collections</h3>
                             {#if isMe}
@@ -670,7 +719,7 @@
                 {/if}
 
                 {#if profile.groups.length > 0}
-                    <div class="profile-list profile-groups">
+                    <div class="profile-list profile-groups" style:order={sectionOrder("groups")}>
                         <div class="profile-heading">
                             <h3>Groups</h3>
                             {@render viewButtons(groupView, next => groupView = next)}
@@ -726,7 +775,7 @@
                 {/if}
 
                 {#if profile.favorites?.length}
-                    <div class="profile-list profile-favorites">
+                    <div class="profile-list profile-favorites" style:order={sectionOrder("favorites")}>
                         <div class="profile-heading">
                             <h3>Favorite Games</h3>
                             <a class="profile-btn-more" href="/favorites?id={id}&category=places">Favorites</a>
@@ -742,7 +791,7 @@
                 {/if}
 
                 {#if profile.siteBadges?.length}
-                    <div class="profile-section profile-badges">
+                    <div class="profile-section profile-badges" style:order={sectionOrder("siteBadges")}>
                         <div class="profile-heading">
                             <h3>NoneRev Badges <span class="profile-heading-count">({profile.siteBadges.length})</span></h3>
                             {#if badgesMore}
@@ -765,7 +814,7 @@
                 {/if}
 
                 {#if profile.badges.length > 0}
-                    <div class="profile-section profile-badges">
+                    <div class="profile-section profile-badges" style:order={sectionOrder("playerBadges")}>
                         <div class="profile-heading">
                             <h3>Player Badges <span class="profile-heading-count">({profile.badgeCount.toLocaleString()})</span></h3>
                             <a class="profile-btn-more" href={inventory("badges")}>See All</a>
@@ -785,7 +834,7 @@
                     </div>
                 {/if}
 
-                <div class="profile-section profile-statistics">
+                <div class="profile-section profile-statistics" style:order={sectionOrder("statistics")}>
                     <h3>Statistics</h3>
                     <div class="profile-card">
                         <ul class="profile-stats">
@@ -930,6 +979,40 @@
             <div class="profile-modal-footer">
                 <button type="button" class="profile-modal-button" onclick={() => editing = false}>Cancel</button>
                 <button type="button" class="profile-modal-button profile-modal-save" disabled={saving} onclick={saveCollection}>Save</button>
+            </div>
+        </div>
+    {/if}
+    {#if customizeOpen}
+        <div class="profile-modal-backdrop" role="presentation" onclick={() => customizeOpen = false}></div>
+        <div class="profile-modal profile-customize-modal" role="dialog" aria-modal="true" aria-labelledby="customize-title">
+            <div class="profile-modal-header">
+                <h3 id="customize-title">Customize Profile</h3>
+                <button type="button" class="profile-modal-close" aria-label="Close" onclick={() => customizeOpen = false}></button>
+            </div>
+            <div class="profile-modal-body">
+                <strong>Accent color</strong>
+                <div class="profile-customize-colors" aria-label="Choose profile accent color">
+                    {#each PROFILE_COLORS as color}
+                        <button type="button" class="profile-color-swatch" class:selected={customAccent === color} style={`--swatch-color: ${color}`} aria-label="Use {color}" aria-pressed={customAccent === color} onclick={() => customAccent = color}></button>
+                    {/each}
+                </div>
+                <strong>Section order</strong>
+                <p class="profile-modal-hint">Move sections up or down to set their order on your profile.</p>
+                <ol class="profile-customize-sections">
+                    {#each customSections as section, index (section)}
+                        <li>
+                            <span>{PROFILE_SECTIONS.find(([key]) => key === section)?.[1] ?? section}</span>
+                            <div>
+                                <button type="button" class="profile-modal-button" aria-label="Move up" disabled={index === 0} onclick={() => moveSection(index, -1)}>↑</button>
+                                <button type="button" class="profile-modal-button" aria-label="Move down" disabled={index === customSections.length - 1} onclick={() => moveSection(index, 1)}>↓</button>
+                            </div>
+                        </li>
+                    {/each}
+                </ol>
+            </div>
+            <div class="profile-modal-footer">
+                <button type="button" class="profile-modal-button" disabled={customizeBusy} onclick={() => customizeOpen = false}>Cancel</button>
+                <button type="button" class="profile-modal-button profile-modal-save" disabled={customizeBusy} onclick={saveCustomization}>Save</button>
             </div>
         </div>
     {/if}

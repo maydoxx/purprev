@@ -319,6 +319,16 @@
         if (row.status !== "pending") return statuses[row.status] ?? row.status;
         return row.sender_id === me.id ? `Pending approval from ${row.receiver_name}` : "Pending approval from you";
     };
+    const exchangeDetails = (row: any, isSender: boolean) => {
+        const gave = isSender ? row.items?.offer ?? [] : row.items?.request ?? [];
+        const received = isSender ? row.items?.request ?? [] : row.items?.offer ?? [];
+        const tense = row.status === "pending" ? "give" : row.status === "completed" ? "gave" : "would give";
+        const receiveTense = row.status === "pending" ? "receive" : row.status === "completed" ? "received" : "would receive";
+        return {
+            gave: `${tense[0].toUpperCase()}${tense.slice(1)}: ${gave.map((item: any) => item.name).join(", ") || "Nothing"}`,
+            received: `${receiveTense[0].toUpperCase()}${receiveTense.slice(1)}: ${received.map((item: any) => item.name).join(", ") || "Nothing"}`
+        };
+    };
     const headers = (s: string) => s === "pending"
         ? ["ITEMS YOU WILL GIVE", "ITEMS YOU WILL RECEIVE"]
         : s === "completed" ? ["ITEMS YOU GAVE", "ITEMS YOU RECEIVED"] : ["ITEMS YOU WOULD HAVE GIVEN", "ITEMS YOU WOULD HAVE RECEIVED"];
@@ -495,19 +505,21 @@
                     <th>Date</th>
                     <th>Expires</th>
                     <th>Trade Partner</th>
+                    <th>Exchange</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {#if !list}
-                    <tr class="money-loading"><td colspan="5"><span></span><span></span><span></span></td></tr>
+                    <tr class="money-loading"><td colspan="6"><span></span><span></span><span></span></td></tr>
                 {:else if list.trades.length === 0}
-                    <tr><td class="money-empty" colspan="4">You have no {types[type].toLowerCase()} trade requests.</td></tr>
+                    <tr><td class="money-empty" colspan="6">You have no {types[type].toLowerCase()} trade requests.</td></tr>
                 {:else}
                     {#each list.trades as row (row.id)}
                         {@const isSender = row.sender_id === me.id}
                         {@const otherId = isSender ? row.receiver_id : row.sender_id}
+                        {@const exchange = exchangeDetails(row, isSender)}
                         <tr>
                             <td>{date(row.created_at)}</td>
                             <td>{row.status === "pending" ? date(row.expires_at) : ""}</td>
@@ -515,13 +527,17 @@
                                 <a href="/user?id={otherId}"><img src={headshot(otherId)} alt="" onerror={fallback}></a>
                                 <span>{isSender ? row.receiver_name : row.sender_name}</span>
                             </td>
+                            <td class="trade-history-exchange">
+                                <span title={exchange.gave}>{exchange.gave}</span>
+                                <span title={exchange.received}>{exchange.received}</span>
+                            </td>
                             <td>{status(row)}</td>
                             <td><a class="trade-view-link" href="/trade?type={type}&view={row.id}">View Details</a></td>
                         </tr>
                     {/each}
                     {#if listPage < list.totalPages}
                         <tr class="money-more">
-                            <td colspan="4"><button class="money-btn-control small" type="button" disabled={loadingMore} onclick={loadMore}>More Records</button></td>
+                            <td colspan="5"><button class="money-btn-control small" type="button" disabled={loadingMore} onclick={loadMore}>More Records</button></td>
                         </tr>
                     {/if}
                 {/if}

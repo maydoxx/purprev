@@ -3,6 +3,7 @@ import { session } from "../../session";
 import { sql, now } from "../../db";
 import { isOnline, friendStatus, friendCount, friendsOf, presenceOf } from "../../friends";
 import { notify } from "../../notifications";
+import { privacyAllows } from "../../privacy";
 
 const pendingCount = async (userId: number) => {
     const [row] = await sql`SELECT COUNT(*)::int AS n FROM friendships WHERE status = 'pending' AND target_id = ${userId}`;
@@ -91,13 +92,16 @@ export const friends = new Elysia({ prefix: "/friends" })
                 error: "You cannot follow yourself"
             });
         }
-        const [target] = await sql`SELECT id FROM users WHERE id = ${body.userId}`;
+        const [target] = await sql`SELECT id, follow_privacy FROM users WHERE id = ${body.userId}`;
         if (!target) {
             return status(404, {
                 error: "That user does not exist"
             });
         }
         if (body.follow) {
+            if (!await privacyAllows(target.id, user.id, target.follow_privacy)) {
+                return status(403, { error: "This user does not allow you to follow them." });
+            }
             const inserted = await sql`INSERT INTO user_follows (follower_id, followed_id, created_at) VALUES (${user.id}, ${body.userId}, ${now()}) ON CONFLICT DO NOTHING`;
             if (inserted.count) {
                 await notify(body.userId, user.id, "follow", user.id);
@@ -160,8 +164,8 @@ export const friends = new Elysia({ prefix: "/friends" })
 
         switch (body.action) {
             case "request": {
-                const [exists] = await sql`SELECT id FROM users WHERE id = ${other}`;
-                if (!exists) {
+                const [target] = await sql`SELECT id, friend_request_privacy FROM users WHERE id = ${other}`;
+                if (!target) {
                     return status(404, {
                         error: "That user does not exist"
                     });
@@ -182,6 +186,9 @@ export const friends = new Elysia({ prefix: "/friends" })
                     await notify(other, me, "friend_accepted", me);
                     next = "friends";
                     break;
+                }
+                if (!await privacyAllows(target.id, me, target.friend_request_privacy)) {
+                    return status(403, { error: "This user does not allow friend requests from you." });
                 }
                 await sql`INSERT INTO friendships (requester_id, target_id, status, created_at) VALUES (${me}, ${other}, 'pending', ${now()})`;
                 await notify(other, me, "friend_request", me);

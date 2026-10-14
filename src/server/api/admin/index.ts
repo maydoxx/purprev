@@ -12,6 +12,7 @@ import { ONLINE_WINDOW } from "../../friends";
 import { GENRES, isGenre } from "../../games";
 import { cleanPromo, promoItems, PROMO_CODE } from "../../promo";
 import { clientIp } from "../../invites";
+import { SITE_URL } from "../../site";
 
 const PER_PAGE = 20;
 const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
@@ -1055,6 +1056,46 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         })
     })
 
+    .post("/moderation/bulk", async ({ body, user, status }) => {
+        try {
+            const reason = body.reason.trim();
+            const userIds = [...new Set(body.user_ids)];
+            if (!reason) throw new AdminError("A moderation reason is required.");
+            if (userIds.length === 0 || userIds.length > 50) throw new AdminError("Select between 1 and 50 accounts.");
+            if (userIds.includes(user.id)) throw new AdminError("You cannot moderate your own account.");
+
+            const [action, seconds] = MODERATION[body.type]!;
+            const expiresAt = seconds > 0 ? now() + seconds : 0;
+            const targets = await sql`SELECT id FROM users WHERE id IN ${sql(userIds)}`;
+            if (targets.length !== userIds.length) throw new AdminError("One or more selected accounts no longer exist.");
+
+            await sql.begin(async tx => {
+                for (const userId of userIds) {
+                    const created = await tx`
+                        INSERT INTO moderation_actions (user_id, action, reason, "moderatedBy", "expiresAt", created_at)
+                        VALUES (${userId}, ${action}, ${reason}, ${user.id}, ${expiresAt}, ${now()}) RETURNING id`;
+                    await tx`UPDATE users SET ongoing_action_id = ${Number(created[0].id)} WHERE id = ${userId}`;
+                }
+            });
+            return { ok: true, count: userIds.length };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        admin: true,
+        body: t.Object({
+            user_ids: t.Array(t.Integer(), { minItems: 1, maxItems: 50 }),
+            type: t.Union([
+                t.Literal("warning"),
+                t.Literal("ban1d"),
+                t.Literal("ban3d"),
+                t.Literal("ban7d"),
+                t.Literal("ban14d")
+            ]),
+            reason: t.String({ maxLength: 1000 })
+        })
+    })
+
     .post("/moderation", async ({ body, user, status }) => {
         try {
             const reason = body.reason.trim();
@@ -1133,7 +1174,14 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         const userId = /^\d+$/.test(search) ? Number(search) : 0;
         const status = query.status ?? "all";
         const currentTime = now();
-        const where = sql`(users.username ILIKE ${like} OR users.email ILIKE ${like} OR users.id = ${userId}) AND (${status} = 'all' OR (${status} = 'admin' AND users.admin > 0) OR (${status} = 'moderated' AND users.ongoing_action_id IS NOT NULL) OR (${status} = 'membership' AND users.membership <> 'None' AND (users.membership_expires = 0 OR users.membership_expires > ${currentTime})))`;
+        const where = sql`(users.username ILIKE ${like} OR users.email ILIKE ${like} OR users.id = ${userId}) AND (
+            ${status} = 'all'
+            OR (${status} = 'admin' AND users.admin > 0)
+            OR (${status} = 'banned' AND EXISTS (SELECT 1 FROM moderation_actions ma WHERE ma.id = users.ongoing_action_id AND ma.action BETWEEN 2 AND 5 AND (ma."expiresAt" = 0 OR ma."expiresAt" > ${currentTime})))
+            OR (${status} = 'recent' AND users.created_at >= ${currentTime - 7 * 86400})
+            OR (${status} = 'moderated' AND users.ongoing_action_id IS NOT NULL)
+            OR (${status} = 'membership' AND users.membership <> 'None' AND (users.membership_expires = 0 OR users.membership_expires > ${currentTime}))
+        )`;
         return paginate(
             sql`SELECT COUNT(*)::int AS n FROM users WHERE ${where}`,
             query.page,
@@ -1283,6 +1331,24 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         admin: true,
         params: id,
         body: t.Object({ username: t.String({ maxLength: 20 }) })
+    })
+
+    .post("/users/:id/password-reset", async ({ params, status }) => {
+        const [target] = await sql`SELECT id FROM users WHERE id = ${params.id}`;
+        if (!target) {
+            return status(404, { error: "User not found." });
+        }
+        const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
+        const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token))), byte => byte.toString(16).padStart(2, "0")).join("");
+        const expires = now() + 3600;
+        await sql.begin(async tx => {
+            await tx`DELETE FROM password_reset_tokens WHERE user_id = ${params.id}`;
+            await tx`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (${params.id}, ${digest}, ${expires})`;
+        });
+        return { url: `${SITE_URL}/reset-password?token=${token}`, expiresAt: expires };
+    }, {
+        admin: true,
+        params: id
     })
 
     .patch("/users/:id", async ({ params, body, user, status }) => {

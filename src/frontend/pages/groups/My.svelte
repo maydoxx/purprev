@@ -16,6 +16,7 @@
     let name = $state("");
     let description = $state("");
     let icon = $state<FileList | null>(null);
+    let banner = $state<FileList | null>(null);
 
     const list = (d: any) => Array.isArray(d) ? d : Array.isArray(d?.list) ? d.list : [];
 
@@ -51,6 +52,7 @@
         fd.append("name", name);
         fd.append("description", description);
         if (icon?.[0]) fd.append("icon", icon[0]);
+        if (banner?.[0]) fd.append("banner", banner[0]);
 
         try {
             const d = await apiForm("/groups", fd);
@@ -108,6 +110,9 @@
                 <label for="group-icon">Emblem:</label>
                 <input id="group-icon" type="file" bind:files={icon} accept="image/png,image/jpeg,image/webp">
                 <p>PNG, JPG or WEBP. Square images work best.</p>
+                <label for="group-banner">Banner:</label>
+                <input id="group-banner" type="file" bind:files={banner} accept="image/png,image/jpeg,image/webp">
+                <p>PNG, JPG or WEBP, up to 4 MB. Wide images work best.</p>
                 <div class="group-create-buttons">
                     <input type="submit" class="group-button" value="Create Group" disabled={busy}>
                     <a class="group-button" href="/my/groups">Cancel</a>
