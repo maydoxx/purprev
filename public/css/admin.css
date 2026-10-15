@@ -352,6 +352,26 @@
     word-break: break-all;
 }
 
+.admin-search {
+    min-width: 260px;
+}
+
+.admin-audit-json {
+    background: #f6f6f8;
+    border: 1px solid #e3e3ea;
+    border-radius: 6px;
+    color: #333;
+    font-family: Consolas, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.45;
+    margin: 0;
+    max-height: 320px;
+    overflow: auto;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 .admin-main .btn {
     border: 1px solid transparent;
     border-radius: 3px;
