@@ -15,7 +15,6 @@ export type Application = {
     id: number;
     name: string;
     discord: string;
-    email: string;
     found: string;
     why: string;
     revivals: string;
@@ -49,8 +48,7 @@ export const applicationEmbed = (app: Application) => ({
     color: COLORS[app.status] ?? COLORS.pending,
     description: [
         `**Discord** ${md(app.discord) || "none"}`,
-        `**Socials** ${safe(app.socials || "none given", 500)}`,
-        ...(app.email ? [`**Email** ${md(app.email)}`] : [])
+        `**Socials** ${safe(app.socials || "none given", 500)}`
     ].join("\n"),
     fields: [
         {
