@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { getProfilePicture } from "./getProfilePicture";
 import { invites } from "./invites";
 import { presence } from "./presence";
+import { privacy } from "./privacy";
 import { settings } from "./settings";
 import { friends } from "./friends";
 import { avatar } from "./avatar";
@@ -17,6 +18,7 @@ export const user = new Elysia({ prefix: "/api/user" })
     .use(getProfilePicture)
     .use(invites)
     .use(presence)
+    .use(privacy)
     .use(settings)
     .use(friends)
     .use(avatar)
