@@ -13,6 +13,8 @@ import { GENRES, isGenre } from "../../games";
 import { cleanPromo, promoItems, PROMO_CODE } from "../../promo";
 import { clientIp } from "../../invites";
 import { SITE_URL } from "../../site";
+import { generateApiKey, verifyApiKey, revokeApiKey, listApiKeys, type ApiKeyScope } from "../../api-keys";
+import { adminDeleteUser } from "../../user-deletion";
 
 const PER_PAGE = 20;
 const BLOG_IMAGE_BYTES = 6 * 1024 * 1024;
@@ -699,6 +701,30 @@ export const admin = new Elysia({ prefix: "/api/admin" })
     })
 
 
+    .get("/audit", ({ query }) => {
+        const like = `%${(query.q ?? "").trim()}%`;
+        const method = (query.method ?? "").trim().toUpperCase();
+        const where = method
+            ? sql`(admin_audit.path ILIKE ${like} OR admin_audit.admin_name ILIKE ${like} OR admin_audit.target ILIKE ${like}) AND admin_audit.method = ${method}`
+            : sql`(admin_audit.path ILIKE ${like} OR admin_audit.admin_name ILIKE ${like} OR admin_audit.target ILIKE ${like})`;
+        return paginate(
+            sql`SELECT COUNT(*)::int AS n FROM admin_audit WHERE ${where}`,
+            query.page,
+            limit => sql`
+                SELECT admin_audit.* FROM admin_audit
+                WHERE ${where}
+                ORDER BY admin_audit.id DESC ${limit}
+            `
+        );
+    }, {
+        admin: true,
+        query: t.Object({
+            q: t.Optional(t.String()),
+            method: t.Optional(t.String()),
+            page: t.Optional(t.Numeric())
+        })
+    })
+
     .get("/games", async ({ query }) => {
         const like = `%${(query.q ?? "").trim()}%`;
         const where = sql`(games.title ILIKE ${like} OR users.username ILIKE ${like})`;
@@ -1174,7 +1200,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         const userId = /^\d+$/.test(search) ? Number(search) : 0;
         const status = query.status ?? "all";
         const currentTime = now();
-        const where = sql`(users.username ILIKE ${like} OR users.email ILIKE ${like} OR users.id = ${userId}) AND (
+        const where = sql`(users.username ILIKE ${like} OR users.id = ${userId}) AND (
             ${status} = 'all'
             OR (${status} = 'admin' AND users.admin > 0)
             OR (${status} = 'banned' AND EXISTS (SELECT 1 FROM moderation_actions ma WHERE ma.id = users.ongoing_action_id AND ma.action BETWEEN 2 AND 5 AND (ma."expiresAt" = 0 OR ma."expiresAt" > ${currentTime})))
@@ -1186,7 +1212,7 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             sql`SELECT COUNT(*)::int AS n FROM users WHERE ${where}`,
             query.page,
             limit => sql`
-                SELECT users.id, users.username, users.email, users.admin, users.currency, users.tix, users.ongoing_action_id, users.created_at, users.membership, users.membership_expires,
+                SELECT users.id, users.username, users.admin, users.currency, users.tix, users.ongoing_action_id, users.created_at, users.membership, users.membership_expires,
                     joined.created_by AS invited_by_id, maker.username AS invited_by,
                     (SELECT COUNT(*)::int FROM invite_log l WHERE l.created_by = users.id) AS invited
                 FROM users
@@ -1305,6 +1331,47 @@ export const admin = new Elysia({ prefix: "/api/admin" })
         params: t.Object({ id: t.Numeric(), itemId: t.Numeric() })
     })
 
+    // API Key management
+    .get("/api-keys", async ({ user }) => {
+        return listApiKeys(user.id);
+    }, {
+        admin: true
+    })
+
+    .post("/api-keys", async ({ body, user, status }) => {
+        try {
+            const scopes: ApiKeyScope[] = body.scopes ?? ["game-client"];
+            const expiresInDays = body.expires_in_days;
+            const { id, key } = await generateApiKey(body.name, scopes, user.id, expiresInDays);
+            return { ok: true, id, key };
+        } catch (err) {
+            return handle(err, status);
+        }
+    }, {
+        admin: true,
+        body: t.Object({
+            name: t.String({ maxLength: 100 }),
+            scopes: t.Optional(t.Array(t.Union([
+                t.Literal("game-client"),
+                t.Literal("studio"),
+                t.Literal("tooling"),
+                t.Literal("rcc")
+            ]))),
+            expires_in_days: t.Optional(t.Integer({ minimum: 1, maximum: 365 }))
+        })
+    })
+
+    .delete("/api-keys/:id", async ({ params, user, status }) => {
+        const revoked = await revokeApiKey(params.id, user.id);
+        if (!revoked) {
+            return status(404, { error: "API key not found" });
+        }
+        return { ok: true };
+    }, {
+        admin: true,
+        params: id
+    })
+
     .post("/users/:id/username", async ({ params, body, request, server, status }) => {
         const username = body.username.trim();
         if (!/^[a-zA-Z0-9]{3,20}$/.test(username)) {
@@ -1397,4 +1464,37 @@ export const admin = new Elysia({ prefix: "/api/admin" })
             membership: t.Optional(t.String()),
             membership_days: t.Optional(t.Numeric({ minimum: 0 }))
         })
+    })
+
+    .delete("/users/:id", async ({ params, user, status }) => {
+        if (params.id === user.id) {
+            return status(400, {
+                error: "You cannot delete your own account from the admin panel. Use the account settings page."
+            });
+        }
+
+        const [target] = await sql`SELECT username FROM users WHERE id = ${params.id}`;
+        if (!target) {
+            return status(404, {
+                error: "User not found."
+            });
+        }
+
+        const result = await adminDeleteUser(params.id, user.id);
+
+        if (!result.success) {
+            return status(500, {
+                error: "Account deletion failed",
+                details: result.errors
+            });
+        }
+
+        return {
+            ok: true,
+            message: `User ${target.username} and all associated data permanently deleted`,
+            deleted: result.deletedCounts
+        };
+    }, {
+        admin: true,
+        params: id
     })

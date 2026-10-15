@@ -78,6 +78,7 @@
     import PromoCodes from "./pages/PromoCodes.svelte";
     import AbuseReport from "./pages/AbuseReport.svelte";
     import AdminReports from "./pages/admin/Reports.svelte";
+    import AdminAudit from "./pages/admin/Audit.svelte";
     import GroupsSearch from "./pages/groups/Search.svelte";
     import CreateUserAd from "./pages/CreateUserAd.svelte";
     import MyUserAds from "./pages/MyUserAds.svelte";
@@ -155,6 +156,7 @@
         promocodes: PromoCodes,
         abusereport: AbuseReport,
         "admin-reports": AdminReports,
+        "admin-audit": AdminAudit,
         "groups-search": GroupsSearch,
         "create-user-ad": CreateUserAd,
         "user-ads": MyUserAds,
@@ -208,6 +210,7 @@
         "admin-gamecards",
         "admin-promocodes",
         "admin-reports",
+        "admin-audit",
     ];
 
     const gamesList = $derived(router.name === "games" || (router.name === "search" && !["user", "users", "library"].includes(router.query.type ?? "")));

@@ -256,7 +256,7 @@
 
     <div class="admin-toolbar">
         <form onsubmit={submit}>
-            <input type="search" class="form-control" bind:value={search} placeholder="Username, email, or user ID">
+            <input type="search" class="form-control" bind:value={search} placeholder="Username or user ID">
             <button class="btn btn-primary" type="submit">Search</button>
             {#if q}<a href="/admi/users" class="btn btn-outline-secondary">Clear</a>{/if}
             <select class="form-select" aria-label="Filter users by status" value={status} onchange={(event) => setStatus(event.currentTarget.value)}>
@@ -317,7 +317,6 @@
                                     <img class="admin-avatar" src={pic(u.id)} alt="">
                                     <div>
                                         <a href="/user?id={u.id}">{u.username}</a> <span class="admin-muted">#{u.id}</span>
-                                        <div class="admin-muted">{u.email || "no email"}</div>
                                     </div>
                                 </div>
                             </td>

@@ -7,10 +7,27 @@ export class ApiError extends Error {
     }
 }
 
+const READ_ONLY = ["GET", "HEAD", "OPTIONS"];
+
+// the server sets a readable csrf cookie, we echo it in a header on writes
+const csrfToken = () => {
+    const match = document.cookie.match(/(?:^|;\s*)csrf=([^;]+)/);
+    return match ? decodeURIComponent(match[1]!) : "";
+};
+
 const request = async <T>(path: string, init: RequestInit): Promise<T> => {
+    const headers = new Headers(init.headers);
+    const method = (init.method ?? "GET").toUpperCase();
+    if (!READ_ONLY.includes(method)) {
+        const token = csrfToken();
+        if (token) {
+            headers.set("X-CSRF-Token", token);
+        }
+    }
+
     let res: Response;
     try {
-        res = await fetch("/api" + path, init);
+        res = await fetch("/api" + path, { ...init, headers });
     } catch (err) {
         console.error(`api ${init.method} ${path} -> no response`, err);
         throw new ApiError(0, "Could not reach the server");

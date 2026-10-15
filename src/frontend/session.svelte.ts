@@ -4,7 +4,6 @@ import type { Theme } from "./themes";
 export type Me = {
     id: number;
     username: string;
-    email: string | null;
     about: string | null;
     admin: number;
     currency: number;
@@ -16,6 +15,10 @@ export type Me = {
     social_twitter: string;
     social_youtube: string;
     theme: Theme;
+    social_visibility: Record<string, boolean>;
+    processing_consents: Record<string, boolean>;
+    processing_objections: Record<string, boolean>;
+    processing_restricted: boolean;
 };
 
 let me = $state<Me | null>(null);

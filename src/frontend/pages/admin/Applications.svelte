@@ -110,7 +110,6 @@
                             <td class="admin-app-who">
                                 <div class="fw-semibold">{a.name} <span class="admin-muted">#{a.id}</span></div>
                                 <div class="admin-muted">discord {a.discord}</div>
-                                {#if a.email}<div class="admin-muted">{a.email}</div>{/if}
                                 <div class="admin-muted admin-app-text">{a.socials}</div>
                                 <div class="admin-muted admin-key">{a.ip}</div>
                             </td>

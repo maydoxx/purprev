@@ -25,7 +25,8 @@
             ["/admi/promocodes", "Promo Codes", ["/admi/promocodes"]]
         ]],
         ["System", [
-            ["/admi/settings", "Settings", ["/admi/settings"]]
+            ["/admi/settings", "Settings", ["/admi/settings"]],
+            ["/admi/audit", "Audit Log", ["/admi/audit"]]
         ]]
     ];
 
