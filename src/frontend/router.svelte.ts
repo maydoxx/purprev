@@ -71,6 +71,7 @@ const routes: [string, string][] = [
     ["/admi/promocodes", "admin-promocodes"],
     ["/abusereport", "abusereport"],
     ["/admi/reports", "admin-reports"],
+    ["/admi/audit", "admin-audit"],
     ["/groups/search", "groups-search"],
     ["/my/create-user-ad", "create-user-ad"],
     ["/my/user-ads", "user-ads"],

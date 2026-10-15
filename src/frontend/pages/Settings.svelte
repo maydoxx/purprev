@@ -8,7 +8,7 @@
     import { customTheme, customThemeLoad, reloadCustomTheme, saveCustomTheme, validateCustomCss, CUSTOM_CSS_LIMIT, CUSTOM_CSS_RECOVERY } from "../custom-theme.svelte";
 
     type Tab = "account" | "security" | "privacy" | "billing" | "invites" | "developer";
-    type Modal = "username" | "funds" | "password" | "email" | "done";
+    type Modal = "username" | "funds" | "password" | "done";
 
     const tabs: { id: Tab; label: string }[] = [
         {
@@ -51,7 +51,6 @@
     let error = $state("");
     let success = $state("");
     let notice = $state<{ text: string; ok: boolean } | null>(null);
-    let newEmail = $state("");
     let newBio = $state(session.me?.about ?? "");
     let socialDiscord = $state(session.me?.social_discord ?? "");
     let socialTwitter = $state(session.me?.social_twitter ?? "");
@@ -124,18 +123,15 @@
     const short = $derived(USERNAME_PRICE - (session.me?.currency ?? 0));
     const canBuy = $derived(newUsername.trim().length >= 3 && usernamePassword.length > 0 && !busy);
     const canUpdate = $derived(currentPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0 && !busy);
-    const email = $derived(session.me?.email ?? "");
-    const hiddenEmail = $derived(email ? "*******" + email.slice(email.indexOf("@")) : "");
 
     const titles: Record<Modal, string> = {
         username: "Change Username",
         funds: "Insufficient Funds",
         password: "Change Password",
-        email: "Change My Email",
         done: "Success"
     };
 
-    const title = $derived(modal === "email" && !email ? "Add My Email" : modal ? titles[modal] : "");
+    const title = $derived(modal ? titles[modal] : "");
 
     $effect(() => {
         if (!notice) return;
@@ -151,7 +147,6 @@
         currentPassword = "";
         newPassword = "";
         confirmPassword = "";
-        newEmail = email;
         modal = next;
     };
 
@@ -395,16 +390,6 @@
                             <button type="submit" class="settings-btn-primary" disabled={!canUpdate}>Update</button>
                         </div>
                     </form>
-                {:else if modal === "email"}
-                    <form onsubmit={e => { e.preventDefault(); save("/user/settings/changeemail", { newEmail }, "Email updated."); }}>
-                        <input class="settings-input" type="email" bind:value={newEmail} placeholder="My Email Address" required aria-label="Email address">
-                        {#if error}
-                            <p class="settings-modal-error">{error}</p>
-                        {/if}
-                        <div class="settings-modal-btns">
-                            <button type="submit" class="settings-btn-primary" disabled={busy || !newEmail.trim()}>{email ? "Change Email" : "Add Email"}</button>
-                        </div>
-                    </form>
                 {:else}
                     <p>{success}</p>
                     <div class="settings-modal-btns">
@@ -444,15 +429,6 @@
                         <p>(Previous usernames: {pastNames.join(", ")} )</p>
                     </div>
                 {/if}
-                <div class="settings-row" class:empty={!email}>
-                    {#if email}
-                        <p><span class="settings-label">Email address:</span> {hiddenEmail}</p>
-                        <button type="button" class="settings-edit" title="Change Email" aria-label="Change Email" onclick={() => open("email")}></button>
-                    {:else}
-                        <p><span class="settings-label">Email address:</span> <span class="settings-warning"></span> <span class="settings-error">Add email</span></p>
-                        <button type="button" class="settings-link" onclick={() => open("email")}>Add Email</button>
-                    {/if}
-                </div>
             </div>
 
             <h3>Personal</h3>
@@ -583,6 +559,7 @@
                 <div class="settings-actions">
                     <button type="button" class="settings-btn" disabled={busy} onclick={() => save("/user/settings/privacy", { messages: messagePrivacy, follows: followPrivacy, friendRequests: friendRequestPrivacy }, "Privacy settings saved.")}>Save</button>
                 </div>
+                <p class="settings-hint">Download your data, manage consent and processing preferences, or delete your account on the <a class="settings-link" href="/info/privacy">Privacy &amp; Data</a> page.</p>
             </div>
 
             <h3>Notifications</h3>
