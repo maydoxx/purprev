@@ -7,6 +7,7 @@ import { SITE_URL } from "../../site";
 import { GENRES, gameSettings, isGenre } from "../../games";
 import { PurchaseError, buyPass } from "../../purchase";
 import { byVipId, canJoin, jobOf } from "../../privateservers";
+import { friendStatus } from "../../friends";
 import { DELETED_TEXT, deletedIds, isDeleted } from "../../content";
 
 const PER_PAGE = 20;
@@ -122,12 +123,16 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
         : sort.id === "my-favorites" ? sql`fav.user_id IS NOT NULL`
         : sort.id === "featured" ? sql`games.featured = 1 AND games.title ILIKE ${like}`
         : sql`games.title ILIKE ${like}`;
-    const where = isGenre(genre) && genre !== "All" ? sql`${scope} AND games.genre = ${genre}` : scope;
+    // non-public places never list for anyone but their owner
+    const visible = sql`(games.access = 'everyone' OR games.creator_id = ${userId})`;
+    const filtered = isGenre(genre) && genre !== "All"
+        ? sql`${scope} AND ${visible} AND games.genre = ${genre}`
+        : sql`${scope} AND ${visible}`;
     const [count] = await sql`
         SELECT COUNT(*)::int AS n FROM games
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
         LEFT JOIN game_favorites fav ON fav.game_id = games.id AND fav.user_id = ${userId}
-        WHERE ${where}
+        WHERE ${filtered}
     `;
     const totalPages = Math.max(1, Math.ceil(Number(count.n) / limit));
     const current = Math.min(Math.max(1, page), totalPages);
@@ -144,7 +149,7 @@ const listGames = async (sort: Sort, userId: number, page: number, limit: number
         LEFT JOIN users ON users.id = games.creator_id
         LEFT JOIN game_plays plays ON plays.game_id = games.id AND plays.user_id = ${userId}
         LEFT JOIN game_favorites fav ON fav.game_id = games.id AND fav.user_id = ${userId}
-        WHERE ${where}
+        WHERE ${filtered}
         ORDER BY ${sort.order} LIMIT ${limit} OFFSET ${(current - 1) * limit}
     `;
     const playing = await rcc.players(rows.map((g: any) => Number(g.id)));
@@ -161,6 +166,20 @@ const timeOf = (time: unknown): Time => TIMES.includes(time as Time) ? time as T
 
 
 const ratio = (up: number, down: number) => up + down > 0 ? Math.round(up / (up + down) * 100) : 0;
+
+// private places are only visible to their owner, friends-only to friends
+const canViewGame = async (game: any, user: any) => {
+    if (game.access === "everyone") {
+        return true;
+    }
+    if (!user) {
+        return false;
+    }
+    if (Number(game.creator_id) === user.id || user.admin > 0) {
+        return true;
+    }
+    return game.access === "friends" && await friendStatus(user.id, Number(game.creator_id)) === "friends";
+};
 
 const withMedia = async (game: any, playing = 0, deleted = false) => ({
     ...game,
@@ -256,6 +275,11 @@ export const games = new Elysia({ prefix: "/api/games" })
             WHERE games.id = ${params.id}
         `;
         if (!game) {
+            return status(404, {
+                error: "This game does not exist"
+            });
+        }
+        if (!await canViewGame(game, user)) {
             return status(404, {
                 error: "This game does not exist"
             });

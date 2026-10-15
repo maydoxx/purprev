@@ -77,7 +77,7 @@ const findUser = async (id?: number, username?: string) => {
 const userProfile = async (row: any) => {
     const id = Number(row.id);
     const [[games], [favorites], [posts], badges, friends, history] = await Promise.all([
-        sql`SELECT COUNT(*)::int AS n FROM games WHERE creator_id = ${id}`,
+        sql`SELECT COUNT(*)::int AS n FROM games WHERE creator_id = ${id} AND access = 'everyone'`,
         sql`SELECT COUNT(*)::int AS n FROM game_favorites WHERE user_id = ${id}`,
         sql`SELECT COUNT(*)::int AS n FROM forum_posts WHERE author_id = ${id}`,
         siteBadges(row),
@@ -91,7 +91,6 @@ const userProfile = async (row: any) => {
         admin: Number(row.admin) > 0,
         membership: membershipOf(row),
         online: isOnline(row.lastOnlineSite),
-        moderated: row.ongoing_action_id !== null,
         joined: Number(row.created_at),
         friends,
         places: Number(games.n),
@@ -110,7 +109,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
     .get("/stats", async () => {
         const [[u], [g], [c], servers] = await Promise.all([
             sql`SELECT COUNT(*)::int AS users, COUNT(*) FILTER (WHERE "lastOnlineSite" > ${now() - ONLINE_WINDOW})::int AS online FROM users`,
-            sql`SELECT COUNT(*)::int AS n FROM games`,
+            sql`SELECT COUNT(*)::int AS n FROM games WHERE access = 'everyone'`,
             sql`SELECT COUNT(*)::int AS n FROM catalog_items`,
             rcc.servers()
         ]);
@@ -171,7 +170,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
         const rows = await sql`
             SELECT games.id, games.title, games.visits, games.creator_id, users.username AS creator_name FROM games
             LEFT JOIN users ON users.id = games.creator_id
-            WHERE games.creator_id = ${params.id} ORDER BY games.id DESC LIMIT ${size(query.limit)}
+            WHERE games.creator_id = ${params.id} AND games.access = 'everyone' ORDER BY games.id DESC LIMIT ${size(query.limit)}
         `;
         const playing = await rcc.players(rows.map((g: any) => Number(g.id)));
         return cached(await Promise.all(rows.map((g: any) => gameCard(g, playing))));
@@ -189,7 +188,7 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
         const rows = await sql`
             SELECT games.id, games.title, games.visits, games.creator_id, users.username AS creator_name FROM games
             LEFT JOIN users ON users.id = games.creator_id
-            WHERE games.title ILIKE ${like(query.q)} ORDER BY games.id DESC LIMIT ${size(query.limit)}
+            WHERE games.title ILIKE ${like(query.q)} AND games.access = 'everyone' ORDER BY games.id DESC LIMIT ${size(query.limit)}
         `;
         const playing = await rcc.players(rows.map((g: any) => Number(g.id)));
         return cached(await Promise.all(rows.map((g: any) => gameCard(g, playing))));
@@ -207,6 +206,11 @@ export const publicApi = new Elysia({ prefix: "/api/public" })
             WHERE games.id = ${params.id}
         `;
         if (!g) {
+            return status(404, {
+                error: "unknown game"
+            });
+        }
+        if (g.access !== "everyone") {
             return status(404, {
                 error: "unknown game"
             });

@@ -1,9 +1,11 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { PurchaseError, buyItem } from "../../purchase";
+import { purchaseLimiter } from "../../ratelimit";
 
 export const purchase = new Elysia()
     .use(session)
+    .use(purchaseLimiter)
     .post("/purchase", async ({ body, user, status }) => {
         try {
             const balance = await buyItem(user, body.itemId, body.currency ?? "nonebux");

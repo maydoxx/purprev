@@ -43,12 +43,19 @@ export const buyItem = (user: User, itemId: number, method: Currency, expected?:
     let serial: number | null = null;
 
     if (item.is_limited_unique) {
-        const stock = Number(item.limited_stock ?? 0);
-        const sold = Number(item.limited_sold);
-        if (stock <= 0 || sold >= stock) {
+        // Atomic increment with RETURNING to prevent race conditions
+        const [updated] = await tx`
+            UPDATE catalog_items
+            SET limited_sold = limited_sold + 1
+            WHERE id = ${itemId}
+              AND limited_sold < limited_stock
+              AND limited_stock > 0
+            RETURNING limited_sold
+        `;
+        if (!updated) {
             throw new PurchaseError("SoldOut", "This Limited U item is sold out");
         }
-        serial = sold + 1;
+        serial = Number(updated.limited_sold);
     }
 
     const [me] = await tx`SELECT currency, tix FROM users WHERE id = ${user.id} FOR UPDATE`;
@@ -71,9 +78,7 @@ export const buyItem = (user: User, itemId: number, method: Currency, expected?:
             }
         }
     }
-    if (serial !== null) {
-        await tx`UPDATE catalog_items SET limited_sold = limited_sold + 1 WHERE id = ${itemId}`;
-    }
+
 
     await tx`INSERT INTO user_items (user_id, item_id, wearing, purchased_at, serial_number) VALUES (${user.id}, ${itemId}, 0, ${now()}, ${serial})`;
 

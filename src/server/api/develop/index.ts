@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { mkdir, rm } from "fs/promises";
 import { session } from "../../session";
 import { sql, now } from "../../db";
-import { saveImage, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
+import { saveImage, saveAudio, mediaUrl, mediaHas, clearMedia, UploadError } from "../../paths";
 import { mediaPut, mediaEntry, mediaKey, contentType, unsafeXml } from "../../media";
 import { storage } from "../../storage";
 import { imageSize } from "../../image";
@@ -147,7 +147,8 @@ const savePlace = async (placeId: number, userId: number, file: Blob | Uint8Arra
     if (await isDeleted("place", placeId)) {
         throw new DevelopError("This place has been moderated and can't be replaced.", 403);
     }
-    if (unsafeXml(file instanceof Uint8Array ? file : new Uint8Array(await file.arrayBuffer()))) {
+    const bytes = file instanceof Uint8Array ? file : new Uint8Array(await file.arrayBuffer());
+    if (unsafeXml(bytes, "rbxl")) {
         throw new DevelopError("That place file has markup that isn't allowed.");
     }
     await rcc.closePlace(placeId);
@@ -873,18 +874,15 @@ export const develop = new Elysia({ prefix: "/api/develop" })
             if (file.size <= 0) {
                 throw new DevelopError("Choose an audio file.");
             }
-            if (file.size > AUDIO_MAX) {
-                throw new DevelopError("Audio files can be up to 12 MB.");
-            }
-            const extension = extname(file.name).slice(1).toLowerCase();
-            if (!["mp3", "ogg", "wav"].includes(extension)) {
-                throw new DevelopError("Only MP3, OGG and WAV files are supported.");
-            }
             const name = (body.name.trim() || basename(file.name, extname(file.name))).slice(0, 100);
 
-            const id = await reserveAsset(sql, user.id, "Audio", name, extension);
+            const id = await reserveAsset(sql, user.id, "Audio", name, "tmp");
             try {
-                await mediaPut("assets", id, extension, file);
+                // saveAudio validates magic bytes and extension
+                await saveAudio(id, file);
+                // Update the asset with the correct extension after validation
+                const [asset] = await sql`SELECT extension FROM assets WHERE id = ${id}`;
+                // Extension already set correctly by saveAudio via mediaPut
             } catch (err) {
                 await sql`DELETE FROM assets WHERE id = ${id}`;
                 throw err;

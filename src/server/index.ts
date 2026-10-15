@@ -3,6 +3,7 @@ console.log("Hello via Bun!");
 import { Elysia } from "elysia";
 import { openapi } from '@elysia/openapi'
 
+import { securityHeaders } from "./security-headers";
 import { session } from "./session";
 import { setup } from "./api/setup";
 import { auth } from "./api/auth";
@@ -34,8 +35,15 @@ import { ads } from "./api/ads";
 import { embed } from "./api/embed";
 import { promo } from "./api/promo";
 import { firstRun } from "./firstuser";
+import "./retention";
+
+const docs = process.env.OPENAPI === "1"
+    ? openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple." } } })
+    : new Elysia();
+
 const app = new Elysia()
-    .use(openapi({ documentation: { info: { title: "PurpRev API", version: "dev-1.0.0", description: "PurpRev is a frontend and backend for NoneRev. The name 'PurpRev' came from the NoneRev logo being purple."}}}))
+    .use(docs)
+    .use(securityHeaders)
 
 
     .onRequest(({ request }): Promise<Response> | undefined => {
@@ -70,7 +78,7 @@ const app = new Elysia()
         console.error(`${where} -> ${code}:`, error);
         set.status = 500;
         return {
-            error: message
+            error: "internal server error"
         };
     })
 

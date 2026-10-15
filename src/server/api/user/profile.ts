@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
-import { sql } from "../../db";
+import { sql, parseJson } from "../../db";
 import { isOnline, friendStatus, friendCount, friendsOf, presenceOf } from "../../friends";
 import { withThumbnail, mediaUrl } from "../../paths";
 import { rcc } from "../../rcc";
@@ -86,7 +86,7 @@ export const profile = new Elysia({ prefix: "/profile" })
     .use(session)
     .get("/:id", async ({ params, user, status }) => {
         const [row] = await sql`
-            SELECT id, username, about, admin, created_at, "lastOnlineSite", ongoing_action_id, membership, membership_expires, social_discord, social_twitter, social_youtube, profile_accent, profile_sections, message_privacy, follow_privacy, friend_request_privacy
+            SELECT id, username, about, admin, created_at, "lastOnlineSite", ongoing_action_id, membership, membership_expires, social_discord, social_twitter, social_youtube, profile_accent, profile_sections, message_privacy, follow_privacy, friend_request_privacy, social_visibility
             FROM users WHERE id = ${params.id}
         `;
 
@@ -150,6 +150,11 @@ export const profile = new Elysia({ prefix: "/profile" })
         const [followed] = user ? await sql`SELECT 1 FROM user_follows WHERE follower_id = ${user.id} AND followed_id = ${row.id}` : [null];
         const currentFriendStatus = user ? await friendStatus(user.id, row.id) : "guest";
 
+        const visibility = parseJson<Record<string, boolean>>(row.social_visibility, { discord: true, twitter: true, youtube: true });
+        const isSelf = user?.id === Number(row.id);
+        const isAdmin = !!user && user.admin > 0;
+        const showSocial = (key: "discord" | "twitter" | "youtube") => isSelf || isAdmin || visibility[key] !== false;
+
         return {
             id: row.id,
             username: row.username,
@@ -169,9 +174,9 @@ export const profile = new Elysia({ prefix: "/profile" })
             previousUsernames: history.map((h: any) => h.old_username),
             about: deletedAbout ? DELETED_TEXT : row.about ?? "",
             socials: {
-                discord: row.social_discord ?? "",
-                twitter: row.social_twitter ?? "",
-                youtube: row.social_youtube ?? ""
+                discord: showSocial("discord") ? row.social_discord ?? "" : "",
+                twitter: showSocial("twitter") ? row.social_twitter ?? "" : "",
+                youtube: showSocial("youtube") ? row.social_youtube ?? "" : ""
             },
             admin: row.admin > 0,
             membership: membershipOf(row),

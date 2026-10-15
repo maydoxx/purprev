@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
+import { tradeLimiter } from "../../ratelimit";
 
 const PER_PAGE = 20;
 const MAX_ITEMS_PER_SIDE = 8;
@@ -110,6 +111,8 @@ const typeWhere = (type: string, userId: number) => {
 
 export const trade = new Elysia({ prefix: "/api/trade" })
     .use(session)
+    // Apply rate limiter to all mutating trade endpoints
+    .use(tradeLimiter)
 
     .get("/", async ({ query, user }) => {
         await expirePending();

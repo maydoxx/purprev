@@ -4,6 +4,7 @@ import { sql, now } from "../../db";
 import { friendStatus, friendsOf } from "../../friends";
 import { white } from "../engine/chatfilter";
 import { privacyAllows } from "../../privacy";
+import { encryptText, decryptText } from "../../crypto";
 
 const PAGE = 50;
 const BODY_MAX = 500;
@@ -18,11 +19,11 @@ type Person = {
     online: boolean;
 };
 
-const row = (m: any, me: number) => ({
+const row = async (m: any, me: number) => ({
     id: Number(m.id),
     from: Number(m.sender_id),
     mine: Number(m.sender_id) === me,
-    body: m.body,
+    body: await decryptText(m.body),
     at: Number(m.created_at)
 });
 
@@ -67,13 +68,13 @@ export const chat = new Elysia({ prefix: "/chat" })
         }
         return {
             unread: [...unreadBy.values()].reduce((a, b) => a + b, 0),
-            conversations: latest.filter((m: any) => names.has(Number(m.other))).map((m: any) => ({
+            conversations: await Promise.all(latest.filter((m: any) => names.has(Number(m.other))).map(async (m: any) => ({
                 id: Number(m.other),
                 username: names.get(Number(m.other))!.username,
                 online: !!names.get(Number(m.other))!.online,
                 unread: unreadBy.get(Number(m.other)) ?? 0,
-                last: row(m, user.id)
-            })),
+                last: await row(m, user.id)
+            }))),
             friends
         };
     }, {
@@ -89,7 +90,7 @@ export const chat = new Elysia({ prefix: "/chat" })
             ORDER BY id DESC LIMIT ${PAGE}
         `;
         await sql`UPDATE chat_messages SET is_read = 1 WHERE recipient_id = ${user.id} AND sender_id = ${params.id} AND is_read = 0`;
-        return rows.reverse().map((m: any) => row(m, user.id));
+        return Promise.all(rows.reverse().map((m: any) => row(m, user.id)));
     }, {
         auth: true,
         params: id,
@@ -117,7 +118,7 @@ export const chat = new Elysia({ prefix: "/chat" })
         const filtered = white(text);
         const created = await sql`
             INSERT INTO chat_messages (sender_id, recipient_id, body, is_read, created_at)
-            VALUES (${user.id}, ${params.id}, ${filtered}, 0, ${now()}) RETURNING id`;
+            VALUES (${user.id}, ${params.id}, ${await encryptText(filtered)}, 0, ${now()}) RETURNING id`;
         return {
             id: Number(created[0].id),
             from: user.id,

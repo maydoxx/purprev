@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { session } from "../../session";
 import { sql, now } from "../../db";
 import { rcc, RccError } from "../../rcc";
-import { SITE_URL, SITE_INTERNAL_URL, appearanceUrl } from "../../site";
+import { SITE_URL, SITE_INTERNAL_URL, appearanceUrl, COOKIE_SECURE } from "../../site";
 import { friendStatus } from "../../friends";
 import { sign, rbxsig, studiosig, text } from "./sign";
 import { isInternal } from "./internal";
@@ -11,6 +11,7 @@ import { TIERS, membershipOf } from "../../membership";
 import { report } from "../../counters";
 import { byAccessCode, byKey, canJoin, start } from "../../privateservers";
 import { isDeleted } from "../../content";
+import { digestToken } from "../../crypto";
 
 // admin scripts look for these, they are not site groups
 const ADMIN_GROUPS = [1, 1200769];
@@ -30,7 +31,7 @@ const userFromToken = async (token: string) => {
     const [row] = await sql`
         SELECT users.id, users.username, users.admin, users.membership, users.membership_expires FROM tokens
         JOIN users ON users.id = tokens.user_id
-        WHERE token = ${token} AND expires > ${now()}
+        WHERE token = ${await digestToken(token)} AND expires > ${now()}
     `;
     return row ?? null;
 };
@@ -348,7 +349,7 @@ const routes = (prefix: string) => new Elysia({ prefix })
 
     // phones report how the join went, c is the step and r the outcome
     .all("/JoinRate.ashx", ({ query }) => {
-        console.log(`JoinRate: ${query.c ?? "?"} ${query.r ?? "?"} user ${query.i ?? "?"} place ${query.p ?? "?"} after ${query.d ?? "?"}ms, ${query.b ?? "?"} bytes in, ${query.platform ?? "?"}`);
+        console.log(`JoinRate: ${query.c ?? "?"} ${query.r ?? "?"} place ${query.p ?? "?"} after ${query.d ?? "?"}ms`);
         return "";
     }, {
         query: t.Object({
@@ -591,7 +592,12 @@ export const game = new Elysia()
     })
 
 
-    .get("/Login/Negotiate.ashx", async ({ query, cookie, status }) => {
+    .get("/Login/Negotiate.ashx", async ({ query, cookie, request, status }) => {
+        // browsers send sec-fetch-site, game clients do not. block the cross-site
+        // link that would otherwise silently log a victim into someone else's account
+        if (request.headers.get("sec-fetch-site") === "cross-site") {
+            return status(403, "false");
+        }
         const who = await userFromToken(query.suggest);
         console.log(`Negotiate: ${who ? who.username : "bad ticket"}`);
         if (!who) {
@@ -601,6 +607,7 @@ export const game = new Elysia()
             value: query.suggest,
             path: "/",
             httpOnly: true,
+            secure: COOKIE_SECURE,
             sameSite: "lax"
         });
         return text("");

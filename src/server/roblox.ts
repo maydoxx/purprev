@@ -81,8 +81,30 @@ export const lookupRobloxBundle = async (bundleId: number) => {
     };
 };
 
+// catalog thumbnails only ever come from roblox's cdn, refuse anything else so
+// a crafted url cannot make us fetch internal hosts
+const THUMB_HOSTS = ["roblox.com", "rbxcdn.com", "robloxlabs.com"];
+
+const safeThumbUrl = (raw: string) => {
+    let url: URL;
+    try {
+        url = new URL(raw);
+    } catch {
+        return null;
+    }
+    if (url.protocol !== "https:") {
+        return null;
+    }
+    const host = url.hostname.toLowerCase();
+    return THUMB_HOSTS.some(h => host === h || host.endsWith(`.${h}`)) ? url.href : null;
+};
+
 export const storeThumbnail = async (itemId: number, url: string) => {
-    const res = await fetch(url, {
+    const safe = safeThumbUrl(url);
+    if (!safe) {
+        return;
+    }
+    const res = await fetch(safe, {
         signal: AbortSignal.timeout(20000)
     }).catch(() => null);
     if (!res?.ok) {

@@ -129,7 +129,6 @@ const mobileapi = new Elysia({ prefix: "/mobileapi" })
             password: t.String(),
             gender: t.Optional(t.String()),
             dateOfBirth: t.Optional(t.String()),
-            email: t.Optional(t.String()),
             inviteKey: t.Optional(t.String())
         })
     })
@@ -205,7 +204,7 @@ export const mobile = new Elysia()
 
     .get("/my/account/json", ({ user }) => ({
         AgeBracket: 2,
-        UserEmail: user?.email ?? "",
+        UserEmail: "",
         UserEmailVerified: false
     }))
 

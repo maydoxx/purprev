@@ -3,6 +3,7 @@ import { session } from "../../session";
 import { sql, now } from "../../db";
 import { notify } from "../../notifications";
 import { privacyAllows } from "../../privacy";
+import { encryptText, decryptText } from "../../crypto";
 
 const PER_PAGE = 20;
 
@@ -57,11 +58,13 @@ export const messages = new Elysia({ prefix: "/api/messages" })
             totalPages,
             total: Number(count.n),
             newsUnread: Number(news.n),
-            messages: rows.map((m: any) => ({
+            messages: await Promise.all(rows.map(async (m: any) => ({
                 ...m,
+                subject: await decryptText(m.subject),
+                body: await decryptText(m.body),
                 other_id: m.other_id ?? 0,
                 other_username: senderName(m.other_username, m.message_type)
-            }))
+            })))
         };
     }, {
         auth: true,
@@ -106,6 +109,8 @@ export const messages = new Elysia({ prefix: "/api/messages" })
 
         return {
             ...message,
+            subject: await decryptText(message.subject),
+            body: await decryptText(message.body),
             sender_username: senderName(message.sender_username, message.message_type)
         };
     }, {
@@ -147,7 +152,7 @@ export const messages = new Elysia({ prefix: "/api/messages" })
 
         const created = await sql`
             INSERT INTO messages (sender_id, recipient_id, subject, body, message_type, is_read, recipient_archived, created_at)
-            VALUES (${user.id}, ${recipient.id}, ${subject}, ${text}, 'message', 0, 0, ${now()}) RETURNING id`;
+            VALUES (${user.id}, ${recipient.id}, ${await encryptText(subject)}, ${await encryptText(text)}, 'message', 0, 0, ${now()}) RETURNING id`;
         await notify(recipient.id, user.id, "message", Number(created[0].id));
 
         return {
