@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { giveStarterItems } from "../../starter";
 import { session } from "../../session";
 import { sql, now } from "../../db";
-import { clientIp } from "../../invites";
+import { rawClientIp } from "../../invites";
 import { siteSetting } from "../../settings";
 import { verifyTurnstile } from "../../turnstile";
 import { announceApplication, updateApplication, verifyInteraction, allowedToDecide, interactionUser, interactionUserId, editInteractionMessage, followUp, denyModal, modalReason, type Application } from "../../discord";
@@ -90,7 +90,6 @@ export const applications = new Elysia()
         const revivals = clean(body.revivals ?? "", 500);
         const about = body.about.trim().slice(0, 1000);
         const socials = clean(body.socials, 500);
-        const email = clean(body.email ?? "", 120);
         if (body.password.length < 8) {
             return status(400, {
                 error: "Password must be at least 8 characters"
@@ -137,7 +136,9 @@ export const applications = new Elysia()
                 error: "That username is already taken"
             });
         }
-        const ip = clientIp(request, server);
+        // applications keep the real address on purpose: the pending check below
+        // compares it exactly, and it is discarded about 90 days after a decision
+        const ip = rawClientIp(request, server);
         if (!(await verifyTurnstile(body.turnstile, ip))) {
             return status(400, {
                 error: "Please complete the captcha"
@@ -153,15 +154,15 @@ export const applications = new Elysia()
         const tok = token();
         const hash = await Bun.password.hash(body.password, "bcrypt");
         const created = await sql`
-            INSERT INTO applications (name, discord, email, found, why, revivals, about, socials, password, ip, token, status, created_at)
-            VALUES (${name}, ${discord}, ${email}, ${found}, ${why}, ${revivals}, ${about}, ${socials}, ${hash}, ${ip}, ${tok}, 'pending', ${now()}) RETURNING id`;
+            INSERT INTO applications (name, discord, found, why, revivals, about, socials, password, ip, token, status, created_at)
+            VALUES (${name}, ${discord}, ${found}, ${why}, ${revivals}, ${about}, ${socials}, ${hash}, ${ip}, ${tok}, 'pending', ${now()}) RETURNING id`;
         const id = Number(created[0].id);
         const app = (await load(id))!;
         const messageId = await announceApplication(app);
         if (messageId) {
             await sql`UPDATE applications SET discord_message_id = ${messageId} WHERE id = ${id}`;
         }
-        console.log(`applications: #${id} ${name} (${discord}) from ${ip}`);
+        console.log(`applications: #${id} ${name} (${discord})`);
         return {
             ok: true,
             token: tok
@@ -175,7 +176,6 @@ export const applications = new Elysia()
             revivals: t.Optional(t.String({ maxLength: 1000 })),
             about: t.String({ maxLength: 2000 }),
             socials: t.String({ maxLength: 1000 }),
-            email: t.Optional(t.String({ maxLength: 200 })),
             password: t.String({ maxLength: 200 }),
             confirmpassword: t.String({ maxLength: 200 }),
             turnstile: t.Optional(t.String({ maxLength: 4000 }))
