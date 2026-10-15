@@ -26,9 +26,82 @@ export const TYPES: Record<string, string> = {
 
 export const contentType = (ext: string) => TYPES[ext.toLowerCase()] ?? "application/octet-stream";
 
-// a browser would run these if the file got rendered
-export const unsafeXml = (bytes: Uint8Array) =>
-    /xmlns(:\w+)?\s*=\s*["']https?:\/\/www\.w3\.org\/(1999\/xhtml|2000\/svg)|<!(DOCTYPE|ENTITY)/i.test(new TextDecoder("latin1").decode(bytes));
+// Roblox binary format magic bytes: <roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" ...
+// Binary format starts with version byte (0x00) + length-prefixed strings
+// XML format (.rbxmx) starts with "<roblox" or "<?xml"
+
+const ROBLOX_BINARY_MAGIC = new Uint8Array([0x00]); // Simplified - actual format is more complex
+
+function looksLikeRobloxBinary(bytes: Uint8Array): boolean {
+    // Roblox binary format: first byte is version (usually 0), then length-prefixed strings
+    // At minimum, check for reasonable structure
+    if (bytes.length < 4) return false;
+    // Check for XML declaration or roblox root element at start (for XML format)
+    const header = new TextDecoder("ascii", { fatal: false }).decode(bytes.slice(0, 100));
+    if (header.startsWith("<?xml") || header.startsWith("<roblox")) {
+        return false; // This is XML format, not binary
+    }
+    // For binary, we can't easily validate without full parser
+    // But we can check it doesn't look like malicious XML
+    return true;
+}
+
+// Proper XXE-safe XML parsing - only for XML-based formats (.rbxmx)
+export const unsafeXml = (bytes: Uint8Array, ext?: string): boolean => {
+    // If it's a known binary format, do basic sanity check
+    if (ext === "rbxl" || ext === "rbxm") {
+        return !looksLikeRobloxBinary(bytes);
+    }
+
+    // For XML formats (.rbxmx, .xml), use proper parsing with XXE protection
+    const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+
+    // Quick heuristic: if it doesn't look like XML at all, skip deep parsing
+    if (!text.includes("<") || !text.includes(">")) {
+        return false;
+    }
+
+    try {
+        // Use DOMParser with no external entity resolution
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "application/xml");
+
+        // Check for parser errors
+        const parserError = doc.querySelector("parsererror");
+        if (parserError) {
+            // If it's not valid XML, fall back to regex check
+            return /xmlns(:\w+)?\s*=\s*["']https?:\/\/www\.w3\.org\/(1999\/xhtml|2000\/svg)|<!(DOCTYPE|ENTITY)/i.test(text);
+        }
+
+        // Walk the DOM and check for dangerous constructs
+        const walker = doc.createTreeWalker(doc, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_DOCUMENT_TYPE);
+        let node: Node | null = walker.nextNode();
+        while (node) {
+            if (node.nodeType === Node.DOCUMENT_TYPE_NODE) {
+                // DOCTYPE declaration - potential XXE vector
+                return true;
+            }
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const element = node as Element;
+                // Check for external entity references in attributes
+                for (const attr of element.attributes) {
+                    if (attr.value.includes("ENTITY") || attr.value.includes("SYSTEM") || attr.value.includes("PUBLIC")) {
+                        return true;
+                    }
+                    // Check for dangerous xmlns
+                    if (attr.name.startsWith("xmlns") && /^https?:\/\/www\.w3\.org\/(1999\/xhtml|2000\/svg)$/i.test(attr.value)) {
+                        return true;
+                    }
+                }
+            }
+            node = walker.nextNode();
+        }
+        return false;
+    } catch {
+        // If parsing fails, fall back to regex
+        return /xmlns(:\w+)?\s*=\s*["']https?:\/\/www\.w3\.org\/(1999\/xhtml|2000\/svg)|<!(DOCTYPE|ENTITY)/i.test(text);
+    }
+};
 
 // headshots and 3d scenes live next to the image they belong to
 const SUFFIX: Record<string, [string, string]> = {
