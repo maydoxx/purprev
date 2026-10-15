@@ -1,4 +1,5 @@
-import { sql } from ".";
+import { sql, now } from ".";
+import { digestToken } from "../crypto";
 
 const schema = await Bun.file(import.meta.dir + "/schema.sql").text();
 
@@ -8,6 +9,15 @@ for (const chunk of schema.split(";")) {
     await sql.unsafe(stmt);
 }
 
+// Drop email column from users table if it exists
+await sql`ALTER TABLE users DROP COLUMN IF EXISTS email`;
+
+// Drop email column from applications table if it exists
+await sql`ALTER TABLE applications DROP COLUMN IF EXISTS email`;
+
+// Drop unique constraint on users.email if it exists
+await sql`DROP INDEX IF EXISTS users_email_key`;
+
 const columns: [string, string, string][] = [
     ["users", "membership", "varchar(8) NOT NULL DEFAULT 'None' CHECK (membership IN ('None', 'BC', 'TBC', 'OBC'))"],
     ["users", "membership_expires", "integer NOT NULL DEFAULT 0"],
@@ -15,6 +25,10 @@ const columns: [string, string, string][] = [
     ["users", "social_discord", "varchar(40) NOT NULL DEFAULT ''"],
     ["users", "social_twitter", "varchar(60) NOT NULL DEFAULT ''"],
     ["users", "social_youtube", "varchar(120) NOT NULL DEFAULT ''"],
+    ["users", "social_visibility", "jsonb NOT NULL DEFAULT '{\"discord\": true, \"twitter\": true, \"youtube\": true}'"],
+    ["users", "processing_consents", "jsonb NOT NULL DEFAULT '{\"marketing\": false, \"analytics\": true, \"profiling\": false, \"third_party_sharing\": false}'"],
+    ["users", "processing_objections", "jsonb NOT NULL DEFAULT '{\"marketing\": false, \"analytics\": false, \"profiling\": false, \"third_party_sharing\": false}'"],
+    ["users", "processing_restricted", "smallint NOT NULL DEFAULT 0"],
     ["catalog_items", "bc_only", "smallint NOT NULL DEFAULT 0"],
     ["catalog_items", "tix_price", "integer DEFAULT NULL"],
     ["users", "tix", "integer NOT NULL DEFAULT 0"],
@@ -107,6 +121,19 @@ await sql`
     UPDATE games SET created_at = media.updated_at, updated_at = media.updated_at
     FROM media WHERE media.kind = 'places' AND media.id = games.id AND games.created_at = 0
 `;
+
+// session tokens moved from plaintext to hashed; convert the ones already out
+// there once. the insert claims the migration so a second instance starting at
+// the same time does not hash an already hashed value
+await sql`CREATE TABLE IF NOT EXISTS data_migrations (name varchar(64) PRIMARY KEY, applied_at integer NOT NULL DEFAULT 0)`;
+const [claimed] = await sql`INSERT INTO data_migrations (name, applied_at) VALUES ('hash_session_tokens', ${now()}) ON CONFLICT (name) DO NOTHING RETURNING name`;
+if (claimed) {
+    const rows = await sql`SELECT id, token FROM tokens`;
+    for (const row of rows) {
+        await sql`UPDATE tokens SET token = ${await digestToken(String(row.token))} WHERE id = ${row.id}`;
+    }
+    console.log(`hashed ${rows.length} session tokens`);
+}
 
 console.log("done");
 await sql.close();

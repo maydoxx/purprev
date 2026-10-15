@@ -1,10 +1,6 @@
 import { Elysia, t } from "elysia";
 import { sql, now } from "../../db";
-
-const digestToken = async (token: string) => Array.from(
-    new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token))),
-    byte => byte.toString(16).padStart(2, "0")
-).join("");
+import { digestToken } from "../../crypto";
 
 export const passwordReset = new Elysia()
     .get("/password-reset", async ({ query, status }) => {
