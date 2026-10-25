@@ -212,7 +212,6 @@ export const embed = new Elysia({ prefix: "/api/embed" })
         const path = url.pathname.replace(/^\/api\/embed/, "") || "/";
         const page = PAGES[path.replace(/\/+$/, "").toLowerCase() || "/"];
         const id = page ? url.searchParams.get(page[0]) ?? "" : "";
-        // postgres throws on ids past int4
         const card = page && /^\d{1,9}$/.test(id) ? await page[1](Number(id)) : null;
         return new Response(render(card ?? FALLBACK, `${SITE_URL}${path}${url.search}`), {
             headers: {
@@ -221,4 +220,4 @@ export const embed = new Elysia({ prefix: "/api/embed" })
                 "Cache-Control": "private, max-age=300"
             }
         });
-    })
+    });
