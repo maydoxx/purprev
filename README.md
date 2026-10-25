@@ -16,7 +16,7 @@ PurpRev is both a backend and frontend for [NoneRev](https://nonerev.pw).
 | - | - |
 | Frontend | [Svelte 5](https://svelte.dev) and [Vite](https://vite.dev) |
 | Backend  | [Bun](https://bun.com) and [Elysia](https://elysiajs.com), API docs made by its OpenAPI plugin |
-| Database | [PostgreSQL](https://www.postgresql.org) |
+| Database | [MariaDB](https://www.mariadb.org) |
 
 ## Requirements
 
@@ -24,7 +24,7 @@ It really depends on how you run it, you can pick one below:
 
 | Way                           | You need                                                             |
 | - | - |
-| [Local](#local)               | [Bun](https://bun.com) v1.4 or newer and a [PostgreSQL](https://www.postgresql.org) database |
+| [Local](#local)               | [Bun](https://bun.com) v1.4 or newer and a [MariaDB](https://www.mariadb.org) database |
 | [Docker](#docker)             | [Docker](https://www.docker.com) with compose |
 | [Podman](#podman-quadlets)    | [Podman](https://podman.io) on a machine with systemd |
 
@@ -49,11 +49,11 @@ cp .env.example .env
 | - | - |
 | `VITE_PORT` | Port of the frontend |
 | `API_PORT` | Port of the backend |
-| `PG_HOST` | Where the database is, `localhost` if its on the same machine |
-| `PG_PORT` | `5432` unless you changed it |
-| `PG_DATABASE` | Name of the database |
-| `PG_USER` | Database login |
-| `PG_PASSWORD` | Database password |
+| `MARIADB_HOST` | Where the database is, `localhost` if its on the same machine |
+| `MARIADB_PORT` | `5432` unless you changed it |
+| `MARIADB_DATABASE` | Name of the database |
+| `MARIADB_USER` | Database login |
+| `MARIADB_PASSWORD` | Database password |
 | `RCCMANAGER_HOST` | Where RCCManager is, `localhost` if its on the same machine |
 | `RCCMANAGER_PORT` | RCCManager binding port, default `25500` |
 | `RCCMANAGER_PASSWORD` | RCCManager password |
@@ -84,7 +84,7 @@ In Docker and Podman the database is its own container, so `PG_HOST` and `PG_POR
 
 ### Locally (usually dev environment)
 
-Setup a MySQL server and make a database and a user that match your `.env`:
+Setup a MariaDB server and make a database and a user that match your `.env`:
 
 ```sql
 CREATE DATABASE nonerev;
