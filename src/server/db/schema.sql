@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS blog_posts (
     updated_at integer NOT NULL,
     PRIMARY KEY (id)
 );
-CREATE INDEX blog_posts_category ON blog_posts (category);
-CREATE INDEX blog_posts_author_id ON blog_posts (author_id);
-CREATE INDEX blog_posts_published_at ON blog_posts (published_at);
-CREATE INDEX blog_posts_is_published ON blog_posts (is_published);
+CREATE INDEX IF NOT EXISTS blog_posts_category ON blog_posts (category);
+CREATE INDEX IF NOT EXISTS blog_posts_author_id ON blog_posts (author_id);
+CREATE INDEX IF NOT EXISTS blog_posts_published_at ON blog_posts (published_at);
+CREATE INDEX IF NOT EXISTS blog_posts_is_published ON blog_posts (is_published);
 
 CREATE TABLE IF NOT EXISTS catalog_items (
     id integer NOT NULL AUTO_INCREMENT,
