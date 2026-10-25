@@ -15,8 +15,10 @@ await sql`ALTER TABLE users DROP COLUMN IF EXISTS email`;
 // Drop email column from applications table if it exists
 await sql`ALTER TABLE applications DROP COLUMN IF EXISTS email`;
 
-// Drop unique constraint on users.email if it exists
-await sql`DROP INDEX IF EXISTS users_email_key`;
+// Drop unique index on users.email if it exists
+try {
+    await sql`ALTER TABLE users DROP INDEX users_email_key`;
+} catch {}
 
 const columns: [string, string, string][] = [
     ["users", "membership", "varchar(8) NOT NULL DEFAULT 'None' CHECK (membership IN ('None', 'BC', 'TBC', 'OBC'))"],
@@ -25,9 +27,9 @@ const columns: [string, string, string][] = [
     ["users", "social_discord", "varchar(40) NOT NULL DEFAULT ''"],
     ["users", "social_twitter", "varchar(60) NOT NULL DEFAULT ''"],
     ["users", "social_youtube", "varchar(120) NOT NULL DEFAULT ''"],
-    ["users", "social_visibility", "jsonb NOT NULL DEFAULT '{\"discord\": true, \"twitter\": true, \"youtube\": true}'"],
-    ["users", "processing_consents", "jsonb NOT NULL DEFAULT '{\"marketing\": false, \"analytics\": true, \"profiling\": false, \"third_party_sharing\": false}'"],
-    ["users", "processing_objections", "jsonb NOT NULL DEFAULT '{\"marketing\": false, \"analytics\": false, \"profiling\": false, \"third_party_sharing\": false}'"],
+    ["users", "social_visibility", "JSON NOT NULL DEFAULT ('{\"discord\": true, \"twitter\": true, \"youtube\": true}')"],
+    ["users", "processing_consents", "JSON NOT NULL DEFAULT ('{\"marketing\": false, \"analytics\": true, \"profiling\": false, \"third_party_sharing\": false}')"],
+    ["users", "processing_objections", "JSON NOT NULL DEFAULT ('{\"marketing\": false, \"analytics\": false, \"profiling\": false, \"third_party_sharing\": false}')"],
     ["users", "processing_restricted", "smallint NOT NULL DEFAULT 0"],
     ["catalog_items", "bc_only", "smallint NOT NULL DEFAULT 0"],
     ["catalog_items", "tix_price", "integer DEFAULT NULL"],
@@ -41,7 +43,7 @@ const columns: [string, string, string][] = [
     ["games", "visits", "integer NOT NULL DEFAULT 0"],
     ["games", "avatar_type", "varchar(8) NOT NULL DEFAULT 'R6' CHECK (avatar_type IN ('R6', 'R15'))"],
     ["user_avatar", "avatar_type", "varchar(8) NOT NULL DEFAULT 'R6' CHECK (avatar_type IN ('R6', 'R15'))"],
-    ["applications", "why", "text NOT NULL DEFAULT ''"],
+    ["applications", "why", "text NOT NULL"],
     ["applications", "revivals", "varchar(500) NOT NULL DEFAULT ''"],
     ["applications", "socials", "varchar(500) NOT NULL DEFAULT ''"],
     ["applications", "password", "varchar(255) NOT NULL DEFAULT ''"],
@@ -52,7 +54,7 @@ const columns: [string, string, string][] = [
     ["site_groups", "bc_only", "smallint NOT NULL DEFAULT 0"],
     ["site_groups", "shout_by", "integer NOT NULL DEFAULT 0"],
     ["site_groups", "shout_at", "integer NOT NULL DEFAULT 0"],
-    ["games", "description", "text NOT NULL DEFAULT ''"],
+    ["games", "description", "text NOT NULL"],
     ["games", "genre", "varchar(20) NOT NULL DEFAULT 'All'"],
     ["games", "max_players", "smallint NOT NULL DEFAULT 10"],
     ["games", "allowed_gear", "varchar(160) NOT NULL DEFAULT ''"],
@@ -61,7 +63,7 @@ const columns: [string, string, string][] = [
     ["games", "featured", "smallint NOT NULL DEFAULT 0"],
     ["moderation_actions", "created_at", "integer NOT NULL DEFAULT 0"],
     ["catalog_items", "genre", "varchar(20) NOT NULL DEFAULT 'All'"],
-    ["vip_servers", "access_code", "varchar(64) NOT NULL DEFAULT gen_random_uuid()::text"],
+    ["vip_servers", "access_code", "varchar(64) NOT NULL DEFAULT (UUID())"],
     ["vip_servers", "active", "smallint NOT NULL DEFAULT 1"],
     ["vip_servers", "allow_friends", "smallint NOT NULL DEFAULT 0"],
     ["users", "last_studio", "integer NOT NULL DEFAULT 0"],
@@ -74,8 +76,9 @@ const columns: [string, string, string][] = [
     ["users", "friend_request_privacy", "varchar(10) NOT NULL DEFAULT 'everyone'"],
     ["tokens", "platform", "varchar(20) NOT NULL DEFAULT 'Unknown'"]
 ];
+
 for (const [table, column, definition] of columns) {
-    const [row] = await sql`SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = ${table} AND column_name = ${column}`;
+    const [row] = await sql`SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ${table} AND column_name = ${column}`;
     if (!row) {
         await sql.unsafe(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
         console.log(`added ${table}.${column}`);
@@ -83,51 +86,66 @@ for (const [table, column, definition] of columns) {
 }
 
 const catalogCategoryChecks = await sql`
-    SELECT conname
-    FROM pg_constraint
-    WHERE conrelid = 'catalog_items'::regclass
-      AND contype = 'c'
-      AND pg_get_constraintdef(oid) ILIKE '%category%'
+    SELECT tc.CONSTRAINT_NAME as conname
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.check_constraints cc 
+      ON tc.CONSTRAINT_SCHEMA = cc.CONSTRAINT_SCHEMA 
+      AND tc.CONSTRAINT_NAME = cc.CONSTRAINT_NAME
+    WHERE tc.TABLE_SCHEMA = DATABASE()
+      AND tc.TABLE_NAME = 'catalog_items'
+      AND tc.CONSTRAINT_TYPE = 'CHECK'
+      AND cc.CHECK_CLAUSE LIKE '%category%'
 `;
 for (const { conname } of catalogCategoryChecks) {
-    const safeName = String(conname).replace(/"/g, '""');
-    await sql.unsafe(`ALTER TABLE catalog_items DROP CONSTRAINT "${safeName}"`);
+    const safeName = String(conname).replace(/`/g, '``');
+    await sql.unsafe(`ALTER TABLE catalog_items DROP CHECK \`${safeName}\``);
 }
 await sql`ALTER TABLE catalog_items ADD CONSTRAINT catalog_items_category_check CHECK (category IN ('Hat', 'Face', 'T-Shirt', 'Shirt', 'Pants', 'Gear', 'Package', 'Head', 'Torso', 'LeftArm', 'RightArm', 'LeftLeg', 'RightLeg'))`;
 
 const themeChecks = await sql`
-    SELECT conname
-    FROM pg_constraint
-    WHERE conrelid = 'users'::regclass
-      AND contype = 'c'
-      AND pg_get_constraintdef(oid) ILIKE '%theme%'
+    SELECT tc.CONSTRAINT_NAME as conname
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.check_constraints cc 
+      ON tc.CONSTRAINT_SCHEMA = cc.CONSTRAINT_SCHEMA 
+      AND tc.CONSTRAINT_NAME = cc.CONSTRAINT_NAME
+    WHERE tc.TABLE_SCHEMA = DATABASE()
+      AND tc.TABLE_NAME = 'users'
+      AND tc.CONSTRAINT_TYPE = 'CHECK'
+      AND cc.CHECK_CLAUSE LIKE '%theme%'
 `;
 for (const { conname } of themeChecks) {
-    const safeName = String(conname).replace(/"/g, '""');
-    await sql.unsafe(`ALTER TABLE users DROP CONSTRAINT "${safeName}"`);
+    const safeName = String(conname).replace(/`/g, '``');
+    await sql.unsafe(`ALTER TABLE users DROP CHECK \`${safeName}\``);
 }
 await sql`ALTER TABLE users ADD CONSTRAINT users_theme_check CHECK (theme IN ('auto', 'classic', 'dark', 'oled', 'halloween', 'sakura'))`;
 
-// the column may only exist after the loop above
+// Ensure unique index on vip_servers access_code
 await sql`CREATE UNIQUE INDEX IF NOT EXISTS vip_servers_access_code ON vip_servers (access_code)`;
 
-// seeds insert fixed ids
-const identities = await sql`SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = current_schema() AND is_identity = 'YES'`;
-for (const { table_name, column_name } of identities) {
-    await sql.unsafe(`SELECT setval(pg_get_serial_sequence('${table_name}', '${column_name}'), COALESCE((SELECT MAX(${column_name}) FROM ${table_name}), 0) + 1, false)`);
+// Adjust AUTO_INCREMENT sequences for seeded fixed IDs
+const autoIncs = await sql`
+    SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name 
+    FROM information_schema.columns 
+    WHERE TABLE_SCHEMA = DATABASE() 
+      AND EXTRA LIKE '%auto_increment%'
+`;
+for (const { table_name, column_name } of autoIncs) {
+    const [{ max_val }] = await sql.unsafe(`SELECT COALESCE(MAX(${column_name}), 0) + 1 as max_val FROM ${table_name}`);
+    await sql.unsafe(`ALTER TABLE ${table_name} AUTO_INCREMENT = ${max_val}`);
 }
 
 await sql`
-    UPDATE games SET created_at = media.updated_at, updated_at = media.updated_at
-    FROM media WHERE media.kind = 'places' AND media.id = games.id AND games.created_at = 0
+    UPDATE games 
+    JOIN media ON media.kind = 'places' AND media.id = games.id 
+    SET games.created_at = media.updated_at, games.updated_at = media.updated_at 
+    WHERE games.created_at = 0
 `;
 
-// session tokens moved from plaintext to hashed; convert the ones already out
-// there once. the insert claims the migration so a second instance starting at
-// the same time does not hash an already hashed value
+// Session tokens moved from plaintext to hashed; convert existing ones once.
 await sql`CREATE TABLE IF NOT EXISTS data_migrations (name varchar(64) PRIMARY KEY, applied_at integer NOT NULL DEFAULT 0)`;
-const [claimed] = await sql`INSERT INTO data_migrations (name, applied_at) VALUES ('hash_session_tokens', ${now()}) ON CONFLICT (name) DO NOTHING RETURNING name`;
-if (claimed) {
+const [existing] = await sql`SELECT name FROM data_migrations WHERE name = 'hash_session_tokens'`;
+if (!existing) {
+    await sql`INSERT INTO data_migrations (name, applied_at) VALUES ('hash_session_tokens', ${now()})`;
     const rows = await sql`SELECT id, token FROM tokens`;
     for (const row of rows) {
         await sql`UPDATE tokens SET token = ${await digestToken(String(row.token))} WHERE id = ${row.id}`;
