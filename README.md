@@ -35,7 +35,7 @@ All three ways start the same.
 **1. Clone the repo**
 
 ```bash
-git clone https://github.com/nonerev/purprev.git
+git clone https://github.com/maydoxx/purprev.git
 cd purprev
 ```
 
